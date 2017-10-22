@@ -40,7 +40,7 @@ build:
 .PHONY: tests
 $(TESTS): %.out:%.c
 	$(CC) $(CFLAGS)  $< -o $@
-tests: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
+tests: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
 tests: $(TESTS)
 	sh ./tests/runtests.sh
 
