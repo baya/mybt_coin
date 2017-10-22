@@ -8,9 +8,18 @@
 #include "kyk_sha.h"
 #include "kyk_difficulty.h"
 #include "beej_pack.h"
+#include "mu_unit.h"
 
 
-int main()
+int is_digest_eq(const void* lhs, const void* rhs, size_t count)
+{
+    int res = 0;
+    res = memcmp(lhs, rhs, count) == 0 ? 1 : 0;
+
+    return res;
+}
+
+char *test_block_nonce()
 {
     struct kyk_blk_header blk_hd;
     uint8_t hd_buf[1000];
@@ -26,7 +35,7 @@ int main()
     /*
      * 在已经知道目标 nonce 的情况下, 如果从 0 开始跑计算，需要跑 20 多亿次(准确地说是 40 多亿次) sha256 计算，在没有矿机的情况下，这个实验就没有办法在较短的时间内做下去了
      * 所以将 nonce 设置为一个较大的数，这样只要跑 1 千万次(准确地说是 2 千万次, 因为比特币系统中算一次 hash 要跑两次 sha256 计算) sha256 计算就能得到结果.
-    */
+     */
     
     blk_hd.nonce = 2082236893;
 
@@ -43,8 +52,8 @@ int main()
 
     /* bts to target */
     kyk_bts2target(blk_hd.bts, tg);
-    gmp_printf("0x%02x => target is: 0x%Zx\n", blk_hd.bts, tg);
-    gmp_printf("0x%02x => difficulty is: %u\n", blk_hd.bts, dlt);
+    //gmp_printf("0x%02x => target is: 0x%Zx\n", blk_hd.bts, tg);
+    //gmp_printf("0x%02x => difficulty is: %u\n", blk_hd.bts, dlt);
 
     len = kyk_seri_blk_hd_without_nonce(hd_buf, &blk_hd);
     
@@ -60,7 +69,23 @@ int main()
 	}
     } while(1);
 
-    kyk_print_hex("got block hash", dgst, sizeof(dgst));
+    uint8_t target_blk_hd_hash[32];
+    kyk_parse_hex(target_blk_hd_hash, "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
-    printf("got nonce: %u\n", blk_hd.nonce);
+    mu_assert(is_digest_eq(dgst, target_blk_hd_hash, sizeof(target_blk_hd_hash)), "Failed to get the right block header hash 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+    mu_assert(blk_hd.nonce == 2083236893, "Failed to get the right nonce 2083236893");
+
+    return NULL;
+
 }
+
+char *all_tests()
+{
+    mu_suite_start();
+    
+    mu_run_test(test_block_nonce);
+    
+    return NULL;
+}
+
+MU_RUN_TESTS(all_tests);
