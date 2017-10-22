@@ -14,7 +14,6 @@ static uint8_t MAIN_NW = 0x00;
 char *kyk_make_address(const uint8_t *priv_bytes)
 {
     EC_KEY *key;
-    const BIGNUM *priv_bn;
     point_conversion_form_t conv_form = POINT_CONVERSION_UNCOMPRESSED;
     size_t pub_len;
     uint8_t *pub, *pub_copy;
@@ -46,7 +45,7 @@ char *kyk_make_address(const uint8_t *priv_bytes)
      *     )
      *
      */
-    if (i2o_ECPublicKey(key, &pub_copy) != pub_len) {
+    if ((size_t)i2o_ECPublicKey(key, &pub_copy) != pub_len) {
 	fprintf(stderr, "Unable to decode public key\n");
 	return NULL;
     }
@@ -109,14 +108,17 @@ char *kyk_make_address(const uint8_t *priv_bytes)
 void set_version_byte(uint8_t *vdgst, uint8_t *digest, uint8_t vbyt, size_t len)
 {
     vdgst[0] = vbyt;
-    for (int i=0; i < len; i++){
+    size_t i = 0;
+    for (i = 0; i < len; i++){
 	vdgst[i+1] = digest[i];
     }
 }
 
 void get_addr_checksum(uint8_t *dgst7, const uint8_t *dgst6, size_t len)
 {
-    for(int i=0; i < len; i++){
+    size_t i = 0;
+    
+    for(i = 0; i < len; i++){
 	dgst7[i] = dgst6[i];
     }
 }
@@ -126,13 +128,14 @@ void set_chksum_byte(uint8_t *dgst8,
 		     uint8_t *dgst7, size_t len1,
 		     uint8_t *dgst4, size_t len2)
 {
+    size_t i = 0;
 
-    for(int i=0; i < len2; i++){
+    for(i = 0; i < len2; i++){
 	dgst8[i] = dgst4[i];
     }
 
-    for(int j=0; j < len1; j++){
-	dgst8[j+len2] = dgst7[j];
+    for(i = 0; i < len1; i++){
+	dgst8[i+len2] = dgst7[i];
     }
 
     

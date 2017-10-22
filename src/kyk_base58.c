@@ -13,7 +13,8 @@ char *kyk_base58(const uint8_t *bytes, size_t len)
     char *str;
     BN_CTX *ctx;
     BIGNUM *base, *x, *r;
-    int i, j;
+    size_t i = 0;
+    size_t j = 0;
     
     str_len = len * 138 / 100 + 2;
     str = calloc(str_len, sizeof(char));

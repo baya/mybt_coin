@@ -43,6 +43,7 @@ void print_msg_buf(const ptl_msg_buf *msg_buf)
     const unsigned char *buf = msg_buf -> body;
     size_t len = 0;
     int wth = 36;
+    size_t i = 0;
 
     len = print_hex(buf, sizeof(uint32_t), wth, "Magic");
     buf += len;
@@ -59,7 +60,7 @@ void print_msg_buf(const ptl_msg_buf *msg_buf)
     len = print_hex(buf, len, wth, "Payload");
     buf += len;
 
-    for(int i=0; i < msg_buf -> len; i++){
+    for(i=0; i < msg_buf -> len; i++){
 	printf("%02x", msg_buf -> body[i]);
     }
 
@@ -69,7 +70,6 @@ void print_msg_buf(const ptl_msg_buf *msg_buf)
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf)
 {
     const unsigned char *buf = msg_buf -> body;
-    size_t len = 0;
     
     str += format_hex_to_str(str, "Magic", buf, sizeof(uint32_t));
     buf += 4;
@@ -89,12 +89,13 @@ void format_msg_buf(char *str, const ptl_msg_buf *msg_buf)
 static size_t format_hex_to_str(char *str, const char *note, const unsigned char *buf, size_t len)
 {
     size_t j = 0;
+    size_t i = 0;
     size_t ofst = 0;
     
     j = sprintf(str, "%s: ", note);
     ofst += j;
     str += j;
-    for(int i=0; i < len; i++){
+    for(i=0; i < len; i++){
 	j = sprintf(str, "%02x", buf[i]);
 	ofst += j;
         str += j;
@@ -107,12 +108,13 @@ static size_t format_hex_to_str(char *str, const char *note, const unsigned char
 
 static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note)
 {
-    for(int i=0; i < len; i++){
+    size_t i = 0;
+    for(i=0; i < len; i++){
 	printf("%02x", *buf++);
     }
 
     printf(" ");
-    for(int j=len*2; j < width; j++){
+    for(i = len*2; i < (size_t)width; i++){
 	printf(".");
     }
 

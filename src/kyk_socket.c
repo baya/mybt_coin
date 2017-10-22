@@ -29,7 +29,7 @@ void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_b
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
-    int sfd, s, j;
+    int sfd, s;
     size_t len;
     ssize_t nread;    
     unsigned char resp_body[MAX_BUF_SIZE];
@@ -89,7 +89,7 @@ void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_b
     printf("\n");
 #endif
 
-    if (write(sfd, msg_buf -> body, len) != len) {
+    if (write(sfd, msg_buf -> body, len) != (ssize_t)len) {
 	fprintf(stderr, "partial/failed write\n");
 	exit(EXIT_FAILURE);
     }

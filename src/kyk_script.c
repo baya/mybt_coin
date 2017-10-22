@@ -51,7 +51,6 @@ int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char 
     BIGNUM bn;
     size_t len;
     uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
-    uint8_t csum[4];
 
     BN_init(&bn);
     raw_decode_base58(&bn, addr, strlen(addr));
@@ -113,14 +112,15 @@ size_t kyk_combine_sc(uint8_t *sc,
 		    uint8_t *sc_pubk, size_t sc_pubk_len)
 {
     size_t count = 0;
+    size_t i = 0;
     
-    for(int i=0; i < sc_sig_len; i++){
+    for(i=0; i < sc_sig_len; i++){
 	*sc = sc_sig[i];
 	sc++;
 	count++;
     }
 
-    for(int i=0; i < sc_pubk_len; i++){
+    for(i=0; i < sc_pubk_len; i++){
 	*sc = sc_pubk[i];
 	sc++;
 	count++;
@@ -343,7 +343,8 @@ int is_sc_na_const(uint8_t opcode)
 
 void free_sc_stack(struct kyk_sc_stack *stk)
 {
-    for(int i=0; i < stk -> hgt; i++){
+    size_t i = 0;
+    for(i=0; i < stk -> hgt; i++){
 	free_sc_stk_item(stk -> top);
 	stk -> top--;
     }

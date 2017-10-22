@@ -53,8 +53,9 @@ struct kyk_mkltree_level *create_mkl_leafs(struct kyk_tx_buf *buf_list, size_t l
     mkl_level -> nd = nd_list;
     mkl_level -> len = 0;
     mkl_level -> inx = 1;
-    
-    for(int i=0; i < len; i++){
+
+    size_t i = 0;
+    for(i = 0; i < len; i++){
 	kyk_init_mkltree_node(nd);
 	kyk_hash_mkl_leaf(nd, buf_list[i]);
 	mkl_level -> len++;
@@ -112,8 +113,9 @@ int root_mkl_level(const struct kyk_mkltree_level *level)
 
 
 void kyk_hash_mkltree_level(struct kyk_mkltree_level *level)
-{    
-    for(int i=0; i < level -> len; i++){
+{
+    size_t i = 0;
+    for(i = 0; i < level -> len; i++){
 	kyk_hash_mkltree_node(level -> nd + i);
     }
 }
@@ -144,8 +146,9 @@ void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_le
     level -> inx = child_level -> inx + 1;
     level -> dwn = child_level;
     pnd_cpy = level -> nd;
-
-    for(int i=0; i < level -> len; i++){
+    
+    size_t i = 0;
+    for(i = 0; i < level -> len; i++){
 	pnd_cpy -> ntype = BR_ND_T;
 	pnd_cpy -> child_lft = child_level -> nd + (i * 2);
 	if(i * 2 + 1 > child_level -> len - 1){
@@ -173,13 +176,16 @@ void kyk_print_mkl_tree(const struct kyk_mkltree_level *root_level)
 void kyk_print_mkl_level(const struct kyk_mkltree_level *level)
 {
     struct kyk_mkltree_node *nd;
+    size_t i = 0;
+
     nd = level -> nd;
     if(root_mkl_level(level) == 1){
 	printf("Level %zu (Merkle Root): ", level -> inx);
     } else {
 	printf("Level %zu:               ", level -> inx);
     }
-    for(int i=0; i < level -> len; i++){
+
+    for(i = 0; i < level -> len; i++){
 	kyk_inline_print_hex(nd -> bdy, MKL_NODE_BODY_LEN);
 	if(i == level -> len -1){
 	} else {
@@ -194,13 +200,14 @@ struct kyk_mkltree_level *create_mkl_leafs_from_txid_hexs(const char *hexs[], si
     struct kyk_mkltree_level *mkl_level = malloc(sizeof(struct kyk_mkltree_level));
     struct kyk_mkltree_node *nd_list = malloc(row_num * sizeof(struct kyk_mkltree_node));
     struct kyk_mkltree_node *nd = nd_list;
+    size_t i = 0;
     
     kyk_init_mkl_level(mkl_level);
     mkl_level -> nd = nd_list;
     mkl_level -> len = 0;
     mkl_level -> inx = 1;
     
-    for(int i=0; i < row_num; i++){
+    for(i = 0; i < row_num; i++){
 	kyk_init_mkltree_node(nd);
 	kyk_copy_hex2bin(nd -> bdy, hexs[i], MKL_NODE_BODY_LEN);
 	mkl_level -> len++;

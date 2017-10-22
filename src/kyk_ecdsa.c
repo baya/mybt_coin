@@ -68,7 +68,6 @@ int kyk_ec_sig_verify(uint8_t *buf, size_t buf_len,
     ECDSA_SIG *signature;
     uint8_t digest[32];
     uint8_t suffix_pub[33];
-    uint8_t *der_byte;
     const uint8_t *der_sig_copy;
 
     int verified = 0;

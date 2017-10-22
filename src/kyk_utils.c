@@ -99,7 +99,8 @@ void kyk_reverse(uint8_t *dst, size_t len)
 
 void print_bytes_in_hex(const unsigned char *buf, size_t len)
 {
-    for(int i=0; i < len; i++){
+    size_t i = 0;
+    for(i=0; i < len; i++){
 	printf("%02x", buf[i]);
     }
     printf("\n");
@@ -107,7 +108,9 @@ void print_bytes_in_hex(const unsigned char *buf, size_t len)
 
 void kyk_inline_print_hex(const unsigned char *buf, size_t len)
 {
-    for(int i=0; i < len; i++){
+    size_t i = 0;
+    
+    for(i=0; i < len; i++){
 	printf("%02x", buf[i]);
     }
 }
@@ -138,8 +141,9 @@ int hexstr_to_bytes(const char *hexstr, unsigned char *buf, size_t len)
 size_t kyk_reverse_pack_chars(unsigned char *buf, unsigned char *src, size_t count)
 {
     size_t size = 0;
+    int i = 0;
 
-    for(int i=count-1; i >= 0; i--){
+    for(i = count-1; i >= 0; i--){
 	*buf = src[i];
 	buf++;
 	size += 1;
@@ -152,8 +156,9 @@ size_t kyk_reverse_pack_chars(unsigned char *buf, unsigned char *src, size_t cou
 size_t kyk_pack_chars(unsigned char *buf, unsigned char *src, size_t count)
 {
     size_t size = 0;
+    size_t i = 0;
 
-    for(int i=0; i < count; i++){
+    for(i=0; i < count; i++){
 	*buf = src[i];
 	buf++;
 	size += 1;

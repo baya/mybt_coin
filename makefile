@@ -1,7 +1,7 @@
 OPTLIBS = -lcrypto -lgmp
 LIB_PATHS = /usr/local/opt/openssl/lib
 INC_PATHS = /usr/local/opt/openssl/include
-CFLAGS = -g -O2 -Wall -Wextra -Isrc -I$(INC_PATHS) -rdynamic -DNDEBUG $(OPTFLAGS)
+CFLAGS = -g -O2 -Wall -Wextra -Isrc -I$(INC_PATHS) -DNDEBUG $(OPTFLAGS)
 LIBS = -ldl $(OPTLIBS)
 PREFIX ?= /usr/local
 
@@ -40,7 +40,7 @@ build:
 .PHONY: tests
 $(TESTS): %.out:%.c
 	$(CC) $(CFLAGS)  $< -o $@
-tests: CFLAGS += $(SO_TARGET)
+tests: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
 tests: $(TESTS)
 	sh ./tests/runtests.sh
 
