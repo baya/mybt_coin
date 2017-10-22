@@ -6,6 +6,7 @@
 #include "kyk_block.h"
 #include "kyk_utils.h"
 #include "kyk_sha.h"
+#include "mu_unit.h"
 
 int main()
 {

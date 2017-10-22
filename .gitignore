@@ -1,3 +1,5 @@
 *.o
 *.out
 TAGS
+*.a
+*.so

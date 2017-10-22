@@ -1,4 +1,7 @@
-CFLAGS = -g -O2 -Wall -Wextra -Isrc -rdynamic -DNDEBUG $(OPTFLAGS)
+OPTLIBS = -lcrypto -lgmp
+LIB_PATHS = /usr/local/opt/openssl/lib
+INC_PATHS = /usr/local/opt/openssl/include
+CFLAGS = -g -O2 -Wall -Wextra -Isrc -I$(INC_PATHS) -rdynamic -DNDEBUG $(OPTFLAGS)
 LIBS = -ldl $(OPTLIBS)
 PREFIX ?= /usr/local
 
@@ -26,7 +29,7 @@ $(TARGET): build $(OBJECTS)
 	ranlib $@
 
 $(SO_TARGET): $(TARGET) $(OBJECTS)
-	$(CC) -shared -o $@ $(OBJECTS)
+	$(CC) -shared -o $@ $(OBJECTS) -L$(LIB_PATHS) $(LIBS)
 
 
 build:
