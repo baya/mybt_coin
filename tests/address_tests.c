@@ -25,12 +25,8 @@ char *test_make_address()
     ec_key = EVP_PKEY_get1_EC_KEY(evp_key);
     priv_bn = EC_KEY_get0_private_key(ec_key);
     BN_bn2bin(priv_bn, priv);
-    kyk_print_hex("private key ", priv, sizeof(priv));
-
-
     addr = kyk_make_address(priv);
 
-    printf("address     : %s\n", addr);
     mu_assert(strcmp(addr, target_addr) == 0, "failed to get the correct address 1Te2roqFCPbG59tTP4fLjCZpEAiiwXAQm");
 
     EC_KEY_free(ec_key);

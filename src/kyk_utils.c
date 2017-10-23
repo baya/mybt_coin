@@ -167,3 +167,10 @@ size_t kyk_pack_chars(unsigned char *buf, unsigned char *src, size_t count)
     return size;
 }
 
+int kyk_digest_eq(const void* lhs, const void* rhs, size_t count)
+{
+    int res = 0;
+    res = memcmp(lhs, rhs, count) == 0 ? 1 : 0;
+
+    return res;
+}

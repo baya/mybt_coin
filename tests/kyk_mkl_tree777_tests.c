@@ -4,6 +4,7 @@
 
 #include "kyk_utils.h"
 #include "kyk_mkl_tree.h"
+#include "mu_unit.h"
 
 
 /* 数据来源于: https://blockexplorer.com/api/block/00000000000000001544f99d2e133956f5352feabba910ff64d0d87b16daa26c */
@@ -11,7 +12,7 @@
 
 #define TX_COUNT 777
 
-int main()
+char *test_make_mkl_tree777()
 {
     char *txid_hexs[TX_COUNT] = {
 	"ac823da63a809e4409a00312d8ae9fdc1c67878ab7a998c2ff0f9c18c5f9d450",
@@ -799,9 +800,24 @@ int main()
     leaf_level = create_mkl_leafs_from_txid_hexs((const char **)txid_hexs, TX_COUNT);
     root_level = create_mkl_tree(leaf_level);
     
-    kyk_print_mkl_level(root_level);
-    printf("\n");
-	
+    uint8_t target_rt[MKL_NODE_BODY_LEN];
+    kyk_parse_hex(target_rt, "64661f58773c0adc28609866fe3942c0b1cdb4cb99a0602cee2903f3f2b9f35a");
+    int res = kyk_digest_eq(root_level -> nd -> bdy, target_rt, MKL_NODE_BODY_LEN);
+
+    mu_assert(res, "failed to get the correct merkle 777 root");
+
+    
+    return NULL;
 }
 
 
+char *all_tests()
+{
+    mu_suite_start();
+    
+    mu_run_test(test_make_mkl_tree777);
+    
+    return NULL;
+}
+
+MU_RUN_TESTS(all_tests);

@@ -4,6 +4,7 @@
 
 #include "kyk_utils.h"
 #include "kyk_mkl_tree.h"
+#include "mu_unit.h"
 
 /* 数据来源于: https://webbtc.com/block/000000000000000012c2feb44df5a5d9e0c3ba1b70ed5d42b36732026025ff9f.json */
 
@@ -11,7 +12,7 @@
 #define TX_COUNT 32
 
 
-int main()
+char *test_make_mkl_tree32()
 {
     char *txid_hexs[TX_COUNT] = {
 	"ad44cc76dfcee4d733d86a0a86c540eeb6b2b07b722becab9358ccae76a58761",
@@ -53,12 +54,24 @@ int main()
 
     leaf_level = create_mkl_leafs_from_txid_hexs((const char **)txid_hexs, TX_COUNT);
     root_level = create_mkl_tree(leaf_level);
-    
-    kyk_print_mkl_level(root_level);
-    printf("\n");
 
+    uint8_t target_rt[MKL_NODE_BODY_LEN];
+    kyk_parse_hex(target_rt, "18a40130ae5b27912c13963f6874d46efaa495d72bc82dc0e514859f8e2f6394");
+    int res = kyk_digest_eq(root_level -> nd -> bdy, target_rt, MKL_NODE_BODY_LEN);
+
+    mu_assert(res, "failed to get the correct merkle 32 root");
+
+    return NULL;
+    
 }
 
+char *all_tests()
+{
+    mu_suite_start();
+    
+    mu_run_test(test_make_mkl_tree32);
+    
+    return NULL;
+}
 
-
-
+MU_RUN_TESTS(all_tests);

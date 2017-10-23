@@ -4,6 +4,7 @@
 
 #include "kyk_utils.h"
 #include "kyk_mkl_tree.h"
+#include "mu_unit.h"
 
 /* 数据来源于: https://webbtc.com/block/00000000000000000630790598c5bf4130d9811515c8dd5c6131ea3c56e48ac8.json */
 
@@ -42,7 +43,7 @@
 
 #define TX_COUNT 15
 
-int main()
+char *test_make_mkl_tree15()
 {
     char *txid_hexs[TX_COUNT] = {
 	"30bdad288cc806283ff393b339c473f62d751e7a70ce92145a456b027d12d3a5",
@@ -68,21 +69,25 @@ int main()
     leaf_level = create_mkl_leafs_from_txid_hexs((const char **)txid_hexs, TX_COUNT);
     root_level = create_mkl_tree(leaf_level);
 
-    kyk_print_mkl_tree(root_level);
+    uint8_t target_rt[MKL_NODE_BODY_LEN];
+    kyk_parse_hex(target_rt, "b607ddc194f7be5e2b1f0df25754f7c2db20b1b50c6c2ce53e34b54bc502d0d9");
+    int res = kyk_digest_eq(root_level -> nd -> bdy, target_rt, MKL_NODE_BODY_LEN);
+
+    mu_assert(res, "failed to get the correct merkle 15 root");
+
+
+    return NULL;
 
 }
 
-
-
+char *all_tests()
+{
+    mu_suite_start();
     
+    mu_run_test(test_make_mkl_tree15);
+    
+    return NULL;
+}
 
-
-
-
-
-
-
-
-
-
+MU_RUN_TESTS(all_tests);
 

@@ -12,5 +12,6 @@ void print_bytes_in_hex(const unsigned char *buf, size_t len);
 size_t kyk_reverse_pack_chars(unsigned char *buf, unsigned char *src, size_t count);
 void kyk_inline_print_hex(const unsigned char *buf, size_t len);
 void kyk_copy_hex2bin(uint8_t *v, const char *str, size_t len);
+int kyk_digest_eq(const void* lhs, const void* rhs, size_t count);
 
 #endif
