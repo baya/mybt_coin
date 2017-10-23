@@ -7,17 +7,18 @@
 #include "kyk_utils.h"
 #include "kyk_script.h"
 #include "kyk_ser.h"
+#include "mu_unit.h"
 
-#define KYK_SC_PUBK_MAX_LEN 1000
-#define KYK_SC_MAX_LEN 2000
+#define SC_PUBK_MAX_LEN 1000
+#define SC_MAX_LEN 2000
 
-int main()
+char *test_verify_p2pkh_sc()
 {
-    unsigned char sc_pubk[KYK_SC_PUBK_MAX_LEN];
+    unsigned char sc_pubk[SC_PUBK_MAX_LEN];
     char *addr = "1KAWPAD8KovUo53pqHUY2bLNMTYa1obFX9";
     char *sc_sig_hex = "47304402207f9837b1e2a45e1e7f8054cb841af7e62fd40bf1a9becbebf38e9befe605905b02201fd0d11e48183c0b812f5fdecc36c0caf6fd1184d3ebd85192d711824c02f015014104c4ae8574bd6a8a89af1fad3a945b14f6745cc998f544ab193ffc568b33598f2191dd06dd37c3b971f6f8452e84d86bcb82c29d7fb8787723ca08216a24051af3";
     uint8_t *sc_sig;
-    uint8_t sc[KYK_SC_MAX_LEN];
+    uint8_t sc[SC_MAX_LEN];
     size_t sc_pubk_len, sc_sig_len, sc_len;
     int verified = 0;
 
@@ -63,7 +64,20 @@ int main()
 
     verified = kyk_run_sc(sc, sc_len, unsig_tx, utx_cpy - unsig_tx);
 
-    printf("script verified: %s\n", verified == 1 ? "true" : "false");
+    mu_assert(verified == 1, "Failed to test verify sc pubkey");
 
     free(sc_sig);
+
+    return NULL;
 }
+
+char *all_tests()
+{
+    mu_suite_start();
+    
+    mu_run_test(test_verify_p2pkh_sc);
+    
+    return NULL;
+}
+
+MU_RUN_TESTS(all_tests);

@@ -15,7 +15,7 @@ char *test_make_address()
     const BIGNUM *priv_bn;
     char *addr = NULL;
     char *target_addr = "1Te2roqFCPbG59tTP4fLjCZpEAiiwXAQm";
-    char *err_msg = "Test make address failed";
+    char *err_msg = "Failed to test making address";
 
     FILE *fp = fopen("data/kyk-gens-priv.pem", "r");
     check(fp != NULL, "Pem File opening failed");
