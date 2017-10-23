@@ -8,7 +8,7 @@
 #include "kyk_sha.h"
 #include "mu_unit.h"
 
-int main()
+char *test_block_hash()
 {
     struct kyk_blk_header blk_hd;
     uint8_t hd_buf[1000];
@@ -28,6 +28,24 @@ int main()
     kyk_dgst_hash256(dgst, hd_buf, hd_len);
     kyk_reverse(dgst, sizeof(dgst));
 
-    kyk_print_hex("block hash", dgst, sizeof(dgst));
-    
+    uint8_t target_hsh[SHA256_DIGEST_LENGTH];
+    kyk_parse_hex(target_hsh, "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+    int res = kyk_digest_eq(dgst, target_hsh, SHA256_DIGEST_LENGTH);
+
+    mu_assert(res, "failed to get the correct block hash");
+
+    return NULL;
 }
+
+
+char *all_tests()
+{
+    mu_suite_start();
+    
+    mu_run_test(test_block_hash);
+    
+    return NULL;
+}
+
+MU_RUN_TESTS(all_tests);
+
