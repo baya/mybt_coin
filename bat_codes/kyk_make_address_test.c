@@ -5,8 +5,7 @@
 
 #include "kyk_address.h"
 
-
-int main()
+char *test_make_address()
 {
     uint8_t _h_priv_bytes[32] = {
 	0x18,0xE1,0x4A,0x7B,0x6A,0x30,0x7F,0x42,
@@ -59,5 +58,8 @@ int main()
 
     fclose(fp);
 
-    return 0;
+    return NULL;
+
 }
+
+

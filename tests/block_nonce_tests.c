@@ -72,8 +72,8 @@ char *test_block_nonce()
     uint8_t target_blk_hd_hash[32];
     kyk_parse_hex(target_blk_hd_hash, "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
 
-    mu_assert(is_digest_eq(dgst, target_blk_hd_hash, sizeof(target_blk_hd_hash)), "Failed to get the right block header hash 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
-    mu_assert(blk_hd.nonce == 2083236893, "Failed to get the right nonce 2083236893");
+    mu_assert(is_digest_eq(dgst, target_blk_hd_hash, sizeof(target_blk_hd_hash)), "Failed to get the correct block header hash 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f");
+    mu_assert(blk_hd.nonce == 2083236893, "Failed to get the correct nonce 2083236893");
 
     return NULL;
 
