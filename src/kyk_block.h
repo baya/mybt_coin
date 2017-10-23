@@ -15,6 +15,7 @@ struct kyk_blk_header {
     uint32_t tts;
     uint32_t bts;
     uint32_t nonce;
+    uint8_t blk_hash[32];
 };
 
 struct kyk_block {

@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "kyk_address.h"
 #include "kyk_pem.h"
 #include "dbg.h"
 
@@ -35,3 +36,21 @@ error:
     
     return -1;
 }
+
+char *make_address_from_pem(const char *pem_name)
+{
+    uint8_t priv[32];
+    char *addr = NULL;
+
+    int res = 0;
+    res = get_priv_from_pem(priv, pem_name);
+    check(res > 0, "failed to get private key from pem file");
+    addr = kyk_make_address(priv);
+
+    return addr;
+
+error:
+    if(addr) free(addr);
+    return NULL;
+}
+
