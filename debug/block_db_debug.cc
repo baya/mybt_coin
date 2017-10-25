@@ -2,6 +2,8 @@
 #include <cassert>
 #include <leveldb/db.h>
 
+#include "dbg.h"
+
 int main()
 {
     std::string db_path = "/Users/jim/workspace/bitcoin-block-data/blocks";
