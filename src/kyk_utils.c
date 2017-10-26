@@ -138,7 +138,7 @@ int hexstr_to_bytes(const char *hexstr, unsigned char *buf, size_t len)
     return 0;
 }
 
-size_t kyk_reverse_pack_chars(unsigned char *buf, unsigned char *src, size_t count)
+size_t kyk_reverse_pack_chars(unsigned char *buf, const unsigned char *src, size_t count)
 {
     size_t size = 0;
     int i = 0;
@@ -153,7 +153,7 @@ size_t kyk_reverse_pack_chars(unsigned char *buf, unsigned char *src, size_t cou
 }
 
 
-size_t kyk_pack_chars(unsigned char *buf, unsigned char *src, size_t count)
+size_t kyk_pack_chars(unsigned char *buf, const unsigned char *src, size_t count)
 {
     size_t size = 0;
     size_t i = 0;
