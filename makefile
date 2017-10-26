@@ -29,7 +29,7 @@ dev: all
 
 $(TARGET): CFLAGS += -fPIC
 
-# 运行实际创建`TARGET`的`ar`的命令。`$@ $(OBJECTS)`语法的意思是，将当前目标的名称放在这里，并把`OBJECTS`的内容放在后面。这里`$@`的值为19行的`$(TARGET)`，
+# 运行实际创建`TARGET`的`ar`的命令。`$@ $(OBJECTS)`语法的意思是，将当前目标的名称放在这里，并把`OBJECTS`的内容放在后面。这里`$@`的值为`$(TARGET)`，
 # 它实际上为`build/libMY_LIBRARY.a`。看起来在这一重定向中它做了很多跟踪工作，它也有这个功能，并且你可以通过修改顶部的`TARGET`，来构建一个全新的库。
 $(TARGET): build $(OBJECTS)
 	ar rcs $@ $(OBJECTS)
