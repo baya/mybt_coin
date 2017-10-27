@@ -118,7 +118,7 @@ void kyk_inline_print_hex(const unsigned char *buf, size_t len)
     
 int hexstr_to_bytes(const char *hexstr, unsigned char *buf, size_t len)
 {
-    size_t count = 0;
+    size_t i = 0;
     size_t dst_len = len * 2;
     int ret;
 
@@ -126,14 +126,13 @@ int hexstr_to_bytes(const char *hexstr, unsigned char *buf, size_t len)
 	return -1;
     }
 
-    for(count = 0; count < len; count++){
-	ret = sscanf(hexstr, "%2hhx", buf);
-	if(ret < 1){
-	    return -1;
-	}
-	buf += 1;
-	hexstr += 2;
+    for (i = 0; i < len; ++i) {
+        const char hi = kyk_hex2byte(hexstr[i * 2]);
+        const char lo = kyk_hex2byte(hexstr[i * 2 + 1]);
+
+        buf[i] = hi * 16 + lo;
     }
+
 
     return 0;
 }

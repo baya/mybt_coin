@@ -20,8 +20,6 @@ int main()
     }
     leveldb_readoptions_t *rdopt = leveldb_readoptions_create();
     char *bkey = "62000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
-    //char *bkey = "bf62ec8a06b1f3b271c6a2a64ea367ff439e138561ea580c9866d910000000000";
-    //char *bkey = "63000002f414665fb03389dd19776732bf90883bcb399d23323747596e98dd1801";
     char *value;
     size_t valen = 0;
     value = leveldb_get(db, rdopt, bkey, 33, &valen, &errptr);
@@ -54,8 +52,8 @@ int main()
 
 	
 	//printf("k=%s vlen=%zu\n", key, vlen);
-        kyk_print_hex("Key ", key, klen);
-	kyk_print_hex("Value ", val, vlen);
+        kyk_print_hex("Key ", (uint8_t *)key, klen);
+	kyk_print_hex("Value ", (uint8_t *)val, vlen);
 
 	leveldb_iter_next(iter);
     }
