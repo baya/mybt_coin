@@ -18,7 +18,7 @@ int main()
     uint8_t bkey[33];
     char *value = NULL;
     size_t vlen = 0;
-    char *blk_hash = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
+    char *blk_hash = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26";
     int res = 0;
     errno = 0;
 
