@@ -4,7 +4,48 @@
 #include <stdint.h>
 #include <leveldb/c.h>
 #include "kyk_utils.h"
+#include "basic_defs.h"
 #include "dbg.h"
+#include "beej_pack.h"
+
+
+//! Unused.
+const uint32_t BLOCK_VALID_UNKNOWN      =    0;
+
+//! Parsed, version ok, hash satisfies claimed PoW, 1 <= vtx count <= max, timestamp not in future
+const uint32_t    BLOCK_VALID_HEADER       =    1;
+
+//! All parent headers found, difficulty matches, timestamp >= median previous, checkpoint. Implies all parents
+//! are also at least TREE.
+const uint32_t    BLOCK_VALID_TREE         =    2;
+
+/**
+ * Only first tx is coinbase, 2 <= coinbase input script length <= 100, transactions valid, no duplicate txids,
+ * sigops, size, merkle root. Implies all parents are at least TREE but not necessarily TRANSACTIONS. When all
+ * parent blocks also have TRANSACTIONS, CBlockIndex::nChainTx will be set.
+ */
+const uint32_t    BLOCK_VALID_TRANSACTIONS =    3;
+
+//! Outputs do not overspend inputs, no double spends, coinbase output ok, no immature coinbase spends, BIP30.
+//! Implies all parents are also at least CHAIN.
+const uint32_t    BLOCK_VALID_CHAIN        =    4;
+
+//! Scripts & signatures ok. Implies all parents are also at least SCRIPTS.
+const uint32_t    BLOCK_VALID_SCRIPTS      =    5;
+
+//! All validity bits.
+const uint32_t    BLOCK_VALID_MASK         =   BLOCK_VALID_HEADER | BLOCK_VALID_TREE | BLOCK_VALID_TRANSACTIONS |
+    BLOCK_VALID_CHAIN | BLOCK_VALID_SCRIPTS;
+
+const uint32_t    BLOCK_HAVE_DATA          =    8; //!< full block available in blk*.dat
+const uint32_t    BLOCK_HAVE_UNDO          =   16; //!< undo data available in rev*.dat
+const uint32_t    BLOCK_HAVE_MASK          =   BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO;
+
+const uint32_t    BLOCK_FAILED_VALID       =   32; //!< stage after last reached validness failed
+const uint32_t    BLOCK_FAILED_CHILD       =   64; //!< descends from failed block
+const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD;
+
+const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client
 
 int blk_hashstr_to_bkey(const char *hstr, uint8_t *bkey, size_t klen);
 size_t pack_varint(uint8_t *buf, int n);
@@ -25,11 +66,37 @@ int main()
     char *blk_hash = "0000000099c744455f58e6c6e98b671e1bf7f37346bfd4cf5d0274ad8ee660cb";
     int res = 0;
     errno = 0;
-    int nVersion = 0;
+    
+    // wallet version
+    int wVersion = 0;
+
+    //! height of the entry in the chain. The genesis block has height 0
     int nHeight = 0;
+
+    //! Verification status of this block.
     uint32_t nStatus = 0;
+
+    //! Number of transactions in this block.
+    //! Note: in a potential headers-first mode, this number cannot be relied upon
     unsigned int nTx = 0;
 
+    //! Which # file this block is stored in (blk?????.dat)
+    int nFile = 0;
+
+     //! Byte offset within blk?????.dat where this block's data is stored
+    unsigned int nDataPos = 0;
+
+    //! Byte offset within rev?????.dat where this block's undo data is stored
+    unsigned int nUndoPos = 0;
+
+    //! block header
+    int32_t nVersion;
+    uint256 prevHash;
+    uint256 hashMerkleRoot;
+    uint32_t nTime;
+    uint32_t nBits;
+    uint32_t nNonce;
+    
     res = blk_hashstr_to_bkey(blk_hash, bkey, sizeof(bkey));
     check(res > -1, "failed to convert block hash to bkey");
     kyk_print_hex("bkey ", bkey, sizeof(bkey));
@@ -46,22 +113,65 @@ int main()
 
     valptr = value;
     size_t ofst = 0;
-    ofst = read_varint(valptr, vlen - (valptr - value), &nVersion);
+    ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&wVersion);
     valptr += ofst;
-    ofst = read_varint(valptr, vlen - (valptr - value), &nHeight);
-    printf("??????%zu\n", ofst);
+    ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nHeight);
     valptr += ofst;
-    ofst = read_varint(valptr, vlen - (valptr - value), &nStatus);
-    printf("??????%zu\n", ofst);
-    printf("nVersion: %llu\n", nVersion);
-    printf("nHeight: %llu\n", nHeight);
-    printf("nStatus: %d\n", (uint32_t)nStatus);
+    ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nStatus);
+    valptr += ofst;
 
-    uint8_t buf[10];
-    size_t blen = 0;
-    blen = pack_varint(buf, 29);
-    kyk_print_hex("gg", buf, blen);
+    ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nTx);
+    valptr += ofst;
 
+    if(nStatus & (BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO)){
+	ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nFile);
+	valptr += ofst;
+    }
+    
+    if (nStatus & BLOCK_HAVE_DATA){
+	ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nDataPos);
+	valptr += ofst;
+    }
+
+    if (nStatus & BLOCK_HAVE_UNDO){
+	ofst = read_varint((uint8_t *)valptr, vlen - (valptr - value), (uint32_t *)&nUndoPos);
+	valptr += ofst;
+    }
+
+
+    beej_unpack((unsigned char *)valptr, "<l", &nVersion);
+    valptr += sizeof(nVersion);
+    
+    kyk_reverse_pack_chars(prevHash.data, (unsigned char *)valptr, sizeof(prevHash.data));
+    valptr += sizeof(prevHash.data);
+
+    kyk_reverse_pack_chars(hashMerkleRoot.data, (unsigned char *)valptr, sizeof(hashMerkleRoot.data));
+    valptr += sizeof(prevHash.data);
+
+    beej_unpack((unsigned char *)valptr, "<L", &nTime);
+    valptr += sizeof(nTime);
+
+    beej_unpack((unsigned char *)valptr, "<L", &nBits);
+    valptr += sizeof(nBits);
+
+    beej_unpack((unsigned char *)valptr, "<L", &nNonce);
+    
+    printf("wVersion: %d\n", wVersion);
+    printf("nHeight: %d\n", nHeight);
+    printf("nStatus: %d\n",   nStatus);
+    printf("nTx: %d\n",   nTx);
+    printf("nFile: %d\n", nFile);
+    printf("nDataPos: %d\n", nDataPos);
+    printf("nUndoPos: %d\n", nUndoPos);
+
+    printf("Following is Block Header:\n");
+    printf("nVersion:%d\n", nVersion);
+    kyk_print_hex("PrevHash ", prevHash.data, sizeof(prevHash.data));
+    kyk_print_hex("hashMerkleRoot ", hashMerkleRoot.data, sizeof(hashMerkleRoot.data));
+    printf("nTime:%d\n", nTime);
+    printf("nBits:%x\n", nBits);
+    printf("nNonce:%d\n", nNonce);
+    
 
     leveldb_close(db);
     
