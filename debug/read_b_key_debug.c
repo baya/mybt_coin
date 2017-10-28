@@ -51,7 +51,7 @@ int blk_hashstr_to_bkey(const char *hstr, uint8_t *bkey, size_t klen);
 size_t pack_varint(uint8_t *buf, int n);
 size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
 
-int main()
+int main(int argc, char *argv[])
 {
     leveldb_t *db = NULL;
     leveldb_options_t *db_opts = NULL;
@@ -63,7 +63,12 @@ int main()
     char *valptr = NULL;
     size_t vlen = 0;
     //char *blk_hash = "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f";
-    char *blk_hash = "0000000099c744455f58e6c6e98b671e1bf7f37346bfd4cf5d0274ad8ee660cb";
+    //char *blk_hash = "0000000099c744455f58e6c6e98b671e1bf7f37346bfd4cf5d0274ad8ee660cb";
+    if(argc != 2){
+	printf("please provide a block hash, such as 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f\n");
+	return 1;
+    }
+    char *blk_hash = argv[1];
     int res = 0;
     errno = 0;
     
@@ -156,6 +161,7 @@ int main()
 
     beej_unpack((unsigned char *)valptr, "<L", &nNonce);
     
+    printf("block hash: %s\n", blk_hash);
     printf("wVersion: %d\n", wVersion);
     printf("nHeight: %d\n", nHeight);
     printf("nStatus: %d\n",   nStatus);
