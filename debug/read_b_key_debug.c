@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 
     value = leveldb_get(db, read_opts, (char *)bkey, sizeof(bkey), &vlen, &errptr);
     check(errptr == NULL, "get value error: %s", errptr);
-    kyk_print_hex("value ", (unsigned char*)value, vlen);
+    kyk_print_hex("raw value ", (unsigned char*)value, vlen);
 
     valptr = value;
     size_t ofst = 0;
@@ -160,8 +160,7 @@ int main(int argc, char *argv[])
     valptr += sizeof(nBits);
 
     beej_unpack((unsigned char *)valptr, "<L", &nNonce);
-    
-    printf("block hash: %s\n", blk_hash);
+        
     printf("wVersion: %d\n", wVersion);
     printf("nHeight: %d\n", nHeight);
     printf("nStatus: %d\n",   nStatus);
