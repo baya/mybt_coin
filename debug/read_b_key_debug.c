@@ -178,6 +178,12 @@ int main(int argc, char *argv[])
     printf("nNonce:%d\n", nNonce);
     
 
+    /* uint8_t buf[20]; */
+    /* size_t blen = 0; */
+    
+    /* blen = pack_varint(buf, 433223); */
+    /* kyk_print_hex("varint ", buf, blen); */
+    
     leveldb_close(db);
     
     return 0;
