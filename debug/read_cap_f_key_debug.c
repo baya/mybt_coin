@@ -39,14 +39,14 @@ static const char DB_FLAG = 'F';
 
 struct db_key {
     char flag;
-    char *obj;
+    char *src;
     char *body;
     size_t len;
 };
 
 size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
 size_t read_varint64(const uint8_t *buf, size_t len, uint64_t *val);
-void build_cap_f_key(struct db_key *key, char *obj, size_t len);
+void build_cap_f_key(struct db_key *key, char *src, size_t len);
 void free_db_key(struct db_key *key);
 
 int main()
@@ -59,9 +59,9 @@ int main()
     struct db_key Fkey;
     char *value = NULL;
     size_t vlen = 0;
-    char *obj = "\7txindex";
+    char *src = "\7txindex";
 
-    build_cap_f_key(&Fkey, obj, strlen(obj));
+    build_cap_f_key(&Fkey, src, strlen(src));
 
     kyk_print_hex("Fkey ", (uint8_t *)Fkey.body, Fkey.len);
 
@@ -97,18 +97,18 @@ error:
 
 void free_db_key(struct db_key *key)
 {
-    if(key -> obj) free(key -> obj);
+    if(key -> src) free(key -> src);
     if(key -> body) free(key -> body);
 }
 
-void build_cap_f_key(struct db_key *key, char *obj, size_t len)
+void build_cap_f_key(struct db_key *key, char *src, size_t len)
 {
     key -> flag = DB_FLAG;    
-    key -> obj = malloc(len * sizeof(char));
-    memcpy(key -> obj, obj, len);
+    key -> src = malloc(len * sizeof(char));
+    memcpy(key -> src, src, len);
     key -> body = malloc((len + 1) * sizeof(char));
     key -> body[0] = DB_FLAG;
-    memcpy(key -> body + 1, key -> obj, len);
+    memcpy(key -> body + 1, key -> src, len);
     key -> len = len + 1;
 }
 
