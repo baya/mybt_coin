@@ -92,17 +92,6 @@ error:
 
 }
 
-unsigned char* obfs_unpack(unsigned char *obfs_key, size_t obk_len, char *raw_val, size_t vlen)
-{
-    unsigned char* res = malloc(vlen * sizeof(unsigned char));
-    size_t i = 0;
-    for(i = 0; i < vlen; i++){
-	res[i] = obfs_key[i % obk_len] ^ raw_val[i];
-    }
-    
-    return res;
-}
-
 void free_db_key(struct db_key *key)
 {
     if(key -> src) free(key -> src);
