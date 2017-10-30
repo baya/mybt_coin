@@ -39,4 +39,6 @@ struct kyk_txout *create_txout(uint64_t value,
 			       varint_t sc_size,
 			       const char *sc);
 
+void kyk_free_tx(struct kyk_tx *tx);
+
 #endif

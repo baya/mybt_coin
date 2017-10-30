@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "kyk_tx.h"
 #include "kyk_block.h"
 #include "beej_pack.h"
 #include "kyk_utils.h"
@@ -65,5 +66,12 @@ size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *
     total += len;
 
     return total;
+}
+
+void kyk_free_block(struct kyk_block *blk)
+{
+    if(blk -> hd) free(blk -> hd);
+    if(blk -> tx) kyk_free_tx(blk -> tx);
+    if(blk) free(blk);
 }
 

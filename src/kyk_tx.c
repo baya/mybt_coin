@@ -12,6 +12,8 @@ static size_t kyk_seri_txin(unsigned char *buf, struct kyk_txin *txin);
 static size_t kyk_seri_txin_list(unsigned char *buf, struct kyk_txin *txin, size_t count);
 static size_t kyk_seri_txout(unsigned char *buf, struct kyk_txout *txout);
 size_t kyk_seri_txout_list(unsigned char *buf, struct kyk_txout *txout, size_t count);
+void kyk_free_txin(struct kyk_txin *txin);
+void kyk_free_txout(struct kyk_txout *txout);
 
 
 size_t kyk_seri_tx(unsigned char *buf, struct kyk_tx *tx)
@@ -178,4 +180,24 @@ struct kyk_txout *create_txout(uint64_t value,
     }
 
     return txout;
+}
+
+
+void kyk_free_tx(struct kyk_tx *tx)
+{
+    if(tx -> txin) kyk_free_txin(tx -> txin);
+    if(tx -> txout) kyk_free_txout(tx -> txout);
+    if(tx) free(tx);
+}
+
+void kyk_free_txin(struct kyk_txin *txin)
+{
+    if(txin -> sc) free(txin -> sc);
+    if(txin) free(txin);
+}
+
+void kyk_free_txout(struct kyk_txout *txout)
+{
+    if(txout -> sc) free(txout -> sc);
+    if(txout) free(txout);
 }

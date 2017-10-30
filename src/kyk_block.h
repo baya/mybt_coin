@@ -28,5 +28,6 @@ struct kyk_block {
 
 size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd);
 size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *hd);
+void kyk_free_block(struct kyk_block *blk);
 
 #endif
