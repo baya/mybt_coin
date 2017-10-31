@@ -9,7 +9,7 @@
 #include "kyk_ldb.h"
 #include "mu_unit.h"
 
-#define BLOCK_TEST_INDEX_DB "/tmp/mybt/testblocks/index"
+#define BLOCK_TEST_INDEX_DB "/tmp/mybt_coin/testblocks/index"
 
 void set_bval(struct kyk_bkey_val *bval, struct kyk_block* blk)
 {
@@ -38,6 +38,7 @@ char* test_store_block()
     check(blk_db.errptr == NULL, "failed to open db");    
 
     kyk_store_block(&blk_db, &bval, &errptr);
+    check(errptr == NULL, "failed to store block b key value");
 
     kyk_free_block_db(&blk_db);
 

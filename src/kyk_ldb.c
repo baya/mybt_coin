@@ -49,6 +49,7 @@ void kyk_init_store_db(struct kyk_block_db *blk_db, char *path)
 {
     blk_db -> errptr = NULL;
     blk_db -> path = malloc(sizeof(char) * (strlen(path) + 1));
+    blk_db -> path = memcpy(blk_db -> path, path, strlen(path) + 1);
     blk_db -> db_opts = leveldb_options_create();
     leveldb_options_set_create_if_missing(blk_db -> db_opts, 1);
     blk_db -> db = leveldb_open(blk_db -> db_opts, blk_db -> path, &blk_db -> errptr);
