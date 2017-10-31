@@ -23,35 +23,36 @@ void init_block(struct kyk_block *blk);
 struct kyk_block* make_gens_block()
 {
     struct kyk_block *blk = malloc(sizeof(struct kyk_block));
-    struct kyk_tx tx0;
+    struct kyk_tx *tx0;
     uint8_t tx_buf[TX_BUF_LEN];
     size_t tx_len = 0;
-    struct kyk_blk_header blk_hd;
+    struct kyk_blk_header* blk_hd;
     struct kyk_tx_buf tx_buf_list[TX_COUNT];
     struct kyk_tx_buf *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
 
     init_block(blk);
+
+    tx0 = blk -> tx;
+    blk_hd = blk -> hd;
     
-    create_gens_tx(&tx0);
-    tx_len = kyk_seri_tx(tx_buf, &tx0);
+    create_gens_tx(tx0);
+    //create_gens_tx(blk -> tx);
+    tx_len = kyk_seri_tx(tx_buf, tx0);
     tx_buf_ptr -> bdy = tx_buf;
     tx_buf_ptr -> len = tx_len;
 
-    blk_hd.version = 1;
-    kyk_parse_hex(blk_hd.pre_blk_hash, "0000000000000000000000000000000000000000000000000000000000000000");
+    blk_hd -> version = 1;
+    kyk_parse_hex(blk_hd -> pre_blk_hash, "0000000000000000000000000000000000000000000000000000000000000000");
     mkl_root = make_mkl_tree_root(tx_buf_ptr, TX_COUNT);
-    kyk_cpy_mkl_root_value(blk_hd.mrk_root_hash, mkl_root);
-    blk_hd.tts = 1504483200;
+    kyk_cpy_mkl_root_value(blk_hd -> mrk_root_hash, mkl_root);
+    blk_hd -> tts = 1504483200;
     /* bts 越大，难度越低 */
     //blk_hd.bts = 0x1e00ffff;
-    blk_hd.bts = 0x1f00ffff;
-    blk_hd.nonce = 0;
+    blk_hd -> bts = 0x1f00ffff;
+    blk_hd -> nonce = 0;
 
-    kyk_hsh_nonce(&blk_hd);
-
-    *blk -> hd = blk_hd;
-    *blk -> tx = tx0;
+    kyk_hsh_nonce(blk_hd);
 
     return blk;
 

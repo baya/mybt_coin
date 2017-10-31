@@ -11,7 +11,6 @@
 char *test_make_gens_block()
 {
     struct kyk_block* blk;
-    const char *err_msg = "failed to make gens block";
 
     blk = make_gens_block();
 
@@ -26,11 +25,6 @@ char *test_make_gens_block()
     kyk_free_block(blk);
     
     return NULL;
-
-error:
-    if(blk) kyk_free_block(blk);
-    return err_msg;
-
 }
 
 char *all_tests()
