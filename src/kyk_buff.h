@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 struct kyk_buff {
-   uint8     *base;
+   uint8_t   *base;
    size_t     len;
    ssize_t    idx;
 };

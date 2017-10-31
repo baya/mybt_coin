@@ -39,7 +39,7 @@ struct kyk_block_db {
 struct kyk_bkey_val{
     int wVersion;
     int nHeight;
-    int nHeight;
+    uint32_t nStatus;
     unsigned int nTx;
     int nFile;
     unsigned int nDataPos;
@@ -59,7 +59,7 @@ void kyk_init_store_db(struct kyk_block_db *blk_db, char *path)
 
 void kyk_free_block_db(struct kyk_block_db *blk_db)
 {
-    if(blk_db -> path) free(db -> path);
+    if(blk_db -> path) free(blk_db -> path);
     if(blk_db -> db_opts) leveldb_options_destroy(blk_db -> db_opts);
     if(blk_db -> rd_opts) leveldb_readoptions_destroy(blk_db -> rd_opts);
     if(blk_db -> wr_opts) leveldb_writeoptions_destroy(blk_db -> wr_opts);

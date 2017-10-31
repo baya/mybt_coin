@@ -1,4 +1,4 @@
-OPTLIBS = -lcrypto -lgmp
+OPTLIBS = -lcrypto -lgmp -lleveldb
 LIB_PATHS = /usr/local/opt/openssl/lib
 INC_PATHS = /usr/local/opt/openssl/include
 CFLAGS = -g -O2 -Wall -Wextra -Isrc -I$(INC_PATHS) -DNDEBUG $(OPTFLAGS)
