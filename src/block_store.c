@@ -5,6 +5,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "kyk_buff.h"
+#include "kyk_block.h"
 #include "block_store.h"
 
 static const char DB_COIN = 'C';
@@ -41,7 +43,7 @@ void kyk_store_block(struct kyk_block_db* blk_db,
 		errptr
 	);
 
-    free_db_key(&key);
+    kyk_free_db_key(&key);
     if(buf) free_kyk_buff(buf);
 }
 

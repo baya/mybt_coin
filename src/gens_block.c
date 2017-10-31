@@ -56,8 +56,6 @@ struct kyk_block* make_gens_block()
 
     return blk;
 
-error:
-    return NULL;
 }
 
 void init_block(struct kyk_block *blk)
