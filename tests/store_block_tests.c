@@ -40,6 +40,7 @@ char* test_store_block()
     kyk_store_block(&blk_db, &bval, &errptr);
     check(errptr == NULL, "failed to store block b key value");
 
+    if(blk) kyk_free_block(blk);
     kyk_free_block_db(&blk_db);
 
     return NULL;
