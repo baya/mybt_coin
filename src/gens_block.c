@@ -5,24 +5,12 @@
 #include <string.h>
 #include <time.h>
 
-
-#include "kyk_block.h"
-#include "kyk_tx.h"
-#include "kyk_sha.h"
-#include "kyk_utils.h"
-#include "kyk_script.h"
-#include "kyk_address.h"
-#include "kyk_mkl_tree.h"
-#include "kyk_ser.h"
-#include "kyk_difficulty.h"
-#include "kyk_hash_nonce.h"
-#include "kyk_pem.h"
+#include "gens_block.h"
 
 #define GENS_COINBASE "From 4/Sept/2017 China start suppressing the Bitcoin"
 #define GENS_PEM "data/kyk-gens-priv.pem"
 #define SC_PUBKEY_LEN 1000
 #define TX_BUF_LEN 2000
-#define BLK_LEN 1000 * 1000
 #define BLK_HD_LEN 80
 #define TX_COUNT 1
 #define BLK_MAGIC_NO 0xD9B4BEF9
@@ -30,26 +18,20 @@
 void create_gens_tx(struct kyk_tx *gens_tx);
 void make_coinbase(struct kyk_txin *txin, const char *cb_note);
 struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len);
+void init_block(struct kyk_block *blk);
 
 struct kyk_block* make_gens_block()
 {
     struct kyk_block *blk = malloc(sizeof(struct kyk_block));
     struct kyk_tx tx0;
     uint8_t tx_buf[TX_BUF_LEN];
-    /* uint8_t hd_buf[BLK_HD_LEN]; */
-    /* uint8_t blk_buf[BLK_LEN]; */
-    /* uint8_t *blk_bfp = blk_buf; */
-    size_t tx_len;
-    size_t wsize;
-    size_t hd_len;
-    size_t blk_len = 0;
+    size_t tx_len = 0;
     struct kyk_blk_header blk_hd;
     struct kyk_tx_buf tx_buf_list[TX_COUNT];
     struct kyk_tx_buf *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
-    /* char *err_msg = "failed to make gens block"; */
-    /* FILE *fp = fopen("tmp/kyk-gens-block.dat", "wb"); */
-    /* check(fp != NULL, "failed to open kyk-gens-block.dat file"); */
+
+    init_block(blk);
     
     create_gens_tx(&tx0);
     tx_len = kyk_seri_tx(tx_buf, &tx0);
@@ -68,33 +50,19 @@ struct kyk_block* make_gens_block()
 
     kyk_hsh_nonce(&blk_hd);
 
-    blk -> hd = &blk_hd;
-    blk -> tx = &tx0;
-
-    /* hd_len = kyk_seri_blk_hd(hd_buf, &blk_hd); */
-    /* blk_len += kyk_inc_ser(&blk_bfp, "raw-buf", hd_buf, hd_len); */
-    /* blk_len += kyk_inc_ser(&blk_bfp, "tx-count", TX_COUNT); */
-    /* blk_len += kyk_inc_ser(&blk_bfp, "raw-buf", tx_buf, tx_len); */
-
-
-    /* wsize = fwrite(blk_buf, sizeof(blk_buf[0]), blk_len, fp); */
-    /* check(wsize == blk_len, "failed to save gens block to tmp/kyk-gens-block.dat"); */
-
-    /* uint8_t target_blk_hash[32]; */
-    /* kyk_parse_hex(target_blk_hash, "0000876c9ef8c1f8b2a3012ec1bdea7296f95ae21681799f8adf967f548bf8f3"); */
-    /* check(kyk_digest_eq(blk_hd.blk_hash, target_blk_hash, sizeof(target_blk_hash)), "failed to get the correct block hash"); */
-
-    /* uint8_t target_mkl_rt[32]; */
-    /* kyk_parse_hex(target_mkl_rt, "b76d27da4abf50387dd70f5d6cc7e4df1d54722631cbbfdd292463df77aa0dbd"); */
-    /* check(kyk_digest_eq(blk_hd.mrk_root_hash, target_mkl_rt, sizeof(target_mkl_rt)), "failed to get the correct merkle root"); */
-
-    /* fclose(fp); */
+    *blk -> hd = blk_hd;
+    *blk -> tx = tx0;
 
     return blk;
 
 error:
-    /* if(fp) fclose(fp); */
     return NULL;
+}
+
+void init_block(struct kyk_block *blk)
+{
+    blk -> hd = malloc(sizeof(struct kyk_blk_header));
+    blk -> tx = malloc(sizeof(struct kyk_tx));
 }
 
 struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len)
