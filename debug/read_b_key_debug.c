@@ -47,6 +47,9 @@ const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED
 
 const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client
 
+#define BLOCK_TEST_INDEX_DB "/tmp/mybt_coin/testblocks/index"
+/* #define BLOCK_TEST_INDEX_DB "/tmp/bitcoin-block-data/blocks/index" */
+
 int blk_hashstr_to_bkey(const char *hstr, uint8_t *bkey, size_t klen);
 size_t pack_varint(uint8_t *buf, int n);
 size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
     leveldb_t *db = NULL;
     leveldb_options_t *db_opts = NULL;
     char *errptr = NULL;
-    char *db_path = "/tmp/bitcoin-block-data/blocks/index";
+    char *db_path = BLOCK_TEST_INDEX_DB;
     leveldb_readoptions_t *read_opts = NULL;
     uint8_t bkey[33];
     char *value = NULL;
@@ -114,6 +117,10 @@ int main(int argc, char *argv[])
 
     value = leveldb_get(db, read_opts, (char *)bkey, sizeof(bkey), &vlen, &errptr);
     check(errptr == NULL, "get value error: %s", errptr);
+    if(vlen <= 0){
+	printf("Found no record\n");
+	return -1;
+    } 
     kyk_print_hex("raw value ", (unsigned char*)value, vlen);
 
     valptr = value;

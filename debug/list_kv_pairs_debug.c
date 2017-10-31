@@ -8,6 +8,7 @@
 
 #define INDEX_DB_PATH "/tmp/bitcoin-block-data/blocks/index"
 #define UTXO_DB_PATH "/tmp/bitcoin-block-data/chainstate"
+#define TEST_INDEX_DB_PATH "/tmp/mybt_coin/testblocks/index"
 
 const static char INDEX_KEY_FLAGS[] = {'b', 'f', 'l', 'R', 't'};
 const static char UTXO_KEY_FLAGS[] = {'c', 'C', 'B'};
@@ -125,7 +126,7 @@ char *get_db_path(char ktype)
     size_t i = 0;
     for(i = 0; i < sizeof(INDEX_KEY_FLAGS); i++){
 	if(INDEX_KEY_FLAGS[i] == ktype){
-	    return INDEX_DB_PATH;
+	    return TEST_INDEX_DB_PATH;
 	}
     }
 

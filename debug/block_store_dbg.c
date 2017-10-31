@@ -29,6 +29,9 @@ static const char DB_BLOCK_INDEX = 'b';
     }						\
 
 
+#define OBFUS_KEY {0x1c, 0x8b, 0x91, 0x88, 0xe2, 0x22, 0x54, 0x9a}
+
+
 struct db_key {
     char flag;
     char *src;
@@ -40,6 +43,7 @@ size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
 size_t read_varint64(const uint8_t *buf, size_t len, uint64_t *val);
 void build_db_key(struct db_key *key, const char flag, char *src, size_t len);
 void free_db_key(struct db_key *key);
+unsigned char* obfs_unpack(unsigned char *obfs_key, size_t obk_len, char *raw_val, size_t vlen);
 
 int main()
 {
@@ -148,4 +152,15 @@ size_t pack_varint(uint8_t *buf, int n)
     kyk_reverse_pack_chars(buf, tmp, len+1);
 
     return len+1;
+}
+
+unsigned char* obfs_unpack(unsigned char *obfs_key, size_t obk_len, char *raw_val, size_t vlen)
+{
+    unsigned char* res = malloc(vlen * sizeof(unsigned char));
+    size_t i = 0;
+    for(i = 0; i < vlen; i++){
+	res[i] = obfs_key[i % obk_len] ^ raw_val[i];
+    }
+    
+    return res;
 }
