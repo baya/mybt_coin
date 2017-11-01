@@ -8,4 +8,9 @@ void kyk_store_block(struct kyk_block_db* blk_db,
 		     char **errptr
     );
 
+struct kyk_bkey_val* kyk_read_block(struct kyk_block_db* blk_db,
+				    const char* blk_hash,
+				    char* errptr
+    );
+
 #endif

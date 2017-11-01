@@ -10,10 +10,6 @@ struct kyk_buff {
    ssize_t    idx;
 };
 
-void free_kyk_buff(struct kyk_buff *buf)
-{
-    if(buf -> base) free(buf -> base);
-    free(buf);
-}
+void free_kyk_buff(struct kyk_buff *buf);
 
 #endif

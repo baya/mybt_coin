@@ -3,6 +3,8 @@
 
 #include "varint.h"
 #include "kyk_tx.h"
+#include "kyk_ldb.h"
+#include "kyk_buff.h"
 
 #define KYK_BLK_HD_LEN 80
 #define KYK_BLK_HD_NO_NONCE_LEN 76
@@ -29,5 +31,6 @@ struct kyk_block {
 size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd);
 size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *hd);
 void kyk_free_block(struct kyk_block *blk);
+int kyk_unpack_blk_header(const struct kyk_buff *buf, struct kyk_blk_header *hd);
 
 #endif

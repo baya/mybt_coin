@@ -3,6 +3,9 @@
 
 #include <leveldb/c.h>
 
+
+
+
 #define READ_VARINT_LOOP(N, I, LEN, BUF, VAL)	\
     while((I) < (LEN)) {			\
 	unsigned char chData = *(BUF);		\
@@ -18,6 +21,8 @@
         }					\
     }                                           \
 
+extern const uint32_t BLOCK_HAVE_UNDO;
+extern const uint32_t BLOCK_HAVE_DATA;
 extern const uint32_t BLOCK_HAVE_MASK;
 
 struct db_key {
