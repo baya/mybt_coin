@@ -52,26 +52,29 @@ void kyk_store_block(struct kyk_block_db* blk_db,
 
 struct kyk_bkey_val* kyk_read_block(struct kyk_block_db* blk_db,
 				    const char* blk_hash,
-				    char* errptr
+				    char** errptr
     )
 {
     struct db_key key;
-    struct kyk_buff *bf = NULL;
+    struct kyk_buff bf;
     build_b_key(&key, blk_hash);
-    
-    bf -> base = (uint8_t*)leveldb_get(blk_db -> db,
-				       blk_db -> rd_opts,
-				       key.body,
-				       key.len,
-				       &bf -> len,
-				       &errptr
+    char *value = NULL;
+    size_t vlen = 0;
+    char *err;
+    bf.base = leveldb_get(blk_db -> db,
+			  blk_db -> rd_opts,
+			  (char *)key.body,
+			  key.len,
+			  &bf.len,
+			  errptr
 	);
 
-    check(errptr == NULL, "query bkey failed");
+    check(*errptr == NULL, "query bkey failed %s", *errptr);
+    check(bf.len > 0, "found no bkey record");
 
     struct kyk_bkey_val* bval = malloc(sizeof(struct kyk_bkey_val));
     bval -> blk_hd = malloc(sizeof(struct kyk_blk_header));
-    unpack_bval_buf(bval, bf);
+    unpack_bval_buf(bval, &bf);
 
     return bval;
 

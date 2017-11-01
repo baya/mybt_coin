@@ -61,5 +61,6 @@ size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
 size_t read_varint(const uint8_t *buf, size_t len, uint32_t *val);
 size_t read_varint64(const uint8_t *buf, size_t len, uint64_t *val);
 size_t pack_varint(uint8_t *buf, uint32_t n);
+void kyk_free_bval(struct kyk_bkey_val *bval);
 
 #endif

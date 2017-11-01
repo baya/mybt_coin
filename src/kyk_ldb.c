@@ -124,4 +124,9 @@ size_t pack_varint(uint8_t *buf, uint32_t n)
     return len+1;
 }
 
+void kyk_free_bval(struct kyk_bkey_val *bval)
+{
+    if(bval -> blk_hd) free(bval -> blk_hd);
+    free(bval);
+}
 

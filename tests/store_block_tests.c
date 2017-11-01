@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include "kyk_utils.h"
 #include "gens_block.h"
 #include "block_store.h"
 #include "kyk_ldb.h"
@@ -50,12 +51,50 @@ error:
     return errmsg;
 }
 
+char* test_read_block()
+{
+    struct kyk_block_db blk_db;
+    char* errmsg = "failed to test read block";
+    char* errptr = NULL;
+    uint8_t blk_hash[32];
+    struct kyk_bkey_val* bval = NULL;
+
+    kyk_init_store_db(&blk_db, BLOCK_TEST_INDEX_DB);
+    check(blk_db.errptr == NULL, "failed to init block db %s", blk_db.errptr);
+
+    kyk_parse_hex(blk_hash, "0000876c9ef8c1f8b2a3012ec1bdea7296f95ae21681799f8adf967f548bf8f3");
+    bval = kyk_read_block(&blk_db, (char *)blk_hash, &errptr);
+    check(errptr == NULL, "failed to test read b key value");
+
+    mu_assert(bval != NULL, "failed to test read block");
+
+    mu_assert(bval -> wVersion == 1, "failed to get the correct wVersion");
+    mu_assert(bval -> nHeight == 0, "failed to get the correct nHeight");
+    mu_assert(bval -> nStatus == BLOCK_HAVE_MASK, "failed to get the correct nStatus");
+    mu_assert(bval -> nTx == 1, "failed to get the correct nTx");
+    mu_assert(bval -> nFile == 0, "failed to get the correct nFile");
+    mu_assert(bval -> nDataPos == 8, "failed to get the correct nDataPos");
+    mu_assert(bval -> nUndoPos == 0, "failed to get the correct nUndoPos");
+
+    if(bval) kyk_free_bval(bval);
+    kyk_free_block_db(&blk_db);
+    return NULL;
+
+error:
+    if(bval) kyk_free_bval(bval);
+    kyk_free_block_db(&blk_db);
+    return errmsg;
+
+
+}
+
 
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_store_block);
+    mu_run_test(test_read_block)
     
     return NULL;
 }

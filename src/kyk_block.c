@@ -100,7 +100,4 @@ int kyk_unpack_blk_header(const struct kyk_buff *buf, struct kyk_blk_header *hd)
     beej_unpack((unsigned char*)bufp, "<L", &hd -> nonce);
 
     return 1;
-
-error:
-    return -1;
 }
