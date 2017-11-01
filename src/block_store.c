@@ -76,9 +76,11 @@ struct kyk_bkey_val* kyk_read_block(struct kyk_block_db* blk_db,
     bval -> blk_hd = malloc(sizeof(struct kyk_blk_header));
     unpack_bval_buf(bval, &bf);
 
+    if(bf.base) free(bf.base);
     return bval;
 
 error:
+    if(bf.base) free(bf.base);
     return NULL;
     
 }
