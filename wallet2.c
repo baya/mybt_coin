@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 	printf("usage: %s command [args]\n", argv[0]);
 	printf("init a wallet: %s init\n", argv[0]);
 	printf("query block: %s getblock [block hash]\n", argv[0]);
+	printf("delete wallet: %s delete\n", argv[0]);
     }
     
     if(argc == 2){
@@ -46,6 +47,8 @@ int main(int argc, char *argv[])
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
 	    printf("wallet is now in %s\n", wdir);
+	} else if(match_cmd(argv[1], "delete")){
+	    printf("please use system command `rm -rf ` to delete wallet\n");
 	} else {
 	    printf("invalid options\n");
 	}

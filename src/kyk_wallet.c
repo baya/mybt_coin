@@ -11,6 +11,7 @@
 #include "block_store.h"
 #include "kyk_ldb.h"
 #include "dbg.h"
+#include "kyk_blk_file.h"
 
 #define IDX_DB_NAME "index"
 
@@ -122,5 +123,18 @@ void set_init_bval(struct kyk_bkey_val *bval, struct kyk_block* blk)
     bval -> nDataPos = 8;
     bval -> nUndoPos = 0;
     bval -> blk_hd = blk -> hd;
+}
+
+int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
+			   const struct kyk_block* blk
+    )
+{
+    off_t currpos;
+    currpos = lseek(blk_file -> fp, 0, SEEK_END);
+    check(currpos > -1, "failed to lseek file");
+
+    return 1;
+error:
+    return -1;
 }
 
