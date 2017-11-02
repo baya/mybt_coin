@@ -3,6 +3,7 @@
 #include <leveldb/c.h>
 #include <string.h>
 
+#include "kyk_block.h"
 #include "kyk_ldb.h"
 #include "kyk_utils.h"
 
@@ -128,5 +129,27 @@ void kyk_free_bval(struct kyk_bkey_val *bval)
 {
     if(bval -> blk_hd) free(bval -> blk_hd);
     free(bval);
+}
+
+void kyk_print_bval(struct kyk_bkey_val *bval)
+{
+    struct kyk_blk_header* hd = NULL;
+    hd = bval -> blk_hd;
+    
+    printf("wVersion: %d\n", bval -> wVersion);
+    printf("nHeight:  %d\n", bval -> nHeight);
+    printf("nStatus:  %d\n", bval -> nStatus);
+    printf("nTx:      %d\n", bval -> nTx);
+    printf("nFile:    %d\n", bval -> nFile);
+    printf("nDataPos: %d\n", bval -> nDataPos);
+    printf("nUndoPos: %d\n", bval -> nUndoPos);
+    printf("Following is Block Header:\n");
+    printf("nVersion: %d\n", hd -> version);
+    kyk_print_hex("PrevHash ", hd -> pre_blk_hash, sizeof(hd -> pre_blk_hash));
+    kyk_print_hex("hashMerkleRoot ", hd -> mrk_root_hash, sizeof(hd -> mrk_root_hash));
+    printf("nTime:    %d\n", hd -> tts);
+    printf("nBits:    %x\n", hd -> bts);
+    printf("nNonce:   %d\n", hd -> nonce);
+
 }
 

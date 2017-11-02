@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
 	    check(wallet != NULL, "failed to open wallet");
 	    bval = w_get_block(wallet, argv[2], &errptr);
 	    check(errptr == NULL, "failed to getblock %s", errptr);
-	    printf("wVersion: %d\n", bval -> wVersion);
+	    kyk_print_bval(bval);
+	    kyk_free_bval(bval);
 	}
     }
 
