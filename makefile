@@ -52,7 +52,7 @@ tests: $(TESTS)
 $(DEBUGS):%.out:%.c
 	$(CC) $(CFLAGS) $< -o $@
 
-dbg: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS) -lpthread -lleveldb
+dbg: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS) -lpthread
 dbg: $(DEBUGS)
 
 
@@ -62,13 +62,17 @@ $(CXX_DEBUGS):%.out:%.cc
 cxx_dbg: CXXFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS) -lpthread -lleveldb
 cxx_dbg: $(CXX_DEBUGS)
 
+wallet2: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
+wallet2: wallet2.c
+	$(CC) $(CFLAGS) $< -o $@.out
+
 
 valgrind:
 	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)
 
 # The Cleaner
 clean:
-	rm -rf build $(OBJECTS) $(TESTS) $(CXX_DEBUGS) $(DEBUGS)
+	rm -rf build $(OBJECTS) $(TESTS) $(CXX_DEBUGS) $(DEBUGS) *.out
 	rm -f tests/tests.log
 	find . -name "*.gc" -exec rm {} \;
 	rm -rf `find . -name "*.dSYM" -print`

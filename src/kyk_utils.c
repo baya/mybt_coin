@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "kyk_utils.h"
+#include "dbg.h"
 
 void kyk_print_hex(const char *label, const uint8_t *v, size_t len)
 {
@@ -171,4 +173,36 @@ int kyk_digest_eq(const void* lhs, const void* rhs, size_t count)
     res = memcmp(lhs, rhs, count) == 0 ? 1 : 0;
 
     return res;
+}
+
+char* kyk_pth_concat(const char *s1, const char *s2)
+{
+    /* first +1 for the '/' char, second +1 for the null-terminator */
+    char *result = malloc(strlen(s1) + 1 + strlen(s2)+1);
+    check(result != NULL, "failed to malloc");
+    strcpy(result, s1);
+    strcat(result, "/");
+    strcat(result, s2);
+    
+    return result;
+error:
+
+    return NULL;
+}
+
+
+int kyk_detect_dir(const char *dir)
+{
+    struct stat st;
+    int res = 0;
+
+    if (stat(dir, &st) == 0 && S_ISDIR(st.st_mode))
+    {
+        res = 1;
+    } else {
+	res = 0;
+    }
+
+    return res;
+    
 }

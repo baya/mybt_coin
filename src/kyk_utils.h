@@ -13,5 +13,7 @@ size_t kyk_reverse_pack_chars(unsigned char *buf, const unsigned char *src, size
 void kyk_inline_print_hex(const unsigned char *buf, size_t len);
 void kyk_copy_hex2bin(uint8_t *v, const char *str, size_t len);
 int kyk_digest_eq(const void* lhs, const void* rhs, size_t count);
+char* kyk_pth_concat(const char *s1, const char *s2);
+int kyk_detect_dir(const char *dir);
 
 #endif
