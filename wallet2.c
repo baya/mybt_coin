@@ -39,6 +39,9 @@ int main(int argc, char *argv[])
 	if(match_cmd(argv[1], "init")){
 	    if(kyk_detect_dir(wdir) != 1){
 		mkdir(wdir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	    } else {
+		printf("exit, wallet is already in %s\n", wdir);
+		exit(0);
 	    }
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
