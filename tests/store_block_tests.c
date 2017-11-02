@@ -53,6 +53,7 @@ error:
 
 char* test_read_block()
 {
+    struct kyk_block* blk;
     struct kyk_block_db blk_db;
     char* errmsg = "failed to test read block";
     char* errptr = NULL;
@@ -62,6 +63,7 @@ char* test_read_block()
     kyk_init_store_db(&blk_db, BLOCK_TEST_INDEX_DB);
     check(blk_db.errptr == NULL, "failed to init block db %s", blk_db.errptr);
 
+    blk = make_gens_block();
     kyk_parse_hex(blk_hash, "0000876c9ef8c1f8b2a3012ec1bdea7296f95ae21681799f8adf967f548bf8f3");
     bval = kyk_read_block(&blk_db, (char *)blk_hash, &errptr);
     check(errptr == NULL, "failed to test read b key value");
@@ -75,6 +77,7 @@ char* test_read_block()
     mu_assert(bval -> nFile == 0, "failed to get the correct nFile");
     mu_assert(bval -> nDataPos == 8, "failed to get the correct nDataPos");
     mu_assert(bval -> nUndoPos == 0, "failed to get the correct nUndoPos");
+    mu_assert(kyk_digest_eq(bval -> blk_hd -> mrk_root_hash, blk -> hd -> mrk_root_hash, 32), "failed to get the correct block header");
 
     if(bval) kyk_free_bval(bval);
     kyk_free_block_db(&blk_db);
