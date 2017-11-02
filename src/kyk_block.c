@@ -101,3 +101,46 @@ int kyk_unpack_blk_header(const struct kyk_buff *buf, struct kyk_blk_header *hd)
 
     return 1;
 }
+
+size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk)
+{
+    size_t len = 0;
+    size_t i = 0;
+    size_t start_idx = buf -> idx;
+    struct kyk_blk_header* hd = blk -> hd;
+    struct kyk_tx* tx = blk -> tx;
+    uint8_t *base = buf -> base;
+    
+    len = kyk_seri_blk_hd(base + buf -> idx, hd);
+    buf -> idx += len;
+    buf -> len += len;
+
+    for(i = 0; i < blk -> tx_count; i++){
+	len = kyk_seri_tx(base + buf -> idx, tx + i);
+	buf -> idx += len;
+	buf -> len += len;
+    }
+
+    return(buf -> idx - start_idx);
+}
+
+size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
+{
+    size_t len = 0;
+    size_t start_idx = buf -> idx;
+    uint8_t *base = buf -> base;
+
+    len = beej_pack(base + buf -> idx, "<L", blk -> magic_no);
+    buf -> idx += len;
+    buf -> len += len;
+
+    len = beej_pack(base + buf -> idx, "<L", blk -> blk_size);
+    buf -> idx += len;
+    buf -> len += len;
+
+    len = kyk_ser_blk(buf, blk);
+    buf -> idx += len;
+    buf -> len += len;
+
+    return(buf -> idx - start_idx);
+}

@@ -47,8 +47,8 @@ const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED
 
 const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client
 
-#define BLOCK_TEST_INDEX_DB "/tmp/mybt_coin/testblocks/index"
-/* #define BLOCK_TEST_INDEX_DB "/tmp/bitcoin-block-data/blocks/index" */
+/* #define BLOCK_TEST_INDEX_DB "/tmp/mybt_coin/testblocks/index" */
+#define BLOCK_TEST_INDEX_DB "/tmp/bitcoin-block-data/blocks/index"
 
 int blk_hashstr_to_bkey(const char *hstr, uint8_t *bkey, size_t klen);
 size_t pack_varint(uint8_t *buf, int n);

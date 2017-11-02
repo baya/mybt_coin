@@ -10,8 +10,11 @@
 #include "gens_block.h"
 #include "block_store.h"
 #include "kyk_ldb.h"
-#include "dbg.h"
 #include "kyk_blk_file.h"
+#include "dbg.h"
+#include "kyk_ser.h"
+#include "kyk_buff.h"
+
 
 #define IDX_DB_NAME "index"
 
@@ -52,7 +55,6 @@ struct kyk_wallet* kyk_open_wallet(char *wdir)
     struct kyk_wallet* wallet = malloc(sizeof(struct kyk_wallet));
     struct kyk_block_db* blk_idx_db = malloc(sizeof(struct kyk_block_db));
     char *idx_db_path = NULL;
-    int res = 0;
     wallet -> wdir = malloc(strlen(wdir) + 1);
     
     strncpy(wallet -> wdir, wdir, strlen(wdir) + 1);
@@ -129,6 +131,13 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 			   const struct kyk_block* blk
     )
 {
+    struct kyk_buff* buf = NULL;
+    size_t len = 0;
+
+    buf = create_kyk_buff(1000);
+    check(buf != NULL, "failed to create kyk buff");
+    len = kyk_ser_blk_for_file(buf, blk);
+    
     off_t currpos;
     currpos = lseek(blk_file -> fp, 0, SEEK_END);
     check(currpos > -1, "failed to lseek file");
