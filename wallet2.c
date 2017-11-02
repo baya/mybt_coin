@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     char cwd[1024];
     char *res = NULL;
     char *wdir = NULL;
+    char *errptr = NULL;
 
     res = getcwd(cwd, sizeof(cwd));
     check(res != NULL, "failed to find the current dir");
@@ -41,7 +42,20 @@ int main(int argc, char *argv[])
 	    }
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
-	    printf("wallet is in %s\n", wdir);
+	    printf("wallet is now in %s\n", wdir);
+	} else {
+	    printf("invalid options\n");
+	}
+    }
+
+    if(argc == 3){
+	if(match_cmd(argv[1], "getblock")){
+	    struct kyk_bkey_val* bval = NULL;
+	    wallet = kyk_open_wallet(wdir);
+	    check(wallet != NULL, "failed to open wallet");
+	    bval = w_get_block(wallet, argv[2], &errptr);
+	    check(errptr == NULL, "failed to getblock %s", errptr);
+	    printf("wVersion: %d\n", bval -> wVersion);
 	}
     }
 
