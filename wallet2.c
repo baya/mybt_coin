@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	    check(wallet != NULL, "failed to init wallet");
 	    printf("wallet is now in %s\n", wdir);
 	} else if(match_cmd(argv[1], "delete")){
-	    printf("please use system command `rm -rf ` to delete wallet\n");
+	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {
 	    printf("invalid options\n");
 	}

@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "kyk_utils.h"
 #include "gens_block.h"
@@ -15,59 +17,85 @@
 #include "kyk_ser.h"
 #include "kyk_buff.h"
 
-
-#define IDX_DB_NAME "index"
+const static char* BLOCKS_DIR =  "blocks";
+const static char*  IDX_DB_NAME = "index";
 
 struct kyk_wallet {
     char *wdir;
+    char *blk_dir;
+    char *idx_db_path;
     struct kyk_block_db* blk_index_db;
 };
 
 static void set_init_bval(struct kyk_bkey_val *bval, struct kyk_block* blk);
 static int load_init_data_to_wallet(struct kyk_wallet *wallet);
+void kyk_set_fdir(const char* fdir);
+struct kyk_wallet* new_wallet(const char *wdir);
 
-struct kyk_wallet* kyk_init_wallet(char *wdir)
+struct kyk_wallet* kyk_init_wallet(const char *wdir)
 {
-    struct kyk_wallet* wallet = malloc(sizeof(struct kyk_wallet));
-    struct kyk_block_db* blk_idx_db = malloc(sizeof(struct kyk_block_db));
-    char *idx_db_path = NULL;
     int res = 0;
-    wallet -> wdir = malloc(strlen(wdir) + 1);
-    
-    strncpy(wallet -> wdir, wdir, strlen(wdir) + 1);
-    wallet -> blk_index_db = blk_idx_db;
-    idx_db_path = kyk_pth_concat(wallet -> wdir, IDX_DB_NAME);
-    kyk_init_store_db(wallet -> blk_index_db, idx_db_path);
+    struct kyk_wallet* wallet = new_wallet(wdir);
+    check(wallet != NULL, "failed to get a new wallet");
+
+    kyk_set_fdir(wallet -> blk_dir);
+    kyk_init_store_db(wallet -> blk_index_db, wallet -> idx_db_path);
     check(wallet -> blk_index_db -> errptr == NULL, "failed to init block index db");
+    
     res = load_init_data_to_wallet(wallet);
     check(res > 0, "failed to init wallet");
     
-    if(idx_db_path) free(idx_db_path);
     return wallet;
     
 error:
-    if(idx_db_path) free(idx_db_path);
+    if(wallet) kyk_destroy_wallet(wallet);
     return NULL;
 }
 
-struct kyk_wallet* kyk_open_wallet(char *wdir)
+struct kyk_wallet* new_wallet(const char *wdir)
 {
     struct kyk_wallet* wallet = malloc(sizeof(struct kyk_wallet));
-    struct kyk_block_db* blk_idx_db = malloc(sizeof(struct kyk_block_db));
-    char *idx_db_path = NULL;
-    wallet -> wdir = malloc(strlen(wdir) + 1);
+    check(wallet != NULL, "failed to malloc wallet");
     
+    wallet -> blk_index_db = malloc(sizeof(struct kyk_block_db));
+    check(wallet -> blk_index_db != NULL, "failed to malloc block index db");
+    
+    wallet -> wdir = malloc(strlen(wdir) + 1);
+    check(wallet -> wdir != NULL, "failed to malloc wdir");
     strncpy(wallet -> wdir, wdir, strlen(wdir) + 1);
-    wallet -> blk_index_db = blk_idx_db;
-    idx_db_path = kyk_pth_concat(wallet -> wdir, IDX_DB_NAME);
-    kyk_init_store_db(wallet -> blk_index_db, idx_db_path);
+
+    wallet -> blk_dir = kyk_pth_concat(wallet -> wdir, BLOCKS_DIR);
+    check(wallet -> blk_dir != NULL, "failed to get block dir");
+    
+    wallet -> idx_db_path = kyk_pth_concat(wallet -> blk_dir, IDX_DB_NAME);
+    check(wallet -> idx_db_path != NULL, "failed to get idx db path");
+
+    return wallet;
+
+error:
+    if(wallet) kyk_destroy_wallet(wallet);
+    return NULL;
+}
+
+void kyk_set_fdir(const char* fdir)
+{
+    if(kyk_detect_dir(fdir) != 1){
+	mkdir(fdir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+}
+
+struct kyk_wallet* kyk_open_wallet(const char *wdir)
+{
+    struct kyk_wallet* wallet = new_wallet(wdir);
+    check(wallet != NULL, "failed to get a new wallet");
+
+    kyk_init_store_db(wallet -> blk_index_db, wallet -> idx_db_path);
     check(wallet -> blk_index_db -> errptr == NULL, "failed to open block index db");
     
-    if(idx_db_path) free(idx_db_path);
     return wallet;
     
 error:
-    if(idx_db_path) free(idx_db_path);
+    if(wallet) kyk_destroy_wallet(wallet);    
     return NULL;
 }
 
@@ -91,6 +119,8 @@ error:
 void kyk_destroy_wallet(struct kyk_wallet* wallet)
 {
     if(wallet -> wdir) free(wallet -> wdir);
+    if(wallet -> blk_dir) free(wallet -> blk_dir);
+    if(wallet -> idx_db_path) free(wallet -> idx_db_path);
     if(wallet -> blk_index_db) kyk_free_block_db(wallet -> blk_index_db);
 }
 
@@ -98,20 +128,31 @@ int load_init_data_to_wallet(struct kyk_wallet *wallet)
 {
     struct kyk_block *blk = NULL;
     struct kyk_bkey_val bval;
+    struct kyk_blk_file* blk_file = NULL;
     int res = 1;
     char *errptr = NULL;
     
     blk = make_gens_block();
     check(blk != NULL, "failed to make gens block");
+
+    blk_file = kyk_create_blk_file(0, wallet -> blk_dir, "wb");
+    check(blk_file != NULL, "failed to create block file");
+
+    res = kyk_save_blk_to_file(blk_file, blk);
+    check(res == 1, "failed to save block to file");
+    
     set_init_bval(&bval, blk);
     kyk_store_block(wallet -> blk_index_db, &bval, &errptr);
     check(errptr == NULL, "failed to store b key value");
 
-    if(blk) kyk_free_block(blk);
+    kyk_free_block(blk);
+    kyk_close_blk_file(blk_file);
+    
     return res;
 
 error:
     if(blk) kyk_free_block(blk);
+    if(blk_file) kyk_close_blk_file(blk_file);
     return -1;
 }
 
@@ -142,8 +183,10 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
     currpos = lseek(blk_file -> fp, 0, SEEK_END);
     check(currpos > -1, "failed to lseek file");
 
+    free_kyk_buff(buf);
     return 1;
 error:
+    if(buf) free_kyk_buff(buf);
     return -1;
 }
 
