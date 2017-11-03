@@ -62,13 +62,13 @@ error:
 
 struct kyk_wallet* new_wallet(const char *wdir)
 {
-    struct kyk_wallet* wallet = malloc(sizeof(struct kyk_wallet));
+    struct kyk_wallet* wallet = (struct kyk_wallet*)malloc(sizeof(struct kyk_wallet));
     check(wallet != NULL, "failed to malloc wallet");
     
-    wallet -> blk_index_db = malloc(sizeof(struct kyk_block_db));
+    wallet -> blk_index_db = (struct kyk_block_db*)malloc(sizeof(struct kyk_block_db));
     check(wallet -> blk_index_db != NULL, "failed to malloc block index db");
     
-    wallet -> wdir = malloc(strlen(wdir) + 1);
+    wallet -> wdir = (char*)malloc(strlen(wdir) + 1);
     check(wallet -> wdir != NULL, "failed to malloc wdir");
     strncpy(wallet -> wdir, wdir, strlen(wdir) + 1);
 
@@ -107,7 +107,7 @@ error:
     return NULL;
 }
 
-struct kyk_bkey_val* w_get_block(const struct kyk_wallet* wallet, const char* blk_hash_str, char **errptr)
+struct kyk_bkey_val* w_get_bval(const struct kyk_wallet* wallet, const char* blk_hash_str, char **errptr)
 {
     //struct kyk_block* blk;
     struct kyk_bkey_val* bval = NULL;
@@ -121,6 +121,18 @@ struct kyk_bkey_val* w_get_block(const struct kyk_wallet* wallet, const char* bl
     return bval;
 error:
     if(bval) kyk_free_bval(bval);
+    return NULL;
+}
+
+struct kyk_block* w_get_block(const struct kyk_bkey_val* bval)
+{
+    struct kyk_block* blk = (struct kyk_block*)malloc(sizeof(struct kyk_block));
+    check(blk != NULL, "failed to malloc block");
+
+    return blk;
+
+error:
+    if(blk) kyk_free_block(blk);
     return NULL;
 }
 
@@ -211,4 +223,5 @@ error:
     if(buf) free_kyk_buff(buf);
     return -1;
 }
+
 

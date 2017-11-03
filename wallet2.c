@@ -59,10 +59,14 @@ int main(int argc, char *argv[])
 	    struct kyk_bkey_val* bval = NULL;
 	    wallet = kyk_open_wallet(wdir);
 	    check(wallet != NULL, "failed to open wallet");
-	    bval = w_get_block(wallet, argv[2], &errptr);
+	    bval = w_get_bval(wallet, argv[2], &errptr);
 	    check(errptr == NULL, "failed to getblock %s", errptr);
-	    kyk_print_bval(bval);
-	    kyk_free_bval(bval);
+	    if(bval == NULL){
+		printf("No block record found\n");
+	    } else {
+		kyk_print_bval(bval);
+		kyk_free_bval(bval);
+	    }
 	}
     }
 
