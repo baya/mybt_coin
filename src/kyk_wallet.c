@@ -27,10 +27,18 @@ struct kyk_wallet {
     struct kyk_block_db* blk_index_db;
 };
 
-static void set_init_bval(struct kyk_bkey_val *bval, struct kyk_block* blk);
+static void set_init_bval(struct kyk_bkey_val *bval,
+			  const struct kyk_block* blk,
+			  const struct kyk_blk_file* blk_file
+    );
+
 static int load_init_data_to_wallet(struct kyk_wallet *wallet);
 void kyk_set_fdir(const char* fdir);
 struct kyk_wallet* new_wallet(const char *wdir);
+int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
+			 const struct kyk_block* blk
+    );
+
 
 struct kyk_wallet* kyk_init_wallet(const char *wdir)
 {
@@ -101,13 +109,13 @@ error:
 
 struct kyk_bkey_val* w_get_block(const struct kyk_wallet* wallet, const char* blk_hash_str, char **errptr)
 {
-    struct kyk_block* blk;
+    //struct kyk_block* blk;
     struct kyk_bkey_val* bval = NULL;
     char blk_hash[32];
     size_t len = strlen(blk_hash_str);
     check(len == 64, "invalid block hash");
 
-    kyk_parse_hex(blk_hash, blk_hash_str);
+    kyk_parse_hex((uint8_t*)blk_hash, blk_hash_str);
     bval = kyk_read_block(wallet -> blk_index_db, blk_hash, errptr);
 
     return bval;
@@ -135,13 +143,14 @@ int load_init_data_to_wallet(struct kyk_wallet *wallet)
     blk = make_gens_block();
     check(blk != NULL, "failed to make gens block");
 
-    blk_file = kyk_create_blk_file(0, wallet -> blk_dir, "wb");
+    blk_file = kyk_create_blk_file(0, wallet -> blk_dir, "ab");
     check(blk_file != NULL, "failed to create block file");
+    printf("create blk_file: %s\n", blk_file -> pathname);
 
     res = kyk_save_blk_to_file(blk_file, blk);
     check(res == 1, "failed to save block to file");
     
-    set_init_bval(&bval, blk);
+    set_init_bval(&bval, blk, blk_file);
     kyk_store_block(wallet -> blk_index_db, &bval, &errptr);
     check(errptr == NULL, "failed to store b key value");
 
@@ -156,14 +165,17 @@ error:
     return -1;
 }
 
-void set_init_bval(struct kyk_bkey_val *bval, struct kyk_block* blk)
+void set_init_bval(struct kyk_bkey_val *bval,
+		   const struct kyk_block* blk,
+		   const struct kyk_blk_file* blk_file
+    )
 {
     bval -> wVersion = 1;
     bval -> nHeight = 0;
     bval -> nStatus = BLOCK_HAVE_MASK;
-    bval -> nTx = 1;
-    bval -> nFile = 0;
-    bval -> nDataPos = 8;
+    bval -> nTx = blk -> tx_count;
+    bval -> nFile = blk_file -> nFile;
+    bval -> nDataPos = blk_file -> nStartPos;
     bval -> nUndoPos = 0;
     bval -> blk_hd = blk -> hd;
 }
@@ -174,14 +186,26 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 {
     struct kyk_buff* buf = NULL;
     size_t len = 0;
+    long int pos = 0;
 
     buf = create_kyk_buff(1000);
     check(buf != NULL, "failed to create kyk buff");
-    len = kyk_ser_blk_for_file(buf, blk);
     
-    off_t currpos;
-    currpos = lseek(blk_file -> fp, 0, SEEK_END);
-    check(currpos > -1, "failed to lseek file");
+    len = kyk_ser_blk_for_file(buf, blk);
+    check(len > 0, "failed to serialize block");
+    
+    pos = ftell(blk_file -> fp);
+    check(pos != -1L, "failed to get the block dat file pos");
+
+    blk_file -> nOffsetPos = sizeof(blk -> magic_no) + sizeof(blk -> blk_size);
+    
+    blk_file -> nStartPos = (unsigned int)pos + blk_file -> nOffsetPos;
+    kyk_print_hex("buf", buf -> base, buf -> len);
+    
+    len = fwrite(buf -> base, sizeof(uint8_t), buf -> len, blk_file -> fp);
+    check(len == buf -> len, "failed to save block to file");
+    blk_file -> nEndPos = len;
+    
 
     free_kyk_buff(buf);
     return 1;

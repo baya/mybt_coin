@@ -28,10 +28,12 @@ struct kyk_blk_file* kyk_create_blk_file(int nFile, const char* blk_dir, const c
 
     blk_file -> filename = make_filename(nFile);
     blk_file -> pathname = make_pathname(blk_dir, blk_file -> filename);
+    blk_file -> nOffsetPos = 0;
     blk_file -> nStartPos = 0;
     blk_file -> nEndPos = 0;
     blk_file -> nFile = nFile;
     blk_file -> fp = fopen(blk_file -> pathname, mode);
+    check(blk_file -> fp != NULL, "failed to open block file");
 
     return blk_file;
 error:
@@ -45,7 +47,7 @@ char *make_filename(int n)
     size_t len = 0;
     char* filename = NULL;
     check(buf != NULL, "failed to create kyk buff");
-    sprintf(buf -> base, "blk%.5i", n);
+    sprintf((char *)buf -> base, "blk%.5i"".dat", n);
     len = strlen((char *)buf -> base) + 1;
     filename = malloc(len * sizeof(char));
     check(filename != NULL, "failed to malloc file name");

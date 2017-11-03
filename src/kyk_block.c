@@ -139,8 +139,6 @@ size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
     buf -> len += len;
 
     len = kyk_ser_blk(buf, blk);
-    buf -> idx += len;
-    buf -> len += len;
 
     return(buf -> idx - start_idx);
 }

@@ -33,6 +33,7 @@ struct kyk_block* make_gens_block()
 
     init_block(blk);
 
+    blk -> tx_count = TX_COUNT;
     tx0 = blk -> tx;
     blk_hd = blk -> hd;
     
@@ -44,7 +45,7 @@ struct kyk_block* make_gens_block()
 
     blk_hd -> version = 1;
     kyk_parse_hex(blk_hd -> pre_blk_hash, "0000000000000000000000000000000000000000000000000000000000000000");
-    mkl_root = make_mkl_tree_root(tx_buf_ptr, TX_COUNT);
+    mkl_root = make_mkl_tree_root(tx_buf_ptr, blk -> tx_count);
     kyk_cpy_mkl_root_value(blk_hd -> mrk_root_hash, mkl_root);
     blk_hd -> tts = 1504483200;
     /* bts 越大，难度越低 */
