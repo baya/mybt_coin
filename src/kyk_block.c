@@ -115,6 +115,10 @@ size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk)
     buf -> idx += len;
     buf -> len += len;
 
+    len = kyk_pack_varint(base + buf -> idx, blk -> tx_count);
+    buf -> idx += len;
+    buf -> len += len;
+
     for(i = 0; i < blk -> tx_count; i++){
 	len = kyk_seri_tx(base + buf -> idx, tx + i);
 	buf -> idx += len;
@@ -139,6 +143,10 @@ size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
     buf -> len += len;
 
     len = kyk_ser_blk(buf, blk);
+    check(len == blk -> blk_size, "faile to serialize block");
 
     return(buf -> idx - start_idx);
+
+error:
+    return 0;
 }

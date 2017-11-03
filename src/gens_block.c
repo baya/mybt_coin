@@ -30,10 +30,12 @@ struct kyk_block* make_gens_block()
     struct kyk_tx_buf tx_buf_list[TX_COUNT];
     struct kyk_tx_buf *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
+    size_t blk_size = 0;
 
     init_block(blk);
 
     blk -> tx_count = TX_COUNT;
+    blk_size += get_varint_size(blk -> tx_count);
     tx0 = blk -> tx;
     blk_hd = blk -> hd;
     
@@ -42,6 +44,7 @@ struct kyk_block* make_gens_block()
     tx_len = kyk_seri_tx(tx_buf, tx0);
     tx_buf_ptr -> bdy = tx_buf;
     tx_buf_ptr -> len = tx_len;
+    blk_size += tx_len;
 
     blk_hd -> version = 1;
     kyk_parse_hex(blk_hd -> pre_blk_hash, "0000000000000000000000000000000000000000000000000000000000000000");
@@ -52,10 +55,11 @@ struct kyk_block* make_gens_block()
     //blk_hd.bts = 0x1e00ffff;
     blk_hd -> bts = 0x1f00ffff;
     blk_hd -> nonce = 0;
+    blk_size += BLK_HD_LEN;
 
     kyk_hsh_nonce(blk_hd);
     blk -> magic_no = BLK_MAGIC_NO;
-    blk -> blk_size = tx_len + BLK_HD_LEN;
+    blk -> blk_size = blk_size;
 
     return blk;
 

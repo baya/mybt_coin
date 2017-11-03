@@ -145,7 +145,6 @@ int load_init_data_to_wallet(struct kyk_wallet *wallet)
 
     blk_file = kyk_create_blk_file(0, wallet -> blk_dir, "ab");
     check(blk_file != NULL, "failed to create block file");
-    printf("create blk_file: %s\n", blk_file -> pathname);
 
     res = kyk_save_blk_to_file(blk_file, blk);
     check(res == 1, "failed to save block to file");
@@ -200,7 +199,6 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
     blk_file -> nOffsetPos = sizeof(blk -> magic_no) + sizeof(blk -> blk_size);
     
     blk_file -> nStartPos = (unsigned int)pos + blk_file -> nOffsetPos;
-    kyk_print_hex("buf", buf -> base, buf -> len);
     
     len = fwrite(buf -> base, sizeof(uint8_t), buf -> len, blk_file -> fp);
     check(len == buf -> len, "failed to save block to file");

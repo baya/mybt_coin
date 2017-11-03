@@ -9,4 +9,6 @@ size_t kyk_pack_varint(unsigned char *buf, varint_t v);
 /* Returns bytes used: 0 if max_len too small. */
 size_t kyk_unpack_varint(const unsigned char *buf, varint_t *val);
 
+size_t get_varint_size(varint_t v);
+
 #endif

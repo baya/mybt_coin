@@ -61,3 +61,13 @@ size_t kyk_unpack_varint(const unsigned char *buf, varint_t *val)
 	return 1;
     }
 }
+
+size_t get_varint_size(varint_t v)
+{
+    size_t res = 0;
+    
+    unsigned char buf[100];
+    res = kyk_pack_varint(buf, v);
+
+    return res;
+}
