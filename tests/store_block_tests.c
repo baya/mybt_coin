@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "kyk_utils.h"
 #include "gens_block.h"
@@ -24,6 +26,20 @@ void set_bval(struct kyk_bkey_val *bval, struct kyk_block* blk)
     bval -> blk_hd = blk -> hd;
 }
 
+void set_block_test_dir()
+{
+    const char* dir1 = "/tmp/mybt_coin";
+    const char* dir2 = "/tmp/mybt_coin/testblocks";
+    
+    if(kyk_detect_dir(dir1) != 1){
+	mkdir(dir1, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+
+    if(kyk_detect_dir(dir2) != 1){
+	mkdir(dir2, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+}
+
 char* test_store_block()
 {
     struct kyk_block* blk;
@@ -31,6 +47,8 @@ char* test_store_block()
     char* errmsg = "failed to test store block";
     char *errptr = NULL;
     struct kyk_bkey_val bval;
+
+    set_block_test_dir();
 
     blk = make_gens_block();
     set_bval(&bval, blk);
@@ -59,6 +77,8 @@ char* test_read_block()
     char* errptr = NULL;
     uint8_t blk_hash[32];
     struct kyk_bkey_val* bval = NULL;
+
+    set_block_test_dir();
 
     kyk_init_store_db(&blk_db, BLOCK_TEST_INDEX_DB);
     check(blk_db.errptr == NULL, "failed to init block db %s", blk_db.errptr);

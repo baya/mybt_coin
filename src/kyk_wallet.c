@@ -124,17 +124,6 @@ error:
     return NULL;
 }
 
-struct kyk_block* w_get_block(const struct kyk_bkey_val* bval)
-{
-    struct kyk_block* blk = (struct kyk_block*)malloc(sizeof(struct kyk_block));
-    check(blk != NULL, "failed to malloc block");
-
-    return blk;
-
-error:
-    if(blk) kyk_free_block(blk);
-    return NULL;
-}
 
 void kyk_destroy_wallet(struct kyk_wallet* wallet)
 {

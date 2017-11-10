@@ -39,6 +39,8 @@ struct kyk_key* kyk_key_generate_new(void)
     s = kyk_key_get_pubkey(k, &k->pub_key, &k->pub_len);
     check(s > 0, "failed to get pubkey");
 
+    return k;
+
 error:
     free_kyk_key(k);
     return NULL;
