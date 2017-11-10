@@ -66,6 +66,9 @@ wallet2: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
 wallet2: wallet2.c
 	$(CC) $(CFLAGS) $< -o $@.out
 
+wallet_alice: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
+wallet_alice: wallet_alice.c
+	$(CC) $(CFLAGS) $< -o $@.out
 
 valgrind:
 	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)

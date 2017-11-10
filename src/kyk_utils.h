@@ -15,5 +15,7 @@ void kyk_copy_hex2bin(uint8_t *v, const char *str, size_t len);
 int kyk_digest_eq(const void* lhs, const void* rhs, size_t count);
 char* kyk_pth_concat(const char *s1, const char *s2);
 int kyk_detect_dir(const char *dir);
+char* kyk_strdup(const char* str);
+char* kyk_gethomedir();
 
 #endif

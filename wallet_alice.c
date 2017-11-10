@@ -13,21 +13,20 @@
 #include "kyk_wallet.h"
 #include "dbg.h"
 
-#define WALLET_NAME "my_wallet2"
+#define WALLET_NAME "Wallet_Alice"
 
 int match_cmd(char *src, char *cmd);
 
 int main(int argc, char *argv[])
 {
     struct kyk_wallet* wallet = NULL;
-    char cwd[1024];
-    char *res = NULL;
+    char *hmdir = NULL;
     char *wdir = NULL;
     char *errptr = NULL;
 
-    res = getcwd(cwd, sizeof(cwd));
-    check(res != NULL, "failed to find the current dir");
-    wdir = kyk_pth_concat(cwd, WALLET_NAME);
+    hmdir = kyk_gethomedir();
+    check(hmdir != NULL, "failed to find the current dir");
+    wdir = kyk_pth_concat(hmdir, WALLET_NAME);
     check(wdir != NULL, "failed to find the wallet dir");
 
     if(argc == 1){

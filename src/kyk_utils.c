@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "kyk_utils.h"
 #include "dbg.h"
 
@@ -205,4 +209,28 @@ int kyk_detect_dir(const char *dir)
 
     return res;
     
+}
+
+char* kyk_gethomedir(void)
+{
+    struct passwd* pwd;
+
+    pwd = getpwuid(getuid());
+    check(pwd != NULL, "failed to get pwd");
+
+    return kyk_strdup(pwd -> pw_dir);
+
+error:
+    return NULL;
+}
+
+char* kyk_strdup(const char* str)
+{
+    void* ptr = strdup(str);
+    check(ptr != NULL, "failed to dup string");
+    
+    return ptr;
+
+error:
+    return NULL;
 }
