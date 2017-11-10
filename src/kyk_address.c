@@ -1,4 +1,5 @@
 #include "kyk_address.h"
+#include "dbg.h"
 
 
 static void set_version_byte(uint8_t *vdgst, uint8_t *digest, uint8_t vbyt, size_t len);
@@ -11,12 +12,8 @@ static void set_chksum_byte(uint8_t *dgst8,
 
 static uint8_t MAIN_NW = 0x00;
 
-char *kyk_make_address(const uint8_t *priv_bytes)
+char *kyk_make_address_from_pub(uint8_t *pub, size_t pub_len)
 {
-    EC_KEY *key;
-    point_conversion_form_t conv_form = POINT_CONVERSION_UNCOMPRESSED;
-    size_t pub_len;
-    uint8_t *pub, *pub_copy;
     uint8_t dgst2[SHA256_DIGEST_LENGTH];
     uint8_t dgst3[20];
     uint8_t dgst4[21];
@@ -25,31 +22,6 @@ char *kyk_make_address(const uint8_t *priv_bytes)
     uint8_t dgst7[4];
     uint8_t dgst8[25];
     char *dgst9;
-
-    key = kyk_ec_new_keypair(priv_bytes);
-    if (!key) {
-        fprintf(stderr, "Unable to create keypair\n");
-        return NULL;
-    }
-
-    EC_KEY_set_conv_form(key, conv_form);
-    pub_len = i2o_ECPublicKey(key, NULL);
-    pub = calloc(pub_len, sizeof(uint8_t));
-    pub_copy = pub;
-
-    /* 1 - Take the corresponding public key generated with it
-     *     (
-     *       65 bytes, 1 byte 0x04,
-     *       32 bytes corresponding to X coordinate,
-     *       32 bytes corresponding to Y coordinate
-     *     )
-     *
-     */
-    if ((size_t)i2o_ECPublicKey(key, &pub_copy) != pub_len) {
-	fprintf(stderr, "Unable to decode public key\n");
-	return NULL;
-    }
-
 
     /*
      * 2 - Perform SHA-256 hashing on the public key
@@ -98,9 +70,46 @@ char *kyk_make_address(const uint8_t *priv_bytes)
      */
     dgst9 = kyk_base58(dgst8, sizeof(dgst8));
 
+    return dgst9;
+
+}
+
+char *kyk_make_address(const uint8_t *priv_bytes)
+{
+    EC_KEY *key;
+    point_conversion_form_t conv_form = POINT_CONVERSION_UNCOMPRESSED;
+    size_t pub_len;
+    size_t res = 0;
+    uint8_t *pub, *pub_copy;
+    char *dgst9;
+
+    key = kyk_ec_new_keypair(priv_bytes);
+    check(key != NULL, "failed to create keypair");
+
+    EC_KEY_set_conv_form(key, conv_form);
+    pub_len = i2o_ECPublicKey(key, NULL);
+    pub = calloc(pub_len, sizeof(uint8_t));
+    pub_copy = pub;
+
+    /* 1 - Take the corresponding public key generated with it
+     *     (
+     *       65 bytes, 1 byte 0x04,
+     *       32 bytes corresponding to X coordinate,
+     *       32 bytes corresponding to Y coordinate
+     *     )
+     *
+     */
+    res = (size_t)i2o_ECPublicKey(key, &pub_copy);
+    check(res == pub_len, "failed to get public key");
+    dgst9 = kyk_make_address_from_pub(pub, pub_len);
+
     EC_KEY_free(key);
 
     return dgst9;
+
+error:
+    if(key) EC_KEY_free(key);
+    return NULL;
 
 }
 

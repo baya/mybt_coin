@@ -8,5 +8,6 @@
 
 
 char *kyk_make_address(const uint8_t *prive_bytes);
+char *kyk_make_address_from_pub(uint8_t *pub, size_t pub_len);
 
 #endif

@@ -1,17 +1,5 @@
-#include <openssl/ec.h>
-#include <openssl/obj_mac.h>
-#include <openssl/err.h>
-#include <openssl/ecdsa.h>
-
 #include "kyk_key.h"
 #include "dbg.h"
-
-
-struct kyk_key {
-    EC_KEY  *key;
-    uint8_t *pub_key;
-    size_t  pub_len;
-};
 
 static int kyk_key_get_pubkey(struct kyk_key *k,
 			      uint8_t     **pub,
