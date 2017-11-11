@@ -20,11 +20,42 @@ char* test_kyk_config_load()
     char* filename = "data/contacts.cfg";
     struct config* cfg;
     int res = -1;
+    char *v = NULL;
 
+    /*  contact0.addr = 1PBP4S44b1ro3kD6LQhBYnsF3fAp1HYPf2                          */
+    /* 	contact0.label = Support bitc development -- https://bit-c.github.com       */
+    /*  contact1.addr = 1PC9aZC4hNX2rmmrt7uHTfYAS3hRbph4UN                          */
+    /* 	contact1.label = Free Software Foundation -- https://fsf.org/donate/        */
+    /*  contact2.addr = 1BTCorgHwCg6u2YSAWKgS17qUad6kHmtQW                          */
+    /* 	contact2.label = Bitcoin Foundation -- https://bitcoinfoundation.org/donate */
+    /*  contacts.numEntries = 3                                                     */
     res = kyk_config_load(filename, &cfg);
     mu_assert(res == 0, "return value of config load should be 0");
     mu_assert(strcmp(cfg -> fileName, filename) == 0, "failed to get the correct config file name");
     //kyk_print_config(cfg);
+
+    v = kyk_config_getstring(cfg, NULL, "contact0.addr");
+    mu_assert(strcmp(v, "1PBP4S44b1ro3kD6LQhBYnsF3fAp1HYPf2") == 0, "Failed to get value of contact0.addr");
+    
+    v = kyk_config_getstring(cfg, NULL, "contact0.label");
+    mu_assert(strcmp(v, "Support bitc development -- https://bit-c.github.com") == 0, "Failed to get value of contact0.label");
+
+    v = kyk_config_getstring(cfg, NULL, "contact1.addr");
+    mu_assert(strcmp(v, "1PC9aZC4hNX2rmmrt7uHTfYAS3hRbph4UN") == 0, "Failed to get value of contact1.addr");
+    v = kyk_config_getstring(cfg, NULL, "contact1.label");
+    mu_assert(strcmp(v, "Free Software Foundation -- https://fsf.org/donate/") == 0, "Failed to get value of contact1.label");
+
+    v = kyk_config_getstring(cfg, NULL, "contact2.addr");
+    mu_assert(strcmp(v, "1BTCorgHwCg6u2YSAWKgS17qUad6kHmtQW") == 0, "Failed to get value of contact1.addr");
+    v = kyk_config_getstring(cfg, NULL, "contact2.label");
+    mu_assert(strcmp(v, "Bitcoin Foundation -- https://bitcoinfoundation.org/donate") == 0, "Failed to get value of contact2.label");
+
+    v = kyk_config_getstring(cfg, NULL, "contacts.numEntries");
+    mu_assert(strcmp(v, "3") == 0, "Failed to get value of contacts.numEntries");
+
+    
+    
+    kyk_config_free(cfg);
     
     return NULL;
 }

@@ -38,12 +38,13 @@ static void kyk_config_chomp(char *str);
 
 static void kyk_config_setunknownkv(struct config *config,
 				    const char    *key,
-				    const char    *val)
-    ;
+				    const char    *val);
+
 static void kyk_config_insert(struct config *config,
 			      struct KeyValuePair *ev);
 
-
+static struct KeyValuePair* kyk_config_get(const struct config* config,
+					   const char* key);
 
 
 struct config* kyk_config_create(void)
@@ -287,3 +288,66 @@ error:
     return;
 }
 
+
+char* kyk_config_getstring(struct config *config,
+			   const char    *defaultStr,
+			   const char    *format,
+			   ...)
+{
+    struct KeyValuePair *ev;
+    char key[1024];
+    char *res = NULL;
+    va_list ap;
+
+    check(config != NULL, "config can not be NULL");
+    check(format != NULL, "format can not be NULL");
+
+    va_start(ap, format);
+    vsnprintf(key, sizeof key, format, ap);
+    va_end(ap);
+
+    ev = kyk_config_get(config, key);
+
+    if (ev) {
+	if (ev -> type == CONFIG_KV_UNKNOWN) {
+	    ev -> type = CONFIG_KV_STRING;
+	} else {
+	    check(ev -> type == CONFIG_KV_STRING, "invalid kv type %d", ev -> type);
+	}
+	res = ev -> u.str ? kyk_strdup(ev -> u.str) : NULL;
+    } else {
+	/* config_setstring(config, defaultStr, "%s", key); */
+	/* ev = kyk_config_get(config, key); */
+	/* ev -> save = 0; */
+	res = defaultStr ? kyk_strdup(defaultStr) : NULL;
+    }
+
+    return res;
+    
+error:
+    if(res) free(res);
+    return NULL;
+}
+
+
+static struct KeyValuePair* kyk_config_get(const struct config* config,
+					   const char* key)
+{
+    struct KeyValuePair *ev;
+
+    check(config != NULL, "config can not be NULL");
+
+    ev = config->list;
+    while (ev) {
+	if (strcasecmp(ev -> key, key) == 0) {
+	    return ev;
+	}
+	ev = ev -> next;
+    }
+    
+    return NULL;
+
+error:
+    
+    return NULL;
+}
