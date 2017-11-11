@@ -17,6 +17,15 @@ char* test_kyk_config_create()
 
 char* test_kyk_config_load()
 {
+    char* filename = "data/contacts.cfg";
+    struct config* cfg;
+    int res = -1;
+
+    res = kyk_config_load(filename, &cfg);
+    mu_assert(res == 0, "return value of config load should be 0");
+    mu_assert(strcmp(cfg -> fileName, filename) == 0, "failed to get the correct config file name");
+    //kyk_print_config(cfg);
+    
     return NULL;
 }
 

@@ -25,4 +25,6 @@ void config_setstring(struct config *config,
 		      const char *s,
 		      const char *fmt, ...);
 
+void kyk_print_config(struct config* cfg);
+
 #endif

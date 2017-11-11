@@ -17,15 +17,15 @@ enum ConfigKVType {
 
 
 struct KeyValuePair {
-   char                *key;
-   bool              save;
-   struct KeyValuePair *next;
-   enum ConfigKVType    type;
-   union {
-      int64_t  val;
-      bool  trueOrFalse;
-      char  *str;
-   } u;
+    char* key;
+    bool  save;
+    struct KeyValuePair* next;
+    enum ConfigKVType    type;
+    union {
+	int64_t  val;
+	bool  trueOrFalse;
+	char* str;
+    } u;
 };
 
 static void config_freekvlist(struct KeyValuePair *list);
@@ -105,6 +105,7 @@ int kyk_config_load(const char* fileName, struct config** conf)
     }
 
     kyk_free_file_desc(fd);
+    *conf = cfg;
 
     return 0;
     
@@ -128,19 +129,19 @@ void kyk_config_free(struct config *conf)
 
 static void config_freekvlist(struct KeyValuePair *list)
 {
-    struct KeyValuePair *e;
+    struct KeyValuePair *ev;
 
-    e = list;
-    while (e) {
+    ev = list;
+    while (ev) {
 	struct KeyValuePair *next;
 
-	next = e->next;
-	if (e->type == CONFIG_KV_UNKNOWN || e->type == CONFIG_KV_STRING) {
-	    free(e->u.str);
+	next = ev -> next;
+	if (ev -> type == CONFIG_KV_UNKNOWN || ev -> type == CONFIG_KV_STRING) {
+	    free(ev -> u.str);
 	}
-	free(e->key);
-	free(e);
-	e = next;
+	free(ev -> key);
+	free(ev);
+	ev = next;
     }
 }
 
@@ -149,16 +150,15 @@ static bool kyk_config_parseline(char *line,
 				 char **key,
 				 char **val)
 {
-    size_t len;
-    char *ptr;
-    char *k;
-    char *v;
-    char *v0;
-    int res;
+    size_t len = 0;
+    char *ptr = NULL;
+    char *k = NULL;
+    char *v = NULL;
+    char *v0 = NULL;
+    int res = 0;
 
     *key = NULL;
     *val = NULL;
-    *v0 = NULL;
 
     len = strlen(line);
     if (line[len - 1] == '\n' || line[len - 1] == '\r') {
@@ -271,5 +271,19 @@ static void kyk_config_insert(struct config *config,
 	ev -> next = config -> list;
 	config -> list = ev;
     }
+}
+
+void kyk_print_config(struct config* cfg)
+{
+    struct KeyValuePair* item = cfg -> list;
+    check(item != NULL, "you are printing a blank config");
+    printf("config file name is %s\n", cfg -> fileName);
+    while(item){
+	printf("%s = %s\n", item -> key, item -> u.str);
+	item = item -> next;
+    }
+
+error:
+    return;
 }
 
