@@ -351,3 +351,113 @@ error:
     
     return NULL;
 }
+
+int kyk_config_write(struct config *conf,
+		     const char    *filename)
+{
+    struct file_descriptor *fd = NULL;
+    struct KeyValuePair *ev = NULL;
+    uint64_t offset = 0;
+    int res = 0;
+    size_t numBytes = 0;
+    char *s = NULL;
+
+    check(conf != NULL, "conf can not be NULL");
+
+    if (filename == NULL) {
+	check(conf->fileName != NULL, "filename and conf fileName can not both be NULL");
+    } else {
+	free(conf -> fileName);
+	conf -> fileName = kyk_strdup(filename);
+    }
+    res = kyk_file_open(conf -> fileName, FALSE, &fd);
+    check(res == 0, "Failed to open config '%s'", filename);
+
+    res = kyk_file_truncate(fd, 0);
+    check(res == 0, "Failed to kyk_file_truncate '%s'", filename);
+
+    ev = conf -> list;
+    
+    while (ev) {
+	numBytes = 0;
+	s = NULL;
+
+	if (ev -> save == 0) {
+	    printf("CONFIG: not writing key '%s'\n", ev -> key);
+	    ev = ev -> next;
+	    continue;
+	}
+
+	switch (ev -> type) {
+	case CONFIG_KV_INT64:
+	    s = kyk_asprintf("%s = \"%lld\"\n", ev -> key, ev -> u.val);
+	    break;
+	case CONFIG_KV_BOOL:
+	    s = kyk_asprintf("%s = \"%s\"\n", ev -> key, ev -> u.trueOrFalse ? "TRUE" : "FALSE");
+	    break;
+	default:
+	    check(ev -> type == CONFIG_KV_UNKNOWN || ev -> type == CONFIG_KV_STRING, "Invalid kv type");
+	    if (ev -> u.str) {
+		s = kyk_asprintf("%s = \"%s\"\n", ev -> key, ev -> u.str);
+	    }
+	}
+
+	if (s) {
+	    numBytes = 0;
+	    res = kyk_file_pwrite(fd, offset, s, strlen(s), &numBytes);
+	    check(res == 0 && numBytes == strlen(s), "CONFIG: failed to kyk_file_pwrite");
+	    offset += numBytes;
+	    free(s);
+	}
+	ev = ev -> next;
+    }
+
+    return 0;
+
+error:
+    
+    if(s) free(s);
+    if (fd) kyk_file_close(fd);
+	
+    return -1;
+}
+
+
+void kyk_config_setstring(struct config *config,
+			  const char    *str,
+			  const char    *fmt,
+			  ...)
+{
+    struct KeyValuePair *ev;
+    char key[1024];
+    va_list ap;
+
+    va_start(ap, fmt);
+    vsnprintf(key, sizeof key, fmt, ap);
+    va_end(ap);
+
+    ev = kyk_config_get(config, key);
+
+    if (ev) {
+	check(ev -> type == CONFIG_KV_STRING || ev -> type == CONFIG_KV_UNKNOWN, "CONFIG: Invalid kv type");
+	free(ev -> u.str);
+	ev -> u.str = NULL;
+    } else {
+	ev = malloc(sizeof *ev);
+	check(ev, "Failed to malloc");
+	ev -> key  = kyk_strdup(key);
+	ev -> type = CONFIG_KV_STRING;
+	kyk_config_insert(config, ev);
+    }
+    ev -> save = 1;
+    ev -> u.str = str ? kyk_strdup(str) : NULL;
+
+error:
+    return;
+}
+
+
+int kyk_config_save(struct config *conf)
+{
+    return kyk_config_write(conf, NULL);
+}

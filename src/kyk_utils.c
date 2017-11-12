@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -229,6 +230,25 @@ char* kyk_strdup(const char* str)
     void* ptr = strdup(str);
     check(ptr != NULL, "failed to dup string");
     
+    return ptr;
+
+error:
+    return NULL;
+}
+
+
+char* kyk_asprintf(const char *fmt, ...)
+{
+    va_list args;
+    char *ptr = NULL;
+    int n = 0;
+
+    va_start(args, fmt);
+    n = vasprintf(&ptr, fmt, args);
+    va_end(args);
+
+    check(n != -1, "failed to vasprintf");
+
     return ptr;
 
 error:

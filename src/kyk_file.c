@@ -35,7 +35,7 @@ int kyk_file_open(const char* name, bool ro, struct file_descriptor** fdout)
     }    
 
     desc -> fd = open(name, flags);
-    check(desc > 0, "failed to open: '%s'", name);
+    check(desc -> fd > 0, "failed to open: '%s'", name);
 
     *fdout = desc;
 
@@ -87,3 +87,57 @@ void kyk_file_close(struct file_descriptor *desc)
     kyk_free_file_desc(desc);
 }
 
+
+int kyk_file_truncate(const struct file_descriptor *desc,
+		      uint64_t offset)
+{
+    int res = 0;
+
+    printf("FILE: truncating '%s' to size %llu\n", desc -> name, offset);
+
+    res = ftruncate(desc -> fd, offset);
+    check(res == 0, "FILE: failed to ftruncate");
+
+    return res;
+
+error:
+    return -1;
+}
+
+
+int kyk_file_pwrite(const struct file_descriptor *desc,
+		    uint64_t offset,
+		    const void *buf,
+		    size_t len,
+		    size_t *numWritten)
+{
+    ssize_t res;
+
+    if (numWritten) {
+	*numWritten = 0;
+    }
+
+    do {
+#ifdef __CYGWIN__
+	/* NOT_TESTED(); */
+	res = lseek(desc->fd, 0, SEEK_SET);
+	if (res < 0) {
+	    break;
+	} 
+	res = write(desc->fd, buf, len);
+#else
+	res = pwrite(desc->fd, buf, len, offset);
+#endif
+    } while (res == -1 && (errno == EAGAIN || errno == EINTR));
+
+    check(res != -1, "failed to kyk_file_pwrite");
+    
+    if (numWritten) {
+	*numWritten = res;
+    }
+    
+    return 0;
+
+error:
+    return -1;
+}

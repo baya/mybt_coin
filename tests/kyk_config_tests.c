@@ -60,12 +60,43 @@ char* test_kyk_config_load()
     return NULL;
 }
 
+char* test_kyk_config_write()
+{
+
+    struct config* cfg = kyk_config_create();
+    char* filename = "data/config_write_test_tmp.cfg";
+    char* str = "bar";
+    int res = 0;
+
+    kyk_config_setstring(cfg, str, "key%d", 0);
+    res = kyk_config_write(cfg, filename);
+
+    mu_assert(res == 0, "Failed to write config");
+
+    return NULL;
+}
+
+char* test_kyk_config_setstring()
+{
+    struct config* cfg = kyk_config_create();
+    char* str = "bar";
+    char* key = "key0";
+    char *v = NULL;
+
+    kyk_config_setstring(cfg, str, "key%d", 0);
+    v = kyk_config_getstring(cfg, NULL, key);
+
+    mu_assert(strcmp(v, str) == 0, "Failed to get value of key0");
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_kyk_config_create);
     mu_run_test(test_kyk_config_load);
+    mu_run_test(test_kyk_config_write);
     
     return NULL;
 }

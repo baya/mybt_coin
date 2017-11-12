@@ -12,5 +12,15 @@ struct file_descriptor {
 void kyk_free_file_desc(struct file_descriptor* desc);
 int kyk_file_open(const char* name, bool ro, struct file_descriptor** fdout);
 int kyk_file_getline(struct file_descriptor *desc, char **line);
+int kyk_file_truncate(const struct file_descriptor *desc,
+		      uint64_t offset);
+
+int kyk_file_pwrite(const struct file_descriptor *desc,
+		    uint64_t offset,
+		    const void *buf,
+		    size_t len,
+		    size_t *numWritten);
+
+void kyk_file_close(struct file_descriptor *desc);
 
 #endif

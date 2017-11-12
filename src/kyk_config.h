@@ -11,19 +11,16 @@ struct config {
 };
 
 int kyk_config_load(const char* fileName, struct config **conf);
-bool kyk_config_write(struct config *conf, const char *filename);
-bool kyk_config_save(struct config *conf);
+int kyk_config_write(struct config *conf, const char *filename);
+int kyk_config_save(struct config *conf);
 
 void kyk_config_free(struct config *conf);
 
 struct config* kyk_config_create(void);
 
-char* kyk_config_getstring(struct config *config, const char *def,
-                       const char *fmt, ...);
-
-void config_setstring(struct config *config,
-		      const char *s,
-		      const char *fmt, ...);
+void kyk_config_setstring(struct config *config,
+			  const char *s,
+			  const char *fmt, ...);
 
 void kyk_print_config(struct config* cfg);
 
@@ -31,5 +28,6 @@ char* kyk_config_getstring(struct config *config,
 			   const char    *defaultStr,
 			   const char    *format,
 			   ...);
+
 
 #endif

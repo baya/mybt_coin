@@ -17,5 +17,6 @@ char* kyk_pth_concat(const char *s1, const char *s2);
 int kyk_detect_dir(const char *dir);
 char* kyk_strdup(const char* str);
 char* kyk_gethomedir();
+char* kyk_asprintf(const char *fmt, ...);
 
 #endif
