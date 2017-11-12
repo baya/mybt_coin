@@ -163,3 +163,53 @@ error:
     return -1;
 }
 
+
+int kyk_file_mkdir(const char *pathname)
+{
+    int res;
+
+    res = mkdir(pathname, S_IRWXU | S_IRGRP | S_IROTH);
+    check(res >= 0, "failed to create directory: '%s'", pathname);
+
+    return 0;
+
+error:
+    return -1;
+}
+
+
+int kyk_file_chmod(const char *filename, uint32_t mode)
+{
+    int res = 0;
+
+    res = chmod(filename, mode);
+    check(res == 0, "failed to chmod '%s'", filename);
+
+    return 0;
+
+error:
+    return -1;
+}
+
+
+int kyk_check_create_file(const char *filename,
+			  const char *label)
+{
+    int res = 0;
+
+    if (kyk_file_exists(filename)) {
+	return 0;
+    }
+
+    res = kyk_file_create(filename);
+    check(res == 0, "Failed to create %s file '%s'", label, filename);
+    
+    res = kyk_file_chmod(filename, 0600);
+    check(res == 0, "Failed to chmod 0600 %s file '%s'", label, filename);
+    
+    return 0;
+
+error:
+
+    return -1;
+}

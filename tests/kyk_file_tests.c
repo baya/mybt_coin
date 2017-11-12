@@ -25,6 +25,24 @@ char* test_kyk_file_create()
     return NULL;
 }
 
+char* test_kyk_file_mkdir()
+{
+    int res = 0;
+    res = kyk_file_mkdir("/tmp/just_tmp_test_dir");
+    mu_assert(res == 0, "failed to create directory");
+
+    return NULL;
+}
+
+char* test_kyk_file_chmod()
+{
+    int res = 0;
+    res = kyk_file_chmod("data/i_am_here.txt", 0700);
+    mu_assert(res == 0, "failed to kyk_file_chmod");
+
+    return NULL;
+}
+
 
 char *all_tests()
 {
@@ -32,6 +50,8 @@ char *all_tests()
 
     mu_run_test(test_kyk_file_exists);
     mu_run_test(test_kyk_file_create);
+    /* mu_run_test(test_kyk_file_mkdir); */
+    mu_run_test(test_kyk_file_chmod);
     
     return NULL;
 }

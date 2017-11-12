@@ -25,5 +25,10 @@ void kyk_file_close(struct file_descriptor *desc);
 
 bool kyk_file_exists(const char *filename);
 int kyk_file_create(const char *filename);
+int kyk_file_mkdir(const char *pathname);
+int kyk_file_chmod(const char *filename, uint32_t mode);
+int kyk_check_create_file(const char *filename,
+			  const char *label);
+
 
 #endif
