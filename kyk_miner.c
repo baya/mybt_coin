@@ -98,3 +98,8 @@ int match_cmd(char *src, char *cmd)
 
     return res;
 }
+
+static int kyk_check_config()
+{
+    
+}

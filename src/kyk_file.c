@@ -141,3 +141,25 @@ int kyk_file_pwrite(const struct file_descriptor *desc,
 error:
     return -1;
 }
+
+bool kyk_file_exists(const char *filename)
+{
+    struct stat s;
+
+    return stat(filename, &s) != -1;
+}
+
+int kyk_file_create(const char *filename)
+{
+    int fd;
+
+    fd = open(filename, O_CREAT, S_IRWXU|S_IRGRP|S_IROTH);
+    check(fd >= 0, "failed to create file '%s'", filename);
+
+    close(fd);
+    return 0;
+
+error:
+    return -1;
+}
+

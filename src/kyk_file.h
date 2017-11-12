@@ -23,4 +23,7 @@ int kyk_file_pwrite(const struct file_descriptor *desc,
 
 void kyk_file_close(struct file_descriptor *desc);
 
+bool kyk_file_exists(const char *filename);
+int kyk_file_create(const char *filename);
+
 #endif
