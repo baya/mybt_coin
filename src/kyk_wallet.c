@@ -1,5 +1,3 @@
-#include "kyk_wallet.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -13,19 +11,15 @@
 #include "block_store.h"
 #include "kyk_ldb.h"
 #include "kyk_blk_file.h"
-#include "dbg.h"
 #include "kyk_ser.h"
 #include "kyk_buff.h"
+#include "kyk_key.h"
+#include "kyk_wallet.h"
+#include "dbg.h"
 
 const static char* BLOCKS_DIR =  "blocks";
 const static char*  IDX_DB_NAME = "index";
 
-struct kyk_wallet {
-    char *wdir;
-    char *blk_dir;
-    char *idx_db_path;
-    struct kyk_block_db* blk_index_db;
-};
 
 static void set_init_bval(struct kyk_bkey_val *bval,
 			  const struct kyk_block* blk,
@@ -211,6 +205,37 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 error:
     if(buf) free_kyk_buff(buf);
     return -1;
+}
+
+
+int kyk_wallet_add_key(struct kyk_wallet* wallet,
+		       const char*    desc,
+		       char**         btc_addr)
+{
+    struct kyk_key* k;
+    uint8_t* privkey;
+    char* privStr;
+    size_t len;
+
+    k = kyk_key_generate_new();
+    if (k == NULL) {
+	return 1;
+    }
+    kyk_key_get_privkey(k, &privkey, &len);
+    /* privStr = b58_bytes_to_privkey(privkey, len); */
+
+    /* if (btc_addr) { */
+    /* 	uint160 pub_key; */
+    /* 	key_get_pubkey_hash160(k, &pub_key); */
+    /* 	*btc_addr = b58_pubkey_from_uint160(&pub_key); */
+    /* } */
+
+    /* wallet_alloc_key(wallet, privStr, NULL, desc, time(NULL), TRUE); */
+
+    /* free(privStr); */
+
+    /* return wallet_save_keys(wallet); */
+    return 0;
 }
 
 

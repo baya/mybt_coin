@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <openssl/pem.h>
 
+#include "kyk_utils.h"
 #include "kyk_address.h"
 #include "mu_unit.h"
 

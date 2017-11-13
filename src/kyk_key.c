@@ -90,3 +90,34 @@ void free_kyk_key(struct kyk_key* k)
 
     free(k -> pub_key);
 }
+
+
+int kyk_key_get_privkey(struct kyk_key* k,
+			uint8_t**   priv,
+			size_t*     len)
+{
+    check(priv, "priv can not be blank");
+    *priv = NULL;
+    *len = 0;
+
+    check(EC_KEY_check_key(k -> key), "invalid key");
+
+    const BIGNUM *bn = EC_KEY_get0_private_key(k->key);
+    check(bn != NULL, "invalid bn");
+    
+    *len = BN_num_bytes(bn) + 1;
+    *priv = malloc(*len);
+    check(*priv != NULL, "failed to malloc");
+    
+    BN_bn2bin(bn, *priv);
+
+    /*
+     * Compressed key.
+     */
+    (*priv)[*len - 1] = 1;
+
+    return 0;
+
+error:
+    return -1;
+}

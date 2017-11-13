@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
 	    kyk_check_config(wdir);
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
-	    printf("wallet is now in %s\n", wdir);
 	} else if(match_cmd(argv[1], "delete")){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {

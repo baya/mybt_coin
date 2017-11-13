@@ -7,14 +7,17 @@
 #include <openssl/ecdsa.h>
 
 struct kyk_key {
-    EC_KEY  *key;
-    uint8_t *pub_key;
-    size_t  pub_len;
+    EC_KEY*  key;
+    uint8_t* pub_key;
+    size_t   pub_len;
 };
-
 
 struct kyk_key* kyk_key_alloc(void);
 void free_kyk_key(struct kyk_key* k);
 struct kyk_key* kyk_key_generate_new(void);
+int kyk_key_get_privkey(struct kyk_key* k,
+			uint8_t**   priv,
+			size_t*     len);
+
 
 #endif
