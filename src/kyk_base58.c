@@ -3,6 +3,7 @@
 #include "kyk_base58.h"
 #include "kyk_sha.h"
 #include "kyk_utils.h"
+#include "dbg.h"
 
 static const char kyk_base58_alphabet[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 static int decode_char(char c, const char *enc);
@@ -112,6 +113,33 @@ int raw_decode_base58(BIGNUM *bn, const char *src, size_t len)
 
     return 1;
 
+}
+
+int kyk_decode_b58_priv(const char* src, size_t src_len, uint8_t** dst, size_t* dst_len)
+{
+    BIGNUM bn;
+    size_t bn_len = 0;
+
+    check(dst, "dst can not be NULL");
+
+    BN_init(&bn);
+
+    raw_decode_base58(&bn, src, src_len);
+
+    bn_len = BN_num_bytes(&bn);
+    *dst_len = bn_len;
+    *dst = calloc(bn_len, sizeof(uint8_t));
+    check(*dst, "failed to calloc");
+    
+    BN_bn2bin(&bn, *dst);
+
+    BN_free(&bn);
+    
+
+    return 0;
+
+error:
+    return -1;
 }
 
 

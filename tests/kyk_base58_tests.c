@@ -26,11 +26,25 @@ char* test_kyk_base58check()
     return NULL;
 }
 
+char* test_kyk_decode_b58_priv()
+{
+    char* src = "po5gXeh6avhvSWbgnT5ZQgYyNTbsbhtTmaKneuUkMEBmHxhea";
+    uint8_t *priv;
+    size_t priv_len = 0;
+    int res = -1;
+
+    res = kyk_decode_b58_priv(src, strlen(src), &priv, &priv_len);
+    mu_assert(res == 0, "failed to test decode_b58_priv")
+
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_kyk_base58check);
+    mu_run_test(test_kyk_decode_b58_priv);
     
     return NULL;
 }
