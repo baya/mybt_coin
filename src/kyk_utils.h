@@ -18,5 +18,10 @@ int kyk_detect_dir(const char *dir);
 char* kyk_strdup(const char* str);
 char* kyk_gethomedir();
 char* kyk_asprintf(const char *fmt, ...);
+int str_snprintf_bytes(char        *str,
+		       size_t       len,
+		       const uint8_t *buf,
+		       size_t       buflen);
+
 
 #endif

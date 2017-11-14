@@ -254,3 +254,25 @@ char* kyk_asprintf(const char *fmt, ...)
 error:
     return NULL;
 }
+
+
+int str_snprintf_bytes(char        *str,
+		       size_t       len,
+		       const uint8_t *buf,
+		       size_t       buflen)
+{
+    size_t idx = 0;
+    size_t i;
+
+    str[0] = '\0';
+    
+    for (i = 0; i < buflen; i++) {
+	check(idx <= len, "str_snprintf_bytes: overflow len");
+	idx += snprintf(str + idx, len - idx, "%02x", buf[i]);
+    }
+
+    return 0;
+
+error:
+    return -1;
+}
