@@ -9,11 +9,13 @@ char* test_kyk_create_wallet_key()
 {
     struct kyk_wallet_key* wkey = NULL;
     uint32_t cfg_idx = 0;
+    const char* desc = "main key";
     char* errmsg = "failed to test kyk_create_wallet_key";
     
-    wkey = kyk_create_wallet_key(cfg_idx, "main key");
+    wkey = kyk_create_wallet_key(cfg_idx, desc);
     check(wkey, "failed to kyk_create_wallet_key");
     mu_assert(wkey -> cfg_idx == cfg_idx, "failed to set the correct cfgidx");
+    mu_assert(strcmp(wkey -> desc, desc) == 0, "failed to set the correct desc");
     // printf("btc address: %s\n", wkey -> btc_addr);
     
     return NULL;
