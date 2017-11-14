@@ -24,15 +24,40 @@ error:
     return errmsg;
 }
 
+char* test_kyk_wallet_check_config()
+{
+    
+    const char* wdir = "/tmp/kyk_miner_wallet_test";
+    struct kyk_wallet* wallet = NULL;
+    char* errmsg = "failed to test kyk_wallet_check_config";
+    int res = -1;
+    
+    wallet = calloc(1, sizeof *wallet);
+    check(wallet != NULL, "failed to calloc");
+
+    res = kyk_wallet_check_config(wallet, wdir);
+    mu_assert(res == 0, "failed to test kyk_wallet_check_config");
+    mu_assert(strcmp(wallet -> wdir, wdir) == 0, "failed to get the correct wallet wdir");
+    
+
+    return NULL;
+
+error:
+    return errmsg;
+}
+
+
 char* test_wallet_add_key()
 {
     return NULL;
 }
 
+
 char* all_tests()
 {
     mu_suite_start();
     mu_run_test(test_kyk_create_wallet_key);
+    mu_run_test(test_kyk_wallet_check_config);
     mu_run_test(test_wallet_add_key);
 
     return NULL;

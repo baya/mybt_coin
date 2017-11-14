@@ -16,8 +16,6 @@
 
 #define WALLET_NAME ".kyk_miner"
 
-static int kyk_check_config(const char* wdir);
-
 int match_cmd(char *src, char *cmd);
 
 int main(int argc, char *argv[])
@@ -41,9 +39,11 @@ int main(int argc, char *argv[])
     
     if(argc == 2){
 	if(match_cmd(argv[1], "init")){
-	    kyk_check_config(wdir);
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
+	    kyk_wallet_check_config(wallet, wdir);
+	    struct kyk_wallet_key* k = kyk_create_wallet_key(0, "Main miner address");
+	    kyk_wallet_add_key(wallet, k);
 	} else if(match_cmd(argv[1], "delete")){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {
@@ -88,62 +88,3 @@ int match_cmd(char *src, char *cmd)
     return res;
 }
 
-static int kyk_check_config(const char* wdir)
-{
-    char* peers_dat_path = NULL;
-    char* txdb_path = NULL;
-    char* wallet_cfg_path = NULL;
-    char* main_cfg_path = NULL;
-    int res = 0;
-
-    peers_dat_path = kyk_asprintf("%s/peers.dat", wdir);
-    txdb_path = kyk_asprintf("%s/txdb", wdir);
-    wallet_cfg_path = kyk_asprintf("%s/wallet.cfg", wdir);
-    main_cfg_path = kyk_asprintf("%s/main.cfg", wdir);
-
-    if(!kyk_file_exists(wdir)){
-	printf("\nIt looks like you're a new user. Welcome!\n"
-	       "\n"
-	       "Note that kyk_miner uses the directory: ~/"WALLET_NAME"to store:\n"
-	       " - blocks:               ~/"WALLET_NAME"/blocks     \n"
-	       " - peer IP addresses:    ~/"WALLET_NAME"/peers.dat  \n"
-	       " - transaction database: ~/"WALLET_NAME"/txdb       \n"
-	       " - wallet keys:          ~/"WALLET_NAME"/wallet.cfg \n"
-	       " - main config file:     ~/"WALLET_NAME"/main.cfg \n\n");
-
-    } else {
-	printf("exit, node files are already in %s\n", wdir);
-	exit(0);
-    }
-
-    if(!kyk_file_exists(wdir)){
-	res = kyk_file_mkdir(wdir);
-	check(res == 0, "Failed to create directory '%s'", wdir);
-
-	res = kyk_file_chmod(wdir, 0700);
-	check(res == 0, "Failed to chmod 0700 direcotry '%s'", wdir);
-    }
-
-    res = kyk_check_create_file(peers_dat_path, "peers");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", peers_dat_path);
-    
-    kyk_check_create_file(txdb_path, "txdb");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", txdb_path);
-    
-    kyk_check_create_file(wallet_cfg_path, "wallet config");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", wallet_cfg_path);
-    
-    kyk_check_create_file(main_cfg_path, "main config");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", main_cfg_path);
-    
-
-    return 0;
-
-error:
-    free(peers_dat_path);
-    free(txdb_path);
-    free(wallet_cfg_path);
-    free(main_cfg_path);
-    
-    return -1;
-}

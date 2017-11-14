@@ -14,6 +14,8 @@
 #include "kyk_ser.h"
 #include "kyk_buff.h"
 #include "kyk_key.h"
+#include "kyk_file.h"
+#include "kyk_config.h"
 #include "kyk_wallet.h"
 #include "dbg.h"
 
@@ -26,8 +28,10 @@ static void set_init_bval(struct kyk_bkey_val *bval,
 			  const struct kyk_blk_file* blk_file
     );
 
+static int kyk_load_wallet_cfg(struct kyk_wallet* wallet);
+
 static int load_init_data_to_wallet(struct kyk_wallet *wallet);
-void kyk_set_fdir(const char* fdir);
+static int kyk_set_fdir(const char* fdir);
 struct kyk_wallet* new_wallet(const char *wdir);
 int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 			 const struct kyk_block* blk
@@ -36,11 +40,18 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 
 struct kyk_wallet* kyk_init_wallet(const char *wdir)
 {
-    int res = 0;
-    struct kyk_wallet* wallet = new_wallet(wdir);
+    int res = -1;
+    struct kyk_wallet* wallet = NULL;
+    
+    res = kyk_set_fdir(wdir);
+    check(res == 0, "failed to kyk_set_fdir");
+    
+    wallet = new_wallet(wdir);
     check(wallet != NULL, "failed to get a new wallet");
 
-    kyk_set_fdir(wallet -> blk_dir);
+    res = kyk_set_fdir(wallet -> blk_dir);
+    check(res == 0, "failed to kyk_set_fdir");
+    
     kyk_init_store_db(wallet -> blk_index_db, wallet -> idx_db_path);
     check(wallet -> blk_index_db -> errptr == NULL, "failed to init block index db");
     
@@ -79,11 +90,19 @@ error:
     return NULL;
 }
 
-void kyk_set_fdir(const char* fdir)
+int kyk_set_fdir(const char* fdir)
 {
+    int res = -1;
+    
     if(kyk_detect_dir(fdir) != 1){
-	mkdir(fdir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	res = kyk_file_mkdir(fdir);
+	check(res == 0, "failed to kyk_file_mkdir");
     }
+
+    return 0;
+
+error:
+    return -1;
 }
 
 struct kyk_wallet* kyk_open_wallet(const char *wdir)
@@ -251,10 +270,123 @@ error:
 
 }
 
+int kyk_load_wallet_cfg(struct kyk_wallet* wallet)
+{
+    struct config* cfg = NULL;
+    int res = -1;
+
+    check(wallet, "wallet can not be NULL");
+    check(wallet -> wallet_cfg_path, "wallet cfg path can not be NULL");
+    check(wallet -> wallet_cfg == NULL, "wallet cfg has already been loaded");
+
+    res = kyk_config_load(wallet -> wallet_cfg_path, &cfg);
+    check(res == 0, "failed to kyk_config_load");
+
+    wallet -> wallet_cfg = cfg;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
 
 int kyk_wallet_add_key(struct kyk_wallet* wallet,
 		       struct kyk_wallet_key* k)
 {
+    int res = -1;
+    char* k_desc = NULL;
+    struct config* w_cfg = NULL;
+    
+    if(wallet -> wallet_cfg == NULL){
+	res = kyk_load_wallet_cfg(wallet);
+	check(res == 0, "failed to kyk_load_wallet_cfg");
+	w_cfg = wallet -> wallet_cfg;
+    }
+
+    k_desc = kyk_asprintf("key%d.desc", k -> cfg_idx);
+    kyk_config_setstring(w_cfg, k -> desc, k_desc);
+
+    res = kyk_config_write(w_cfg, wallet -> wallet_cfg_path);
+    check(res == 0, "failed to kyk_config_write");
+
+    if(k_desc) free(k_desc);
+    return 0;
+
+error:
+    if(k_desc) free(k_desc);
+    return -1;
+}
+
+
+int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
+{
+    char* peers_dat_path = NULL;
+    char* txdb_path = NULL;
+    char* wallet_cfg_path = NULL;
+    char* main_cfg_path = NULL;
+    int res = 0;
+
+    peers_dat_path = kyk_asprintf("%s/peers.dat", wdir);
+    txdb_path = kyk_asprintf("%s/txdb", wdir);
+    wallet_cfg_path = kyk_asprintf("%s/wallet.cfg", wdir);
+    main_cfg_path = kyk_asprintf("%s/main.cfg", wdir);
+
+    if(!kyk_file_exists(main_cfg_path)){
+	printf("\nIt looks like you're a new user. Welcome!\n"
+	       "\n"
+	       "Note that kyk_miner uses the directory: %s to store:\n"
+	       " - blocks:               %s/blocks     \n"
+	       " - peer IP addresses:    %s/peers.dat  \n"
+	       " - transaction database: %s/txdb       \n"
+	       " - wallet keys:          %s/wallet.cfg \n"
+	       " - main config file:     %s/main.cfg \n\n",
+	       wdir,
+	       wdir,
+	       wdir,
+	       wdir,
+	       wdir,
+	       wdir
+	    );
+
+    } else {
+	printf("exit, node files are already in %s\n", wdir);
+	exit(0);
+    }
+
+    if(!kyk_file_exists(wdir)){
+	res = kyk_file_mkdir(wdir);
+	check(res == 0, "Failed to create directory '%s'", wdir);
+
+	res = kyk_file_chmod(wdir, 0700);
+	check(res == 0, "Failed to chmod 0700 direcotry '%s'", wdir);
+    }
+
+    wallet -> wdir = kyk_strdup(wdir);
+
+    res = kyk_check_create_file(peers_dat_path, "peers");
+    check(res == 0, "Failed to kyk_check_create_file '%s'", peers_dat_path);
+    
+    kyk_check_create_file(txdb_path, "txdb");
+    check(res == 0, "Failed to kyk_check_create_file '%s'", txdb_path);
+    
+    kyk_check_create_file(wallet_cfg_path, "wallet config");
+    check(res == 0, "Failed to kyk_check_create_file '%s'", wallet_cfg_path);
+    wallet -> wallet_cfg_path = wallet_cfg_path;
+    
+    kyk_check_create_file(main_cfg_path, "main config");
+    check(res == 0, "Failed to kyk_check_create_file '%s'", main_cfg_path);
+    
 
     return 0;
+
+error:
+    free(peers_dat_path);
+    free(txdb_path);
+    free(wallet_cfg_path);
+    free(main_cfg_path);
+    
+    return -1;
 }
+

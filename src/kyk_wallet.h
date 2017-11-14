@@ -22,6 +22,7 @@ struct kyk_wallet {
     char *idx_db_path;
     char *wallet_cfg_path;
     struct kyk_block_db* blk_index_db;
+    struct config* wallet_cfg;
 };
 
 struct kyk_wallet* kyk_init_wallet(const char *wdir);
@@ -38,5 +39,7 @@ struct kyk_wallet_key* kyk_create_wallet_key(uint32_t cfg_idx,
 
 int kyk_wallet_add_key(struct kyk_wallet* wallet,
 		       struct kyk_wallet_key* k);
+
+int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir);
 
 #endif
