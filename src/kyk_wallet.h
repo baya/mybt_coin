@@ -6,21 +6,21 @@
 #include "kyk_ldb.h"
 
 struct kyk_wallet_key {
-    struct key  *key;
-    time_t       birth;
+    struct kyk_key* key;
+    char        *priv_str;
     char        *desc;
     char        *btc_addr;
-    uint8_t     *pub;
-    size_t       pubLen;
-    uint160      pub_key;
+    uint8_t     *pub_key;
+    size_t       pub_len;
     uint32_t     cfg_idx;
-    bool         spendable;
 };
+
 
 struct kyk_wallet {
     char *wdir;
     char *blk_dir;
     char *idx_db_path;
+    char *wallet_cfg_path;
     struct kyk_block_db* blk_index_db;
 };
 
@@ -31,9 +31,12 @@ struct kyk_bkey_val* w_get_bval(const struct kyk_wallet* wallet,
 				 char **errptr);
 void kyk_destroy_wallet(struct kyk_wallet* wallet);
 
-int kyk_wallet_add_key(struct kyk_wallet* wallet,
-		       const char*    desc,
-		       char**         btc_addr);
+struct kyk_wallet_key* kyk_create_wallet_key(uint32_t cfg_idx,
+					     const char* desc
+    );
 
+
+int kyk_wallet_add_key(struct kyk_wallet* wallet,
+		       struct kyk_wallet_key* k);
 
 #endif

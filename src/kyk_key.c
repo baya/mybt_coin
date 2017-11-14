@@ -105,19 +105,34 @@ int kyk_key_get_privkey(struct kyk_key* k,
     const BIGNUM *bn = EC_KEY_get0_private_key(k->key);
     check(bn != NULL, "invalid bn");
     
-    *len = BN_num_bytes(bn) + 1;
+    *len = BN_num_bytes(bn);
     *priv = malloc(*len);
     check(*priv != NULL, "failed to malloc");
     
     BN_bn2bin(bn, *priv);
-
-    /*
-     * Compressed key.
-     */
-    (*priv)[*len - 1] = 1;
 
     return 0;
 
 error:
     return -1;
 }
+
+int kyk_key_cpy_pubkey(struct kyk_key *k,
+		       uint8_t     **pub,
+		       size_t    *len)
+{
+    check(pub, "pub can not be NULL");
+    
+    *pub = malloc(k->pub_len);
+    check(*pub, "failed to malloc");
+    
+    *len = k -> pub_len;
+
+    memcpy(*pub, k -> pub_key, *len);
+
+    return 0;
+
+error:
+    return -1;
+}
+

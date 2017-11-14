@@ -207,35 +207,54 @@ error:
     return -1;
 }
 
-
-int kyk_wallet_add_key(struct kyk_wallet* wallet,
-		       const char*    desc,
-		       char**         btc_addr)
+struct kyk_wallet_key* kyk_create_wallet_key(uint32_t cfg_idx,
+					     const char* desc
+    )
 {
-    struct kyk_key* k;
-    uint8_t* privkey;
-    char* privStr;
-    size_t len;
+    struct kyk_wallet_key* wkey = NULL;
+    struct kyk_key* k = NULL;
+    uint8_t* privkey = NULL;
+    uint8_t* pubkey = NULL;
+    char* privStr = NULL;
+    char* btc_addr = NULL;
+    size_t len = 0;
+    int res = -1;
 
     k = kyk_key_generate_new();
-    if (k == NULL) {
-	return 1;
-    }
+    check(k != NULL, "failed to kyk_key_generate_new");
+    
     kyk_key_get_privkey(k, &privkey, &len);
-    /* privStr = b58_bytes_to_privkey(privkey, len); */
+    check(len > 0, "failed to kyk_key_get_privkey");
+    privStr = kyk_base58check(privkey, len);
+    btc_addr = kyk_make_address_from_pub(k -> pub_key, k -> pub_len);
 
-    /* if (btc_addr) { */
-    /* 	uint160 pub_key; */
-    /* 	key_get_pubkey_hash160(k, &pub_key); */
-    /* 	*btc_addr = b58_pubkey_from_uint160(&pub_key); */
-    /* } */
+    wkey = calloc(1, sizeof *wkey);
+    check(wkey != NULL, "failed to calloc");
+    
+    wkey -> cfg_idx = cfg_idx;
+    wkey -> desc = desc ? kyk_strdup(desc) : NULL;
+    wkey -> priv_str = privStr;
+    wkey -> btc_addr = btc_addr;
+    wkey -> pub_key = pubkey;
+    res = kyk_key_cpy_pubkey(k, &wkey -> pub_key, &wkey -> pub_len);
+    check(res == 0, "failed to kyk_cpy_pubkey");
 
-    /* wallet_alloc_key(wallet, privStr, NULL, desc, time(NULL), TRUE); */
+    return wkey;
+    
+error:
+    if(k) free_kyk_key(k);
+    if(privkey) free(privkey);
+    if(btc_addr) free(btc_addr);
+    if(pubkey) free(pubkey);
+    
+    return NULL;
 
-    /* free(privStr); */
-
-    /* return wallet_save_keys(wallet); */
-    return 0;
 }
 
 
+int kyk_wallet_add_key(struct kyk_wallet* wallet,
+		       struct kyk_wallet_key* k)
+{
+
+    return 0;
+}

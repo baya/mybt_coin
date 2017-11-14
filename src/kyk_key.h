@@ -18,6 +18,9 @@ struct kyk_key* kyk_key_generate_new(void);
 int kyk_key_get_privkey(struct kyk_key* k,
 			uint8_t**   priv,
 			size_t*     len);
+int kyk_key_cpy_pubkey(struct kyk_key *k,
+		       uint8_t     **pub,
+		       size_t    *len);
 
 
 #endif
