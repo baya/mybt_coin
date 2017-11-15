@@ -22,6 +22,7 @@ char* test_generate_new_key()
     check(k != NULL, "failed to generate new key");
 
     addr = kyk_make_address_from_pub(k -> pub_key, k -> pub_len);
+    printf("addr: %s\n", addr);
     check(addr != NULL, "failed to make address");
 
     return NULL;

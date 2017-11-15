@@ -72,9 +72,9 @@ struct kyk_key* kyk_key_alloc(void)
    k = malloc(sizeof *k);
    check(k != NULL, "failed to malloc kyk_key");
    
-   k->key = EC_KEY_new_by_curve_name(NID_secp256k1);
-   k->pub_key = NULL;
-   k->pub_len = 0;
+   k -> key = EC_KEY_new_by_curve_name(NID_secp256k1);
+   k -> pub_key = NULL;
+   k -> pub_len = 0;
 
    return k;
 
