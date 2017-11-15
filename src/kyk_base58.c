@@ -68,19 +68,22 @@ char *kyk_base58(const uint8_t *bytes, size_t len)
     return str;
 }
 
-char *kyk_base58check(const uint8_t *bytes, size_t len)
+char *kyk_base58check(uint8_t addrtype, const uint8_t *bytes, size_t len)
 {
     size_t check_len;
     uint8_t *check;
     uint8_t digest[32];
     char *str;
 
-    check_len = len + 4;
+    /* prefix + payload + checksum */
+    check_len = 1 + len + 4;
     check = calloc(check_len, sizeof(char));
+    check[0] = addrtype;
+    memcpy(check + 1, bytes, len);
 
-    kyk_dgst_hash256(digest, bytes, len);
-    memcpy(check, bytes, len);
-    memcpy(check + len, digest, 4);
+    kyk_dgst_hash256(digest, check, len + 1);
+    
+    memcpy(check + 1 + len, digest, 4);
 
     str = kyk_base58(check, check_len);
     free(check);
@@ -115,10 +118,11 @@ int raw_decode_base58(BIGNUM *bn, const char *src, size_t len)
 
 }
 
-int kyk_decode_b58_priv(const char* src, size_t src_len, uint8_t** dst, size_t* dst_len)
+int kyk_base58_decode_check(const char* src, size_t src_len, uint8_t** dst, size_t* dst_len)
 {
     BIGNUM bn;
     size_t bn_len = 0;
+    uint8_t* buf = NULL;
 
     check(dst, "dst can not be NULL");
 
@@ -127,18 +131,26 @@ int kyk_decode_b58_priv(const char* src, size_t src_len, uint8_t** dst, size_t* 
     raw_decode_base58(&bn, src, src_len);
 
     bn_len = BN_num_bytes(&bn);
-    *dst_len = bn_len;
-    *dst = calloc(bn_len, sizeof(uint8_t));
+    *dst_len = bn_len - 1 - 4;
+    
+    *dst = calloc(*dst_len, sizeof(uint8_t));
     check(*dst, "failed to calloc");
     
-    BN_bn2bin(&bn, *dst);
-
-    BN_free(&bn);
+    buf = calloc(bn_len, sizeof(*buf));
+    check(dst, "failed to calloc");
     
+    BN_bn2bin(&bn, buf);
+    memcpy(*dst, buf + 1, *dst_len);
+
+    free(buf);
+    BN_free(&bn);
 
     return 0;
 
 error:
+    if(buf) free(buf);
+    if(*dst) free(*dst);
+    BN_free(&bn);
     return -1;
 }
 

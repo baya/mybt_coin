@@ -11,30 +11,73 @@
 char* test_kyk_base58check()
 {
     uint8_t priv[32] = {
-	0x6c, 0x85, 0xf3, 0x94, 0x51, 0x41, 0xa6, 0xc4,
-	0x37, 0x93, 0x56, 0x5a, 0x17, 0xc3, 0xc4, 0x69,
-	0xc4, 0xcb, 0x07, 0x8a, 0x17, 0x35, 0x2c, 0x22,
-	0x7a, 0xbb, 0xc8, 0x58, 0x95, 0x1a, 0xa0, 0xf2
+	0x1e, 0x99, 0x42, 0x3a, 0x4e, 0xd2, 0x76, 0x08,
+	0xa1, 0x5a, 0x26, 0x16, 0xa2, 0xb0, 0xe9, 0xe5,
+	0x2c, 0xed, 0x33, 0x0a, 0xc5, 0x30, 0xed, 0xcc,
+	0x32, 0xc8, 0xff, 0xc6, 0xa5, 0x26, 0xae, 0xdd	
     };
 
-    char* res = NULL;
-    char* target_res = "po5gXeh6avhvSWbgnT5ZQgYyNTbsbhtTmaKneuUkMEBmHxhea";
+    uint8_t cpriv[33];
 
-    res = kyk_base58check(priv, sizeof(priv));
-    mu_assert(strcmp(res, target_res) == 0, "Failed to get the correct base58check result");
+    char* res = NULL;
+    
+    /* WIF */
+    char* wif_res = "5J3mBbAH58CpQ3Y5RNJpUKPE62SQ5tfcvU2JpbnkeyhfsYB1Jcn";
+
+    /* WIF-compressed */
+    char* wifc_res = "KxFC1jmwwCoACiCAWZ3eXa96mBM6tb3TYzGmf6YwgdGWZgawvrtJ";
+
+    res = kyk_base58check(PRIVKEY_ADDRESS, priv, sizeof(priv));
+
+    mu_assert(strcmp(res, wif_res) == 0, "Failed to get the correct base58check result");
+
+    memcpy(cpriv, priv, 32);
+    cpriv[32] = 0x01;
+
+    res = kyk_base58check(PRIVKEY_ADDRESS, cpriv, sizeof(cpriv));
+    mu_assert(strcmp(res, wifc_res) == 0, "Failed to get the correct base58check result");
 
     return NULL;
 }
 
-char* test_kyk_decode_b58_priv()
+char* test_kyk_base58_decode_check()
 {
-    char* src = "po5gXeh6avhvSWbgnT5ZQgYyNTbsbhtTmaKneuUkMEBmHxhea";
+    uint8_t target_priv[32] = {
+	0x1e, 0x99, 0x42, 0x3a, 0x4e, 0xd2, 0x76, 0x08,
+	0xa1, 0x5a, 0x26, 0x16, 0xa2, 0xb0, 0xe9, 0xe5,
+	0x2c, 0xed, 0x33, 0x0a, 0xc5, 0x30, 0xed, 0xcc,
+	0x32, 0xc8, 0xff, 0xc6, 0xa5, 0x26, 0xae, 0xdd	
+    };
+
+    char* wif_src = "5J3mBbAH58CpQ3Y5RNJpUKPE62SQ5tfcvU2JpbnkeyhfsYB1Jcn";
     uint8_t *priv;
     size_t priv_len = 0;
     int res = -1;
 
-    res = kyk_decode_b58_priv(src, strlen(src), &priv, &priv_len);
-    mu_assert(res == 0, "failed to test decode_b58_priv")
+    res = kyk_base58_decode_check(wif_src, strlen(wif_src), &priv, &priv_len);
+    mu_assert(res == 0, "failed to test kyk_base58_decode_check");
+    mu_assert(priv_len == sizeof(target_priv), "failed to get the correct priv");
+    mu_assert(kyk_digest_eq(priv, target_priv, priv_len), "failed to get the correct priv");
+
+    free(priv);
+    priv = NULL;
+
+    /* WIF-compressed */
+    char* wifc_src = "KxFC1jmwwCoACiCAWZ3eXa96mBM6tb3TYzGmf6YwgdGWZgawvrtJ";
+    
+    /* By adding a sufix 0x01 to the target priv */
+    uint8_t target_comp_priv[33] = {
+	0x1e, 0x99, 0x42, 0x3a, 0x4e, 0xd2, 0x76, 0x08,
+	0xa1, 0x5a, 0x26, 0x16, 0xa2, 0xb0, 0xe9, 0xe5,
+	0x2c, 0xed, 0x33, 0x0a, 0xc5, 0x30, 0xed, 0xcc,
+	0x32, 0xc8, 0xff, 0xc6, 0xa5, 0x26, 0xae, 0xdd,
+	0x01
+    };
+
+    res = kyk_base58_decode_check(wifc_src, strlen(wifc_src), &priv, &priv_len);
+    mu_assert(res == 0, "failed to test kyk_base58_decode_check");
+    mu_assert(priv_len == sizeof(target_comp_priv), "failed to get the correct priv");
+    mu_assert(kyk_digest_eq(priv, target_comp_priv, priv_len), "failed to get the correct priv");
 
     return NULL;
 }
@@ -44,7 +87,7 @@ char *all_tests()
     mu_suite_start();
     
     mu_run_test(test_kyk_base58check);
-    mu_run_test(test_kyk_decode_b58_priv);
+    mu_run_test(test_kyk_base58_decode_check);
     
     return NULL;
 }
