@@ -102,7 +102,7 @@ int kyk_key_get_privkey(struct kyk_key* k,
 
     check(EC_KEY_check_key(k -> key), "invalid key");
 
-    const BIGNUM *bn = EC_KEY_get0_private_key(k->key);
+    const BIGNUM *bn = EC_KEY_get0_private_key(k -> key);
     check(bn != NULL, "invalid bn");
     
     *len = BN_num_bytes(bn);
