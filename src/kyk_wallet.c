@@ -19,6 +19,8 @@
 #include "kyk_wallet.h"
 #include "dbg.h"
 
+#define WCFG_NUM_KEYS "numKeys"
+
 const static char* BLOCKS_DIR =  "blocks";
 const static char*  IDX_DB_NAME = "index";
 
@@ -298,6 +300,8 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
     int res = -1;
     struct config* w_cfg = NULL;
     char pubStr[256];
+    char* numKeysVal = NULL;
+    int64_t numKeys = 0;
     
     if(wallet -> wallet_cfg == NULL){
 	res = kyk_load_wallet_cfg(wallet);
@@ -305,15 +309,29 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
 	w_cfg = wallet -> wallet_cfg;
     }
 
+    numKeysVal = kyk_config_getstring(w_cfg, "0", WCFG_NUM_KEYS);
+    check(numKeysVal, "failed to kyk_config_getstring");
+    numKeys = atol(numKeysVal);
+
     res = str_snprintf_bytes(pubStr, sizeof(pubStr), k -> pub_key, k -> pub_len);
     check(res == 0, "failed to str_snprintf_bytes");
     
-    kyk_config_setstring(w_cfg, k -> desc, "key%u.desc", k -> cfg_idx);
-    kyk_config_setstring(w_cfg, k -> priv_str, "key%u.privkey", k -> cfg_idx);
-    kyk_config_setstring(w_cfg, pubStr, "key%u.pubkey", k -> cfg_idx);
-    kyk_config_setstring(w_cfg, k -> btc_addr, "key%u.address", k -> cfg_idx);
+    res = kyk_config_setstring(w_cfg, k -> desc, "key%u.desc", k -> cfg_idx);
+    check(res == 0, "failed to kyk_config_setstring");
     
+    res = kyk_config_setstring(w_cfg, k -> priv_str, "key%u.privkey", k -> cfg_idx);
+    check(res == 0, "failed to kyk_config_setstring");
+    
+    res = kyk_config_setstring(w_cfg, pubStr, "key%u.pubkey", k -> cfg_idx);
+    check(res == 0, "failed to kyk_config_setstring");
+    
+    res = kyk_config_setstring(w_cfg, k -> btc_addr, "key%u.address", k -> cfg_idx);
+    check(res == 0, "failed to kyk_config_setstring");
 
+    numKeys += 1;
+    res = kyk_config_setint64(w_cfg, numKeys, WCFG_NUM_KEYS);
+    check(res == 0, "failed to kyk_config_setint64");
+    
     res = kyk_config_write(w_cfg, wallet -> wallet_cfg_path);
     check(res == 0, "failed to kyk_config_write");
 

@@ -90,6 +90,29 @@ char* test_kyk_config_setstring()
     return NULL;
 }
 
+char* test_kyk_config_setint64()
+{
+    struct config* cfg = kyk_config_create();
+    char* key = "key";
+    int64_t val = 100;
+    int64_t v = 0;
+    int res = -1;
+    char* errmsg = "failed to test kyk_config_setint64";
+
+    res = kyk_config_setint64(cfg, val, key);
+    check(res == 0, "failed to kyk_config_setint64");
+
+    res = kyk_config_getint64(cfg, &v, 0, key);
+    check(0 == res, "failed to kyk_config_getint64");
+    mu_assert(100 == v, "Failed to get the correct value of key");
+    
+    return NULL;
+
+error:
+
+    return errmsg;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -97,6 +120,7 @@ char *all_tests()
     mu_run_test(test_kyk_config_create);
     mu_run_test(test_kyk_config_load);
     mu_run_test(test_kyk_config_write);
+    mu_run_test(test_kyk_config_setint64);
     
     return NULL;
 }

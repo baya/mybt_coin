@@ -18,9 +18,9 @@ void kyk_config_free(struct config *conf);
 
 struct config* kyk_config_create(void);
 
-void kyk_config_setstring(struct config *config,
-			  const char *s,
-			  const char *fmt, ...);
+int kyk_config_setstring(struct config *config,
+			 const char *s,
+			 const char *fmt, ...);
 
 void kyk_print_config(struct config* cfg);
 
@@ -29,5 +29,15 @@ char* kyk_config_getstring(struct config *config,
 			   const char    *format,
 			   ...);
 
+int kyk_config_setint64(struct config *config,
+			int64_t          val,
+			const char    *fmt,
+			...);
+
+int kyk_config_getint64(struct config *config,
+			int64_t* val,
+			int64_t       defaultValue,
+			const char    *format,
+			...);
 
 #endif

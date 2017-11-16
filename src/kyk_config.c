@@ -420,10 +420,10 @@ error:
 }
 
 
-void kyk_config_setstring(struct config *config,
-			  const char    *str,
-			  const char    *fmt,
-			  ...)
+int kyk_config_setstring(struct config *config,
+			 const char    *str,
+			 const char    *fmt,
+			 ...)
 {
     struct KeyValuePair *ev;
     char key[1024];
@@ -448,13 +448,104 @@ void kyk_config_setstring(struct config *config,
     }
     ev -> save = 1;
     ev -> u.str = str ? kyk_strdup(str) : NULL;
+    
+    return 0;
 
 error:
-    return;
+    return -1;
 }
 
 
 int kyk_config_save(struct config *conf)
 {
     return kyk_config_write(conf, NULL);
+}
+
+
+int kyk_config_setint64(struct config *config,
+			int64_t          val,
+			const char    *fmt,
+			...)
+{
+    struct KeyValuePair *ev;
+    char key[1024];
+    va_list ap;
+
+    va_start(ap, fmt);
+    vsnprintf(key, sizeof key, fmt, ap);
+    va_end(ap);
+
+    ev = kyk_config_get(config, key);
+
+    if (ev) {
+	if (ev -> type == CONFIG_KV_UNKNOWN) {
+	    free(ev -> u.str);
+	    ev -> u.str = NULL;
+	} else {
+	    check(ev -> type == CONFIG_KV_INT64, "ev type should be CONFIG_KV_INT64");
+	}
+    } else {
+	ev = malloc(sizeof *ev);
+	check(ev, "failed to malloc");
+	ev -> key  = kyk_strdup(key);
+	ev -> type = CONFIG_KV_INT64;
+	kyk_config_insert(config, ev);
+    }
+    ev -> save = 1;
+    ev -> u.val = val;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+
+int kyk_config_getint64(struct config *config,
+			int64_t* val,
+			int64_t       defaultValue,
+			const char    *format,
+			...)
+{
+    struct KeyValuePair *ev;
+    char key[1024];
+    va_list ap;
+    int res = -1;
+
+    check(config, "config can not be NULL");
+    check(format, "format can not be NULL");
+
+    va_start(ap, format);
+    vsnprintf(key, sizeof key, format, ap);
+    va_end(ap);
+
+    ev = kyk_config_get(config, key);
+
+    if (ev) {
+	if (ev -> type == CONFIG_KV_UNKNOWN) {
+	    int64_t v = atoll(ev -> u.str);
+	    free(ev -> u.str);
+	    ev -> u.val = v;
+	    ev -> type = CONFIG_KV_INT64;
+	} else {
+	    check(ev-> type == CONFIG_KV_INT64, "ev type should be CONFIG_KV_INT64");
+	}
+	*val = ev -> u.val;
+	
+    } else {
+	res = kyk_config_setint64(config, defaultValue, "%s", key);
+	check(res == 0, "failed to kyk_config_seint64");
+	ev = kyk_config_get(config, key);
+	check(ev, "failed to kyk_config_get");
+	
+	ev -> save = 0;
+	*val = defaultValue;
+    }
+
+    return 0;
+
+error:
+
+    return -1;
 }

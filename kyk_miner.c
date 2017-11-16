@@ -17,6 +17,11 @@
 #define WALLET_NAME ".kyk_miner"
 #define MAIN_ADDR_LABEL "Main Miner Address"
 
+#define CMD_INIT        "init"
+#define CMD_DELETE      "delete"
+#define CMD_ADD_ADDRESS "addAddress"
+#define CMD_QUERY_BLOCK "queryBlock"
+
 int match_cmd(char *src, char *cmd);
 int set_main_address(struct kyk_wallet* wallet);
 
@@ -26,6 +31,7 @@ int main(int argc, char *argv[])
     char *hmdir = NULL;
     char *wdir = NULL;
     char *errptr = NULL;
+    int res = -1;
 
     hmdir = kyk_gethomedir();
     check(hmdir != NULL, "failed to find the current dir");
@@ -34,9 +40,10 @@ int main(int argc, char *argv[])
 
     if(argc == 1){
 	printf("usage: %s command [args]\n", argv[0]);
-	printf("init a wallet: %s init\n", argv[0]);
-	printf("query block: %s getblock [block hash]\n", argv[0]);
-	printf("delete wallet: %s delete\n", argv[0]);
+	printf("init a wallet: %s " CMD_INIT "\n", argv[0]);
+	printf("add address: %s " CMD_ADD_ADDRESS "\n", argv[0]);
+	printf("query block: %s " CMD_QUERY_BLOCK "[block hash]\n", argv[0]);
+	printf("delete wallet: %s " CMD_DELETE "\n", argv[0]);
     }
     
     if(argc == 2){
@@ -44,7 +51,8 @@ int main(int argc, char *argv[])
 	    wallet = kyk_init_wallet(wdir);
 	    check(wallet != NULL, "failed to init wallet");
 	    kyk_wallet_check_config(wallet, wdir);
-	    set_main_address(wallet);
+	    res = set_main_address(wallet);
+	    check(res == 0, "failed to set_main_address");
 	} else if(match_cmd(argv[1], "delete")){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {
@@ -53,7 +61,7 @@ int main(int argc, char *argv[])
     }
 
     if(argc == 3){
-	if(match_cmd(argv[1], "getblock")){
+	if(match_cmd(argv[1], CMD_QUERY_BLOCK)){
 	    struct kyk_bkey_val* bval = NULL;
 	    wallet = kyk_open_wallet(wdir);
 	    check(wallet != NULL, "failed to open wallet");
@@ -65,6 +73,9 @@ int main(int argc, char *argv[])
 		kyk_print_bval(bval);
 		kyk_free_bval(bval);
 	    }
+	} else if(match_cmd(argv[1], CMD_ADD_ADDRESS)){
+	} else {
+	    printf("invalid command %s\n", argv[1]);
 	}
     }
 
@@ -81,10 +92,9 @@ error:
 
 int match_cmd(char *src, char *cmd)
 {
-    size_t count = strlen(cmd);
     int res = 0;
     
-    res = strncmp(src, cmd, count) == 0 ? 1 : 0;
+    res = strcasecmp(src, cmd) == 0 ? 1 : 0;
 
     return res;
 }
