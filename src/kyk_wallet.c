@@ -395,3 +395,17 @@ error:
     return -1;
 }
 
+
+void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
+{
+    if(k == NULL){
+	return;
+    }
+
+    if(k -> key) free_kyk_key(k -> key);
+    if(k -> priv_str) free(k -> priv_str);
+    if(k -> desc) free(k -> desc);
+    if(k -> btc_addr) free(k -> btc_addr);
+    if(k -> pub_key) free(k -> pub_key);
+}
+

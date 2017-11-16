@@ -42,4 +42,6 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
 
 int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir);
 
+void kyk_destroy_wallet_key(struct kyk_wallet_key* k);
+
 #endif

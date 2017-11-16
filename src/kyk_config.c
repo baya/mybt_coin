@@ -316,9 +316,6 @@ char* kyk_config_getstring(struct config *config,
 	}
 	res = ev -> u.str ? kyk_strdup(ev -> u.str) : NULL;
     } else {
-	/* config_setstring(config, defaultStr, "%s", key); */
-	/* ev = kyk_config_get(config, key); */
-	/* ev -> save = 0; */
 	res = defaultStr ? kyk_strdup(defaultStr) : NULL;
     }
 
