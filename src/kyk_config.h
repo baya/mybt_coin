@@ -40,4 +40,6 @@ int kyk_config_getint64(struct config *config,
 			const char    *format,
 			...);
 
+int kyk_config_get_cfg_idx(const struct config* cfg, int* idx);
+
 #endif

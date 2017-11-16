@@ -24,6 +24,7 @@
 
 int match_cmd(char *src, char *cmd);
 int set_main_address(struct kyk_wallet* wallet);
+int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
 
 int main(int argc, char *argv[])
 {
@@ -74,6 +75,11 @@ int main(int argc, char *argv[])
 		kyk_free_bval(bval);
 	    }
 	} else if(match_cmd(argv[1], CMD_ADD_ADDRESS)){
+	    wallet = kyk_open_wallet(wdir);
+	    check(wallet, "failed to open wallet");
+	    res = kyk_wallet_check_config(wallet, wdir);
+	    check(res == 0, "failed to kyk_wallet_check_config");
+	    cmd_add_address(wallet, argv[2]);
 	} else {
 	    printf("invalid command %s\n", argv[1]);
 	}
@@ -102,18 +108,31 @@ int match_cmd(char *src, char *cmd)
 int set_main_address(struct kyk_wallet* wallet)
 {
     int res = -1;
-    struct kyk_wallet_key* k = kyk_create_wallet_key(0, MAIN_ADDR_LABEL);
-    check(k, "failed to kyk_create_wallet_key");
-    
-    res = kyk_wallet_add_key(wallet, k);
-    check(res == 0, "failed to kyk_wallet_add_key");
 
-    kyk_destroy_wallet_key(k);
+    res = kyk_wallet_add_address(wallet, MAIN_ADDR_LABEL);
+    check(res == 0, "failed to kyk_wallet_add_address");
+    
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int cmd_add_address(struct kyk_wallet* wallet, const char* desc)
+{
+    int res = -1;
+    
+    check(wallet, "wallet can not be NULL");
+    check(desc, "address desc can not be NULL");
+    
+    res = kyk_wallet_add_address(wallet, desc);
+    check(res == 0, "failed to kyk_wallet_add_address");
 
     return 0;
 
 error:
-    kyk_destroy_wallet_key(k);
-    return -1;
+
+    exit(1);
 }
 

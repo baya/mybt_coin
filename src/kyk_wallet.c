@@ -39,6 +39,7 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 			 const struct kyk_block* blk
     );
 
+int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
 
 struct kyk_wallet* kyk_init_wallet(const char *wdir)
 {
@@ -272,6 +273,29 @@ error:
 
 }
 
+int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx)
+{
+    int res = -1;
+    struct config* w_cfg = NULL;
+
+    if(wallet -> wallet_cfg == NULL){
+	res = kyk_load_wallet_cfg(wallet);
+	check(0 == res, "failed to kyk_load_wallet_cfg");
+    }
+
+    w_cfg = wallet -> wallet_cfg;
+
+    res = kyk_config_get_cfg_idx(w_cfg, cfg_idx);
+    check(res == 0, "failed to kyk_config_get_cfg_idx");
+
+    return 0;
+
+error:
+
+    return -1;
+
+}
+
 int kyk_load_wallet_cfg(struct kyk_wallet* wallet)
 {
     struct config* cfg = NULL;
@@ -300,18 +324,13 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
     int res = -1;
     struct config* w_cfg = NULL;
     char pubStr[256];
-    char* numKeysVal = NULL;
-    int64_t numKeys = 0;
     
     if(wallet -> wallet_cfg == NULL){
 	res = kyk_load_wallet_cfg(wallet);
-	check(res == 0, "failed to kyk_load_wallet_cfg");
-	w_cfg = wallet -> wallet_cfg;
+	check(res == 0, "failed to kyk_load_wallet_cfg");	
     }
 
-    numKeysVal = kyk_config_getstring(w_cfg, "0", WCFG_NUM_KEYS);
-    check(numKeysVal, "failed to kyk_config_getstring");
-    numKeys = atol(numKeysVal);
+    w_cfg = wallet -> wallet_cfg;
 
     res = str_snprintf_bytes(pubStr, sizeof(pubStr), k -> pub_key, k -> pub_len);
     check(res == 0, "failed to str_snprintf_bytes");
@@ -328,10 +347,6 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
     res = kyk_config_setstring(w_cfg, k -> btc_addr, "key%u.address", k -> cfg_idx);
     check(res == 0, "failed to kyk_config_setstring");
 
-    numKeys += 1;
-    res = kyk_config_setint64(w_cfg, numKeys, WCFG_NUM_KEYS);
-    check(res == 0, "failed to kyk_config_setint64");
-    
     res = kyk_config_write(w_cfg, wallet -> wallet_cfg_path);
     check(res == 0, "failed to kyk_config_write");
 
@@ -339,6 +354,34 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
 
 error:
     
+    return -1;
+}
+
+int kyk_wallet_add_address(struct kyk_wallet* wallet, const char* desc)
+{
+    int res = -1;
+    int idx = -1;
+    struct kyk_wallet_key* k = NULL;
+
+    check(wallet, "wallet can not be NULL");
+    check(desc, "address desc can not be NULL");
+
+    res = kyk_wallet_get_cfg_idx(wallet, &idx);
+    check(res == 0, "failed to kyk_wallet_get_cfg_idx");
+
+    k = kyk_create_wallet_key(idx, desc);
+    check(k, "failed to kyk_create_wallet_key");
+
+    res = kyk_wallet_add_key(wallet, k);
+    check(res == 0, "failed to kyk_wallet_add_key");
+
+    kyk_destroy_wallet_key(k);
+
+    return 0;
+    
+error:
+
+    kyk_destroy_wallet_key(k);
     return -1;
 }
 
@@ -374,8 +417,8 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
 	    );
 
     } else {
-	printf("exit, node files are already in %s\n", wdir);
-	exit(0);
+	/* printf("exit, node files are already in %s\n", wdir); */
+	/* exit(0); */
     }
 
     if(!kyk_file_exists(wdir)){

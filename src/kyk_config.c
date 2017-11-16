@@ -549,3 +549,24 @@ error:
 
     return -1;
 }
+
+int kyk_config_get_cfg_idx(const struct config* cfg, int* idx)
+{
+    struct KeyValuePair* ev = NULL;
+
+    *idx = 0;
+
+    check(cfg, "cfg can not be NULL");
+
+    ev = cfg -> list;
+    while(ev){
+	ev = ev -> next;
+	idx += 1;
+    }
+
+    return 0;
+
+error:
+
+    return -1;
+}

@@ -113,6 +113,25 @@ error:
     return errmsg;
 }
 
+char* test_kyk_config_get_cfg_idx()
+{
+    struct config* cfg = kyk_config_create();
+    int res = -1;
+    int idx = -1;
+    char* errmsg = "failed to test kyk_config_get_cfg_idx";
+
+    res = kyk_config_get_cfg_idx(cfg, &idx);
+    check(res == 0, "failed to kyk_config_get_cfg_idx");
+
+    mu_assert(0 == idx, "failed to test kyk_config_get_cfg_idx");
+
+    return NULL;
+    
+error:
+
+    return errmsg;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -121,6 +140,7 @@ char *all_tests()
     mu_run_test(test_kyk_config_load);
     mu_run_test(test_kyk_config_write);
     mu_run_test(test_kyk_config_setint64);
+    mu_run_test(test_kyk_config_get_cfg_idx);
     
     return NULL;
 }
