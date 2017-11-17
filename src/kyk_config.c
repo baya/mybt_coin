@@ -263,7 +263,7 @@ static void kyk_config_insert(struct config *config,
 
     while (item && strcmp(item -> key, ev -> key) < 0) {
 	prev = item;
-	item = item -> next;
+	item = item->next;
     }
     if (prev) {
 	ev -> next = prev -> next;
@@ -553,17 +553,18 @@ error:
 int kyk_config_get_cfg_idx(const struct config* cfg, int* idx)
 {
     struct KeyValuePair* ev = NULL;
-    int i = 0;
+
+    *idx = 0;
 
     check(cfg, "cfg can not be NULL");
 
     ev = cfg -> list;
     while(ev){
 	ev = ev -> next;
-	i += 1;
+	*idx += 1;
     }
 
-    *idx = i / CFG_KEY_COL_COUNT;
+    *idx = *idx / CFG_KEY_COL_COUNT;
 
     return 0;
 

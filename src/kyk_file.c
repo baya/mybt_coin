@@ -93,8 +93,6 @@ int kyk_file_truncate(const struct file_descriptor *desc,
 {
     int res = 0;
 
-    printf("FILE: truncating '%s' to size %llu\n", desc -> name, offset);
-
     res = ftruncate(desc -> fd, offset);
     check(res == 0, "FILE: failed to ftruncate");
 

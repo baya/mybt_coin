@@ -375,6 +375,8 @@ int kyk_wallet_add_address(struct kyk_wallet* wallet, const char* desc)
     res = kyk_wallet_add_key(wallet, k);
     check(res == 0, "failed to kyk_wallet_add_key");
 
+    printf("Added a new address: %s\n", k -> btc_addr);
+
     kyk_destroy_wallet_key(k);
 
     return 0;
