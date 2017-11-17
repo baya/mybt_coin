@@ -305,7 +305,7 @@ int kyk_load_wallet_cfg(struct kyk_wallet* wallet)
     check(wallet -> wallet_cfg_path, "wallet cfg path can not be NULL");
     check(wallet -> wallet_cfg == NULL, "wallet cfg has already been loaded");
 
-    res = kyk_config_load(wallet -> wallet_cfg_path, &cfg);
+    res = kyk_config_load(wallet -> wallet_cfg_path, &cfg);    
     check(res == 0, "failed to kyk_config_load");
 
     wallet -> wallet_cfg = cfg;

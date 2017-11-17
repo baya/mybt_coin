@@ -3,6 +3,8 @@
 
 #include "kyk_defs.h"
 
+#define CFG_KEY_COL_COUNT 4
+
 struct KeyValuePair;
 
 struct config {
