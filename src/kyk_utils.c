@@ -7,6 +7,7 @@
 #include <pwd.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 #include "kyk_utils.h"
 #include "dbg.h"
@@ -274,5 +275,33 @@ int str_snprintf_bytes(char        *str,
     return 0;
 
 error:
+    return -1;
+}
+
+int kyk_get_suffix_digest(const char* str, int* num)
+{
+    char tmp[11];
+    size_t i = 0;
+    size_t j = 0;
+    size_t len = strlen(str);
+    size_t max_size = sizeof(tmp) - 1;
+
+    for(i = 0; i < len; i++){
+	char c = str[i];
+	if(isdigit(c)){
+	    tmp[j] = c;
+	    j++;
+	    check(j < max_size, "over max size %lu", max_size);
+	} else {
+	    j = 0;
+	}
+    }
+
+    *num = strtol(tmp, NULL, 10);
+
+    return 0;
+
+error:
+
     return -1;
 }
