@@ -15,7 +15,19 @@ char* test_get_suffix_digest()
     res = kyk_get_suffix_digest(str, &num);
     mu_assert(res == 0, "failed to kyk_get_suffix_digest");
     mu_assert(num == 99, "failed to get the correct value");
-    
+
+    char* longStr = "key10ua12345678901";
+    num = 0;
+    res = kyk_get_suffix_digest(longStr, &num);
+    mu_assert(res == -1, "should be over size");
+    mu_assert(num == 0, "should be 0");
+
+    char* longStr2 = "key10ua1234567890";
+    num = 0;
+    res = kyk_get_suffix_digest(longStr2, &num);
+    mu_assert(res == 0, "failed to kyk_get_suffix_digest");
+    mu_assert(num == 1234567890, "failed to get the correct value");
+
     return NULL;
 }
 

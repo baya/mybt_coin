@@ -289,9 +289,9 @@ int kyk_get_suffix_digest(const char* str, int* num)
     for(i = 0; i < len; i++){
 	char c = str[i];
 	if(isdigit(c)){
+	    check(j < max_size, "over max size %lu", max_size);
 	    tmp[j] = c;
 	    j++;
-	    check(j < max_size, "over max size %lu", max_size);
 	} else {
 	    j = 0;
 	}
