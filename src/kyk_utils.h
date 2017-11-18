@@ -24,6 +24,7 @@ int str_snprintf_bytes(char        *str,
 		       size_t       buflen);
 
 int kyk_get_suffix_digest(const char* str, int* num);
+int kyk_get_first_digest(const char* str, int* num);
 
 
 #endif

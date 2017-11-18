@@ -31,6 +31,34 @@ char* test_get_suffix_digest()
     return NULL;
 }
 
+
+char* test_get_first_digest()
+{
+    char* str = "ke1";
+    int num = 0;
+    int res = -1;
+    errno = 0;
+
+    res = kyk_get_first_digest(str, &num);
+    mu_assert(res == 0, "failed to kyk_get_suffix_digest");
+    mu_assert(num == 1, "failed to get the correct value");
+
+    char* longStr = "keyua12345678901ad10";
+    num = 0;
+    res = kyk_get_suffix_digest(longStr, &num);
+    mu_assert(res == -1, "should be over size");
+    mu_assert(num == 0, "should be 0");
+
+    char* longStr2 = "keyua1234567890a334309";
+    num = 0;
+    res = kyk_get_first_digest(longStr2, &num);
+    mu_assert(res == 0, "failed to kyk_get_suffix_digest");
+    mu_assert(num == 1234567890, "failed to get the correct value");
+    
+
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();

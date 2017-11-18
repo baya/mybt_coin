@@ -553,18 +553,24 @@ error:
 int kyk_config_get_cfg_idx(const struct config* cfg, int* idx)
 {
     struct KeyValuePair* ev = NULL;
-
-    *idx = 0;
+    
+    int res = -1;
 
     check(cfg, "cfg can not be NULL");
+    
+    *idx = 0;
 
     ev = cfg -> list;
     while(ev){
-	ev = ev -> next;
-	*idx += 1;
+	if(ev -> next == NULL){
+	    res = kyk_get_first_digest(ev -> key, idx);
+	    check(res == 0, "failed to kyk_get_first_digest");
+	    *idx += 1;
+	    break;
+	} else {
+	    ev = ev -> next;
+	}
     }
-
-    *idx = *idx / CFG_KEY_COL_COUNT;
 
     return 0;
 
