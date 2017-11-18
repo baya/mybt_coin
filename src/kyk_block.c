@@ -150,3 +150,4 @@ size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
 error:
     return 0;
 }
+

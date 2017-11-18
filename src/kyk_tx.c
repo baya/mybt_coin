@@ -6,14 +6,16 @@
 #include "varint.h"
 #include "beej_pack.h"
 #include "kyk_utils.h"
+#include "dbg.h"
 
 
 static size_t kyk_seri_txin(unsigned char *buf, struct kyk_txin *txin);
 static size_t kyk_seri_txin_list(unsigned char *buf, struct kyk_txin *txin, size_t count);
 static size_t kyk_seri_txout(unsigned char *buf, struct kyk_txout *txout);
-size_t kyk_seri_txout_list(unsigned char *buf, struct kyk_txout *txout, size_t count);
-void kyk_free_txin(struct kyk_txin *txin);
-void kyk_free_txout(struct kyk_txout *txout);
+static size_t kyk_seri_txout_list(unsigned char *buf, struct kyk_txout *txout, size_t count);
+static void kyk_free_txin(struct kyk_txin *txin);
+static void kyk_free_txout(struct kyk_txout *txout);
+static int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note);
 
 
 size_t kyk_seri_tx(unsigned char *buf, struct kyk_tx *tx)
@@ -201,3 +203,84 @@ void kyk_free_txout(struct kyk_txout *txout)
     if(txout -> sc) free(txout -> sc);
     if(txout) free(txout);
 }
+
+int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note)
+{
+    unsigned char cb_tmp[1000] = {0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04};
+    size_t cb_len = 7;
+    size_t cb_note_len = strlen(cb_note);
+
+    cb_tmp[7] = (uint8_t) cb_note_len;
+    cb_len += 1;
+
+    memcpy(cb_tmp + 8, cb_note, cb_note_len);
+    cb_len += cb_note_len;
+
+    txin -> sc_size = cb_len;
+    check(txin -> sc_size < MAX_COINBASE_SC_LEN, "Failed to kyk_make_coinbase: over MAX_COINBASE_SC_LEN");
+
+    txin -> sc = malloc(txin -> sc_size * sizeof(unsigned char));
+    check(txin -> sc, "Failed to kyk_make_coinbase: malloc error");
+    
+    memcpy(txin -> sc, cb_tmp, txin -> sc_size);
+
+    return 0;
+
+error:
+    return -1;
+}
+
+int kyk_make_coinbase_tx(struct kyk_tx** tx,
+			 const char* note,
+			 uint64_t outValue,
+			 const char* pub,
+			 size_t pub_len
+    )
+{
+    struct kyk_txin* txin;
+    struct kyk_txout* txout;
+    char *addr = NULL;
+    uint8_t sc_pbk[MAX_SC_PUB_LEN];
+    struct kyk_tx* txcpy = NULL;
+
+    check(tx, "Failed to kyk_make_coinbase_tx: tx can not be NULL");
+
+    txcpy = (struct kyk_tx*)calloc(1, sizeof(struct kyk_tx));
+    check(txcpy, "Failed to kyk_make_coinbase_tx: tx calloc error");
+
+    txcpy -> version = 1;
+    txcpy -> vin_sz = 1;
+    txcpy -> lock_time = 0;
+    txcpy -> txin = calloc(txcpy -> vin_sz, sizeof(struct kyk_txin));
+    check(txcpy -> txin, "Failed to kyk_make_coinbase_tx: txin calloc error");
+    
+    txcpy -> vout_sz = 1;
+    txcpy -> txout = calloc(txcpy -> vout_sz, sizeof(struct kyk_txout));
+    check(txcpy -> txout, "Failed to kyk_make_coinbase_tx: txout calloc error");
+    
+    txin = txcpy -> txin;
+    txout =txcpy -> txout;
+
+    memset(txin -> pre_txid, KYK_COINBASE_PRE_TX_BYTE, sizeof(txin -> pre_txid));
+    txin -> pre_tx_inx = KYK_COINBASE_PRE_TX_INX;
+    kyk_make_coinbase_sc(txin, note);
+    
+    txin -> seq_no = KYK_COINBASE_SEQ_NO;
+    txout -> value = outValue;
+
+    /* addr = make_address_from_pem(GENS_PEM); */
+
+    txout -> sc_size = p2pkh_sc_from_address(sc_pbk, addr);
+    txout -> sc = calloc(txout -> sc_size, sizeof(uint8_t));
+    memcpy(txout -> sc, sc_pbk, txout -> sc_size);
+
+    *tx = txcpy;
+
+    return 0;
+
+error:
+
+    return -1;
+
+}
+
