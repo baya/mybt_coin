@@ -69,12 +69,51 @@ char* test_make_address_from_pubkey()
     return NULL;
 }
 
+char* test2_make_address_from_pubkey()
+{
+    uint8_t pubkey[] = {
+	0x03, 0xef, 0x50, 0x92, 0x20, 0x0f, 0x49, 0xae,
+	0x02, 0x6c, 0xf6, 0xe5, 0xa8, 0x5d, 0x49, 0xcb,
+	0x19, 0x4b, 0x9f, 0x89, 0x44, 0x48, 0xe9, 0x4f,
+	0x7e, 0x75, 0x22, 0xeb, 0x9e, 0xfa, 0x72, 0xbe,
+	0xe3
+    };
+
+    char* target_addr = "12f7cbrBn9Xupes1yrFevuMkRM7bXoey6d";
+    char* addr = NULL;
+
+    addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));
+    mu_assert(strcmp(addr, target_addr) == 0, "failed to get the correct address");
+    
+    return NULL;
+}
+
+char* test3_make_address_from_pubkey()
+{
+    uint8_t pubkey[] = {
+	0x02, 0xd9, 0x7b, 0x41, 0x2a, 0x3d, 0x69, 0x0f,
+	0xc6, 0x89, 0xa7, 0x8d, 0x43, 0xac, 0xbc, 0x37,
+	0x84, 0xa6, 0x57, 0xf0, 0x45, 0xf4, 0x40, 0x5c,
+	0x8f, 0xa7, 0x4d, 0x2f, 0x41, 0x96, 0x8e, 0xb9,
+	0x48	
+    };
+
+    char* target_addr = "12ZYkesYJNdHmg3DPxx64LhYWq8Ddmx3HW";
+    char* addr = NULL;
+
+    addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));
+    mu_assert(strcmp(addr, target_addr) == 0, "failed to get the correct address");
+    
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_make_address);
     mu_run_test(test_make_address_from_pubkey);
+    mu_run_test(test2_make_address_from_pubkey);
     
     return NULL;
 }
