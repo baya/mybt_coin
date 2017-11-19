@@ -12,7 +12,7 @@ static void set_chksum_byte(uint8_t *dgst8,
 
 static uint8_t MAIN_NW = 0x00;
 
-char *kyk_make_address_from_pub(uint8_t *pub, size_t pub_len)
+char *kyk_make_address_from_pubkey(uint8_t *pub, size_t pub_len)
 {
     uint8_t dgst2[SHA256_DIGEST_LENGTH];
     uint8_t dgst3[20];
@@ -101,7 +101,7 @@ char *kyk_make_address(const uint8_t *priv_bytes)
      */
     res = (size_t)i2o_ECPublicKey(key, &pub_copy);
     check(res == pub_len, "failed to get public key");
-    dgst9 = kyk_make_address_from_pub(pub, pub_len);
+    dgst9 = kyk_make_address_from_pubkey(pub, pub_len);
 
     EC_KEY_free(key);
 

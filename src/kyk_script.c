@@ -30,6 +30,10 @@ static int kyk_sc_cmpitem(const struct kyk_sc_stk_item *item1,
 			  const struct kyk_sc_stk_item *item2);
 static void free_sc_stack(struct kyk_sc_stack *stk);
 
+int build_p2pkh_sc_from_pubkey()
+{
+    return 0;
+}
 
 
 size_t p2pkh_sc_from_address(unsigned char *sc, const char *addr)
@@ -300,7 +304,7 @@ struct kyk_sc_stk_item * kyk_sc_pop_stack(struct kyk_sc_stack *stk)
 
     item = stk -> top;
     stk -> top--;
-    stk -> hgt --;
+    stk -> hgt--;
 
     return item;
 }

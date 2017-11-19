@@ -248,7 +248,7 @@ struct kyk_wallet_key* kyk_create_wallet_key(uint32_t cfg_idx,
     kyk_key_get_privkey(k, &privkey, &len);
     check(len > 0, "failed to kyk_key_get_privkey");
     privStr = kyk_base58check(PRIVKEY_ADDRESS, privkey, len);
-    btc_addr = kyk_make_address_from_pub(k -> pub_key, k -> pub_len);
+    btc_addr = kyk_make_address_from_pubkey(k -> pub_key, k -> pub_len);
 
     wkey = calloc(1, sizeof *wkey);
     check(wkey != NULL, "failed to calloc");

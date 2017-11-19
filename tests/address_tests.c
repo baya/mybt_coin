@@ -46,11 +46,17 @@ error:
     return err_msg;
 }
 
+char* test_make_address_from_pubkey()
+{
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_make_address);
+    mu_run_test(test_make_address_from_pubkey);
     
     return NULL;
 }

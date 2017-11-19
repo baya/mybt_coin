@@ -6,6 +6,7 @@
 #include "varint.h"
 #include "beej_pack.h"
 #include "kyk_utils.h"
+#include "kyk_script.h"
 #include "dbg.h"
 
 
