@@ -47,17 +47,17 @@ static int kyk_key_get_pubkey(struct kyk_key *k,
     *pub = NULL;
     *len = 0;
 
-    res = EC_KEY_check_key(k->key);
+    res = EC_KEY_check_key(k -> key);
     check(res > 0, "EC_KEY_check_key failed");
 
-    *len = i2o_ECPublicKey(k->key, 0);
+    *len = i2o_ECPublicKey(k -> key, 0);
     check(*len <= 65, "pub len should be <= 65");
     
     data = malloc(*len);
     check(data != NULL, "failed to malloc data");
     
     *pub = data;
-    i2o_ECPublicKey(k->key, &data);
+    i2o_ECPublicKey(k -> key, &data);
 
     return 0;
 

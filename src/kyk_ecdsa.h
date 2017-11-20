@@ -21,5 +21,11 @@ int kyk_ec_sign(uint8_t* priv,
     );
 
 
+int kyk_ec_get_pubkey_from_priv(const uint8_t* priv,
+				int cv_flag,
+				struct kyk_buff** pub
+    );
+
+
 
 #endif

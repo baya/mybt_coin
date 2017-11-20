@@ -97,6 +97,54 @@ EC_KEY *kyk_ec_new_keypair(const uint8_t *priv_bytes)
     return key;
 }
 
+int kyk_ec_get_pubkey_from_priv(const uint8_t* priv,
+				int cv_flag,
+				struct kyk_buff** pub
+    )
+{
+    EC_KEY *key;
+    point_conversion_form_t conv_forms[2] = {
+        POINT_CONVERSION_UNCOMPRESSED,
+        POINT_CONVERSION_COMPRESSED
+    };
+    uint8_t* bp = NULL;
+
+    struct kyk_buff* pub_cpy = NULL;
+    size_t len;
+
+    check(pub, "Failed to kyk_ec_get_pubkey_from_priv: pub can not be NULL");
+
+    key = kyk_ec_new_keypair(priv);
+    check(key != NULL, "Failed to kyk_ec_get_pubkey_from_priv: failed to create keypair");
+
+    check(cv_flag == 1 || cv_flag == 0, "Failed to kyk_ec_get_pubkey_from_priv: invalid cv_flag");
+
+    EC_KEY_set_conv_form(key, conv_forms[cv_flag]);
+
+    pub_cpy = malloc(sizeof(*pub_cpy));
+
+    pub_cpy -> len = i2o_ECPublicKey(key, NULL);
+    pub_cpy -> base = calloc(pub_cpy -> len, sizeof(uint8_t));
+    check(pub_cpy -> base, "Failed to kyk_ec_get_pubkey_from_priv: calloc error");
+
+    bp = pub_cpy -> base;
+
+    len = i2o_ECPublicKey(key, &bp);
+    check(len == pub_cpy -> len, "Failed to kyk_ec_get_pubkey_from_priv: failed to i2o_ECPublicKey");
+
+    *pub = pub_cpy;
+
+    EC_KEY_free(key);
+
+    return 0;
+
+error:
+    if(pub_cpy) free(pub_cpy);
+    if(key) EC_KEY_free(key);
+    return -1;
+
+}
+
 EC_KEY *kyk_ec_new_pubkey(const uint8_t *pub_bytes, size_t pub_len)
 {
     EC_KEY *key;
