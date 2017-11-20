@@ -231,9 +231,9 @@ int kyk_sc_op_checksig(struct kyk_sc_stack *stk, uint8_t *tx, size_t tx_len)
     buf_len = tx_len + size;
 
     memcpy(der_sig, sig, sig_len - 1);
-    ret_code = kyk_ec_sig_verify(tx_buf, buf_len,
-				 der_sig, sig_len-1,
-				 pubkey, pubkey_len);
+    ret_code = kyk_ec_sig_hash256_verify(tx_buf, buf_len,
+					 der_sig, sig_len-1,
+					 pubkey, pubkey_len);
     stk -> top--;
     stk -> top--;
     stk -> hgt -= 2;

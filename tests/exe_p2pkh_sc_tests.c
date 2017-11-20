@@ -62,7 +62,7 @@ char *test_verify_p2pkh_sc()
     /* 合并 scriptSig 和 scriptPubKey 为一个脚本 */
     sc_len = kyk_combine_sc(sc, sc_sig, sc_sig_len, sc_pubk, sc_pubk_len);
 
-    verified = kyk_run_sc(sc, sc_len, unsig_tx, utx_cpy - unsig_tx);
+    verified = kyk_run_sc(sc, sc_len, unsig_tx, utx_cpy - unsig_tx);    
 
     mu_assert(verified == 1, "Failed to test verify sc pubkey");
 

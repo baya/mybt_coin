@@ -102,7 +102,7 @@ int kyk_ec_get_pubkey_from_priv(const uint8_t* priv,
 				struct kyk_buff** pub
     )
 {
-    EC_KEY *key;
+    EC_KEY *key = NULL;
     point_conversion_form_t conv_forms[2] = {
         POINT_CONVERSION_UNCOMPRESSED,
         POINT_CONVERSION_COMPRESSED
@@ -163,13 +163,10 @@ int kyk_ec_sig_verify(uint8_t *buf, size_t buf_len,
 {
     EC_KEY *key;
     ECDSA_SIG *signature;
-    uint8_t digest[32];
-    uint8_t suffix_pub[33];
     const uint8_t *der_sig_copy;
 
     int verified = 0;
 
-    memcpy(suffix_pub, pubkey, sizeof(suffix_pub));
     key = kyk_ec_new_pubkey(pubkey, pub_len);
     if (!key) {
 	fprintf(stderr, "Unable to create pubkey");
@@ -179,11 +176,21 @@ int kyk_ec_sig_verify(uint8_t *buf, size_t buf_len,
     der_sig_copy = der_sig;
     signature = d2i_ECDSA_SIG(NULL, &der_sig_copy, der_sig_len);
 
-    kyk_dgst_hash256(digest, buf, buf_len);
-    verified = ECDSA_do_verify(digest, sizeof(digest), signature, key);
+    verified = ECDSA_do_verify(buf, buf_len, signature, key);
 
     ECDSA_SIG_free(signature);
     EC_KEY_free(key);
     
     return verified;
+}
+
+
+int kyk_ec_sig_hash256_verify(uint8_t *buf, size_t buf_len,
+			      uint8_t *der_sig, size_t der_sig_len,
+			      uint8_t *pubkey, size_t pub_len)
+{
+    uint8_t digest[32];
+    kyk_dgst_hash256(digest, buf, buf_len);
+    
+    return kyk_ec_sig_verify(digest, sizeof(digest), der_sig, der_sig_len, pubkey, pub_len);
 }
