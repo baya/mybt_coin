@@ -3,8 +3,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "kyk_sha.h"
 #include "kyk_ecdsa.h"
 #include "kyk_utils.h"
+#include "kyk_buff.h"
 #include "mu_unit.h"
 
 char *test_ecdsa()
@@ -84,11 +86,48 @@ error:
     return err_msg;
 }
 
+char* test_kyk_ec_sign()
+{
+    uint8_t priv_bytes[32] = {
+        0x16, 0x26, 0x07, 0x83, 0xe4, 0x0b, 0x16, 0x73,
+        0x16, 0x73, 0x62, 0x2a, 0xc8, 0xa5, 0xb0, 0x45,
+        0xfc, 0x3e, 0xa4, 0xaf, 0x70, 0xf7, 0x27, 0xf3,
+        0xf9, 0xe9, 0x2b, 0xdd, 0x3a, 0x1d, 0xdc, 0x42
+    };
+    
+    const char message[] = "Hello Bitcoin";
+    char* errmsg = "Failed to test_kyk_ec_sign";
+
+    EC_KEY *key;
+    uint8_t digest[32];
+    ECDSA_SIG *signature = NULL;
+    struct kyk_buff* der = NULL;
+    int res = -1;
+    
+    key = kyk_ec_new_keypair(priv_bytes);
+    check(key, "Unable to create keypair");
+    kyk_dgst_sha256(digest, (uint8_t *)message, strlen(message));
+
+    res = kyk_ec_sign(priv_bytes, digest, sizeof(digest), &der);
+    check(res == 0, "failed to kyk_ec_sign");
+
+    free_kyk_buff(der);
+    ECDSA_SIG_free(signature);
+    EC_KEY_free(key);    
+
+    return NULL;
+
+error:
+
+    return errmsg;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_ecdsa);
+    mu_run_test(test_kyk_ec_sign);
     
     return NULL;
 }

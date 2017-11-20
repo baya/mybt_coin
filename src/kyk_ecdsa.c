@@ -7,7 +7,56 @@
 #include "kyk_sha.h"
 #include "kyk_ecdsa.h"
 #include "kyk_utils.h"
+#include "kyk_buff.h"
+#include "dbg.h"
 
+int kyk_ec_sign(uint8_t* priv,
+		const uint8_t* src,
+		size_t src_len,
+		struct kyk_buff** der
+    )
+{
+    EC_KEY *key = NULL;
+    ECDSA_SIG *signature = NULL;
+    struct kyk_buff* der_cpy = NULL;
+    size_t der_len = 0;
+    uint8_t* bp = NULL;
+
+    check(der, "failed to kyk_ec_sign: der can not be NULL");
+
+    der_cpy = malloc(sizeof(struct kyk_buff));
+    check(der_cpy, "failed to kyk_ec_sign: malloc error");
+	
+    key = kyk_ec_new_keypair(priv);
+    check(key, "failed to kyk_ec_sign: unable to create keypair");
+
+    signature = ECDSA_do_sign(src, src_len, key);
+    check(signature, "failed to kyk_ec_sign: ECDSA_do_sign failed");
+    
+    der_len = ECDSA_size(key);
+    der_cpy -> base = calloc(der_len, sizeof(uint8_t));
+    check(der_cpy -> base, "failed to kyk_ec_sign: calloc error");
+    
+    der_cpy -> len = der_len;
+    bp = der_cpy -> base;
+
+    i2d_ECDSA_SIG(signature, &bp);
+
+    *der = der_cpy;
+
+    ECDSA_SIG_free(signature);
+    EC_KEY_free(key);    
+
+    return 0;
+
+error:
+
+    if(signature) ECDSA_SIG_free(signature);
+    if(key) EC_KEY_free(key);    
+
+    return -1;
+
+}
 
 
 EC_KEY *kyk_ec_new_keypair(const uint8_t *priv_bytes)

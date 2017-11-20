@@ -13,19 +13,19 @@ struct kyk_key* kyk_key_generate_new(void)
     k = kyk_key_alloc();
     check(k != NULL, "failed to alloc kyk_key");
 
-    s = EC_KEY_generate_key(k->key);
+    s = EC_KEY_generate_key(k -> key);
     check(s > 0, "EC_KEY_generate_key failed");
 
-    s = EC_KEY_check_key(k->key);
+    s = EC_KEY_check_key(k -> key);
     check(s > 0, "EC_KEY_check_key failed");
 
-    EC_KEY_set_conv_form(k->key, POINT_CONVERSION_COMPRESSED);
+    EC_KEY_set_conv_form(k -> key, POINT_CONVERSION_COMPRESSED);
 
     check(k -> pub_key == NULL, "invalid pub_key");
     check(k -> pub_len == 0, "invalid pub len");
 
-    s = kyk_key_get_pubkey(k, &k->pub_key, &k->pub_len);
-    check(s > 0, "failed to get pubkey");
+    s = kyk_key_get_pubkey(k, &k -> pub_key, &k -> pub_len);
+    check(s == 0, "failed to get pubkey");
 
     return k;
 
@@ -59,10 +59,10 @@ static int kyk_key_get_pubkey(struct kyk_key *k,
     *pub = data;
     i2o_ECPublicKey(k->key, &data);
 
-    return 1;
+    return 0;
 
 error:
-    return 0;
+    return -1;
 }
 
 struct kyk_key* kyk_key_alloc(void)
