@@ -98,22 +98,16 @@ char* test_kyk_ec_sign()
     const char message[] = "Hello Bitcoin";
     char* errmsg = "Failed to test_kyk_ec_sign";
 
-    EC_KEY *key;
     uint8_t digest[32];
-    ECDSA_SIG *signature = NULL;
     struct kyk_buff* der = NULL;
     int res = -1;
     
-    key = kyk_ec_new_keypair(priv_bytes);
-    check(key, "Unable to create keypair");
     kyk_dgst_sha256(digest, (uint8_t *)message, strlen(message));
 
     res = kyk_ec_sign(priv_bytes, digest, sizeof(digest), &der);
     check(res == 0, "failed to kyk_ec_sign");
 
     free_kyk_buff(der);
-    ECDSA_SIG_free(signature);
-    EC_KEY_free(key);    
 
     return NULL;
 
