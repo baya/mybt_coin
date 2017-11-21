@@ -7,7 +7,7 @@
 #include "kyk_base58.h"
 
 
-char *kyk_make_address(const uint8_t *prive_bytes);
+char *kyk_make_address(const uint8_t *priv_bytes, size_t priv_len);
 char *kyk_make_address_from_pubkey(uint8_t *pub, size_t pub_len);
 
 #endif

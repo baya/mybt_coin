@@ -74,14 +74,28 @@ char *kyk_make_address_from_pubkey(uint8_t *pub, size_t pub_len)
 
 }
 
-char *kyk_make_address(const uint8_t *priv_bytes)
+char *kyk_make_address(const uint8_t *priv_bytes, size_t priv_len)
 {
-    EC_KEY *key;
-    point_conversion_form_t conv_form = POINT_CONVERSION_UNCOMPRESSED;
-    size_t pub_len;
+    EC_KEY *key = NULL;
+    point_conversion_form_t conv_form;
+    size_t pub_len = 0;
     size_t res = 0;
     uint8_t *pub, *pub_copy;
     char *dgst9;
+
+    if(priv_len == 33){
+	/* WIF-compressed */
+	if(priv_bytes[priv_len -1] == 0x01){
+	    conv_form = POINT_CONVERSION_COMPRESSED;
+	}
+    } else if(priv_len == 32){
+	conv_form = POINT_CONVERSION_UNCOMPRESSED;
+    } else {
+	printf("Failed to kyk_make_address: invalid priv bytes\n");
+	goto error;
+    }
+
+    check(priv_bytes, "Failed to kyk_make_address: priv_bytes can not be NULL");
 
     key = kyk_ec_new_keypair(priv_bytes);
     check(key != NULL, "failed to create keypair");

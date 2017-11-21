@@ -70,7 +70,7 @@ char *test_make_gens_tx()
     int res = 0;
     res = get_priv_from_pem(priv, pem_name);
     check(res > 0, "Failed to get private key from pem file");
-    addr = kyk_make_address(priv);
+    addr = kyk_make_address(priv, sizeof(priv));
     sc_pbk_len = p2pkh_sc_from_address(sc_pbk, addr);
     txout -> sc_size = sc_pbk_len;
     txout -> sc = sc_pbk;

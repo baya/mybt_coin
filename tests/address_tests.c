@@ -26,7 +26,7 @@ char *test_make_address()
     ec_key = EVP_PKEY_get1_EC_KEY(evp_key);
     priv_bn = EC_KEY_get0_private_key(ec_key);
     BN_bn2bin(priv_bn, priv);
-    addr = kyk_make_address(priv);
+    addr = kyk_make_address(priv, sizeof(priv));
 
     mu_assert(strcmp(addr, target_addr) == 0, "failed to get the correct address 1Te2roqFCPbG59tTP4fLjCZpEAiiwXAQm");
 
@@ -44,6 +44,27 @@ error:
     if(fp) fclose(fp);
     
     return err_msg;
+}
+
+/* make an address from WIF-compressed priv key */
+char* test2_make_address()
+{
+    uint8_t priv[33] = {
+	0x6c, 0x85, 0xf3, 0x94, 0x51, 0x41, 0xa6, 0xc4,
+	0x37, 0x93, 0x56, 0x5a, 0x17, 0xc3, 0xc4, 0x69,
+	0xc4, 0xcb, 0x07, 0x8a, 0x17, 0x35, 0x2c, 0x22,
+	0x7a, 0xbb, 0xc8, 0x58, 0x95, 0x1a, 0xa0, 0xf2,
+	0x01
+    };
+
+    const char* target_addr = "1PZ7xZRGcr7NqioLTRjJBjfk4bUknWVR7i";
+
+    char* addr = NULL;
+
+    addr = kyk_make_address(priv, sizeof(priv));
+    mu_assert(strcmp(addr, target_addr) == 0, "Failed to test2_make_address");
+
+    return NULL;
 }
 
 char* test_make_address_from_pubkey()
@@ -114,6 +135,7 @@ char *all_tests()
     mu_run_test(test_make_address);
     mu_run_test(test_make_address_from_pubkey);
     mu_run_test(test2_make_address_from_pubkey);
+    mu_run_test(test2_make_address);
     
     return NULL;
 }
