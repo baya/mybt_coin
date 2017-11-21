@@ -12,6 +12,8 @@
 #include "kyk_script.h"
 #include "kyk_address.h"
 #include "kyk_pem.h"
+#include "kyk_buff.h"
+#include "kyk_ecdsa.h"
 #include "mu_unit.h"
 
 #define SC_PUBKEY_LEN 1000
@@ -47,7 +49,6 @@ char *test_make_gens_tx()
     uint8_t target_txid[TXID_LEN];
 
     kyk_parse_hex(target_txid, "b76d27da4abf50387dd70f5d6cc7e4df1d54722631cbbfdd292463df77aa0dbd");
-
 
     tx0.version = 1;
     tx0.vin_sz = 1;

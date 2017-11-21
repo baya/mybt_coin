@@ -234,15 +234,15 @@ error:
 int kyk_make_coinbase_tx(struct kyk_tx** tx,
 			 const char* note,
 			 uint64_t outValue,
-			 const char* pub,
+			 const uint8_t* pub,
 			 size_t pub_len
     )
 {
     struct kyk_txin* txin;
     struct kyk_txout* txout;
-    char *addr = NULL;
-    uint8_t sc_pbk[MAX_SC_PUB_LEN];
     struct kyk_tx* txcpy = NULL;
+    struct kyk_buff* pbk_sc = NULL;
+    int res = -1;
 
     check(tx, "Failed to kyk_make_coinbase_tx: tx can not be NULL");
 
@@ -271,16 +271,22 @@ int kyk_make_coinbase_tx(struct kyk_tx** tx,
 
     /* addr = make_address_from_pem(GENS_PEM); */
 
-    txout -> sc_size = p2pkh_sc_from_address(sc_pbk, addr);
+    res = build_p2pkh_sc_from_pubkey(pub, pub_len, &pbk_sc);
+    check(res == 0, "Failed to kyk_make_coinbase_tx: build_p2pkh_sc_from_pubkey error");
+
+    txout -> sc_size = pbk_sc -> len;
     txout -> sc = calloc(txout -> sc_size, sizeof(uint8_t));
-    memcpy(txout -> sc, sc_pbk, txout -> sc_size);
+    check(txout -> sc, "Failed to kyk_make_coinbase_tx: calloc error");
+    memcpy(txout -> sc, pbk_sc -> base, txout -> sc_size);
+
+    free_kyk_buff(pbk_sc);
 
     *tx = txcpy;
 
     return 0;
 
 error:
-
+    if(pbk_sc) free_kyk_buff(pbk_sc);
     return -1;
 
 }

@@ -41,4 +41,11 @@ struct kyk_txout *create_txout(uint64_t value,
 
 void kyk_free_tx(struct kyk_tx *tx);
 
+int kyk_make_coinbase_tx(struct kyk_tx** tx,
+			 const char* note,
+			 uint64_t outValue,
+			 const uint8_t* pub,
+			 size_t pub_len);
+
+
 #endif
