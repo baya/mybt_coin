@@ -46,7 +46,7 @@ error:
     return err_msg;
 }
 
-/* make an address from WIF-compressed priv key */
+/* Make an address from WIF-compressed priv key */
 char* test2_make_address()
 {
     uint8_t priv[33] = {
