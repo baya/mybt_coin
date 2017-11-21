@@ -69,6 +69,7 @@ char* test_build_p2pkh_sc_from_pubkey()
     mu_assert(res == 0, "Failed to build_p2pkh_sc_from_pubkey");
     mu_assert(kyk_digest_eq(sc -> base, target_pbk_sc, sc -> len), "Failed to build_p2pkh_sc_from_pubkey");
 
+
     return NULL;
 }
 

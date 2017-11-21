@@ -37,7 +37,6 @@ int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
 			       struct kyk_buff** sc
     )    
 {
-    uint8_t dgst2[SHA256_DIGEST_LENGTH];
     uint8_t pbk160[20];
     uint8_t tmpbuf[1000];
     size_t len = 0;
@@ -48,8 +47,7 @@ int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
     sc_cpy = malloc(sizeof(*sc_cpy));
     check(sc_cpy, "Failed to build_p2pkh_sc_from_pubkey: malloc error");
 
-    kyk_dgst_sha256(dgst2, pubkey, pub_len);
-    kyk_dgst_rmd160(pbk160, dgst2, sizeof(dgst2));
+    kyk_dgst_hash160(pbk160, pubkey, pub_len);
     len = build_p2pkh_sc_pubk(tmpbuf, pbk160, sizeof(pbk160));
     
     sc_cpy -> len = len;

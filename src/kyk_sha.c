@@ -39,7 +39,6 @@ void kyk_dgst_rmd160(uint8_t *digest, const uint8_t *message, size_t len)
     RIPEMD160_Final(digest, &ctx);
 }
 
-
 /* inverted hash*/
 struct kyk_digst *kyk_inver_hash(const char *src, size_t len)
 {
