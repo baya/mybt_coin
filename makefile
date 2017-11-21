@@ -74,6 +74,10 @@ kyk_miner: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
 kyk_miner: kyk_miner.c
 	$(CC) $(CFLAGS) $< -o $@.out
 
+dev_tool: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
+dev_tool: dev_tool.c
+	$(CC) $(CFLAGS) $< -o $@.out
+
 valgrind:
 	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)
 
