@@ -37,7 +37,7 @@ char* test_p2pkh_sc_from_address()
 /* } */
 /* spentTxId: "7ffe434034e42b4ca3f48eeacac7c6640de563efb8eb484265cbae8f2e4550b4" */
 
-/* 通过 spentTxId 可以找到 address 对应的 pubkey, 因为下笔交易的 scriptSig 需要包含 pubkey 才能解锁 scriptPubKey */
+/* 通过 spentTxId 可以找到 address 对应的 pubkey, 这是下笔交易的 scriptSig 需要包含 pubkey 才能解锁 scriptPubKey */
 /* https://blockexplorer.com/api/tx/7ffe434034e42b4ca3f48eeacac7c6640de563efb8eb484265cbae8f2e4550b4     */
 
 char* test_build_p2pkh_sc_from_pubkey()
@@ -49,7 +49,7 @@ char* test_build_p2pkh_sc_from_pubkey()
 	0xac
     };
 
-    /* this is a uncompressed pubkey, it is contains 65 bytes */
+    /* this is a uncompressed pubkey, it contains 65 bytes */
     uint8_t pubkey[65] = {
 	0x04, 0x12, 0x78, 0x82, 0x02, 0xff, 0x75, 0x15,
 	0x00, 0xdd, 0xc2, 0x3b, 0x3b, 0x5a, 0x61, 0xea,
