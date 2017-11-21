@@ -147,6 +147,8 @@
 
 #define  KYK_SC_STACK_BUF_SIZE 20
 
+#include "kyk_buff.h"
+
 struct kyk_sc_stk_item {
     size_t len;
     uint8_t *val;
@@ -166,5 +168,8 @@ size_t kyk_combine_sc(uint8_t *sc,
 
 int kyk_run_sc(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len);
 
+int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
+			       size_t pub_len,
+			       struct kyk_buff** sc);
 
 #endif

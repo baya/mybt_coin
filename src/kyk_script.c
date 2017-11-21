@@ -10,6 +10,8 @@
 #include "kyk_sha.h"
 #include "beej_pack.h"
 #include "kyk_ecdsa.h"
+#include "kyk_buff.h"
+#include "dbg.h"
 
 #define TX_BUF_SIZE 2000
 
@@ -30,9 +32,39 @@ static int kyk_sc_cmpitem(const struct kyk_sc_stk_item *item1,
 			  const struct kyk_sc_stk_item *item2);
 static void free_sc_stack(struct kyk_sc_stack *stk);
 
-int build_p2pkh_sc_from_pubkey()
+int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
+			       size_t pub_len,
+			       struct kyk_buff** sc
+    )    
 {
+    uint8_t dgst2[SHA256_DIGEST_LENGTH];
+    uint8_t pbk160[20];
+    uint8_t tmpbuf[1000];
+    size_t len = 0;
+    struct kyk_buff* sc_cpy = NULL;
+
+    check(sc, "Failed to build_p2pkh_sc_from_pubkey: struct kyk_buff** can not be NULL");
+
+    sc_cpy = malloc(sizeof(*sc_cpy));
+    check(sc_cpy, "Failed to build_p2pkh_sc_from_pubkey: malloc error");
+
+    kyk_dgst_sha256(dgst2, pubkey, pub_len);
+    kyk_dgst_rmd160(pbk160, dgst2, sizeof(dgst2));
+    len = build_p2pkh_sc_pubk(tmpbuf, pbk160, sizeof(pbk160));
+    
+    sc_cpy -> len = len;
+    sc_cpy -> base = calloc(sc_cpy -> len, sizeof(uint8_t));
+    check(sc_cpy -> base, "Failed to build_p2pkh_sc_from_pubkey: calloc error");
+
+    memcpy(sc_cpy -> base, tmpbuf, sc_cpy -> len);
+
+    *sc = sc_cpy;
+    
     return 0;
+
+error:
+
+    return -1;
 }
 
 
