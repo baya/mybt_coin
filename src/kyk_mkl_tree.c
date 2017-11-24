@@ -5,11 +5,14 @@
 
 #include "kyk_sha.h"
 #include "kyk_utils.h"
+#include "kyk_tx.h"
+#include "kyk_buff.h"
 #include "kyk_mkl_tree.h"
+#include "dbg.h"
 
 
 static void kyk_init_mkltree_node(struct kyk_mkltree_node *nd);
-static void kyk_hash_mkl_leaf(struct kyk_mkltree_node *nd, struct kyk_tx_buf buf);
+static void kyk_hash_mkl_leaf(struct kyk_mkltree_node *nd, struct kyk_bon_buff buf);
 struct kyk_mkltree_level *create_parent_mkl_level(struct kyk_mkltree_level *level);
 static void kyk_hash_mkltree_level(struct kyk_mkltree_level *level);
 static void kyk_hash_mkltree_node(struct kyk_mkltree_node *nd);
@@ -44,7 +47,7 @@ struct kyk_mkltree_level *create_mkl_tree(struct kyk_mkltree_level *leaf_level)
 }
 
 
-struct kyk_mkltree_level *create_mkl_leafs(struct kyk_tx_buf *buf_list, size_t len)
+struct kyk_mkltree_level *create_mkl_leafs(struct kyk_bon_buff *buf_list, size_t len)
 {
     struct kyk_mkltree_level *mkl_level = malloc(sizeof(struct kyk_mkltree_level));
     struct kyk_mkltree_node *nd_list = malloc(len * sizeof(struct kyk_mkltree_node));
@@ -77,9 +80,9 @@ void kyk_init_mkl_level(struct kyk_mkltree_level *level)
     level -> inx = 0;
 }
 
-void kyk_hash_mkl_leaf(struct kyk_mkltree_node *nd, struct kyk_tx_buf buf)
+void kyk_hash_mkl_leaf(struct kyk_mkltree_node *nd, struct kyk_bon_buff buf)
 {
-    kyk_dgst_hash256(nd -> bdy, buf.bdy, buf.len);
+    kyk_dgst_hash256(nd -> bdy, buf.base, buf.len);
     kyk_reverse(nd -> bdy, MKL_NODE_BODY_LEN);
 }
 
@@ -226,6 +229,30 @@ void kyk_cpy_mkl_root_value(uint8_t *src, struct kyk_mkltree_level *root_level)
     memcpy(src, root_level -> nd -> bdy, MKL_NODE_BODY_LEN);
 }
 
+
+struct kyk_mkltree_level* kyk_make_mkl_tree_root_fro_tx_list(struct kyk_tx* tx_list,
+							     size_t tx_count)
+{
+    struct kyk_bon_buff *buf_list = NULL;
+    struct kyk_mkltree_level *leaf_level;
+    struct kyk_mkltree_level *root_level;
+    size_t i = 0;
+
+    buf_list = calloc(tx_count, sizeof(struct kyk_bon_buff));
+    check(buf_list, "Failed to kyk_make_mkl_tree_root: calloc failed");
+
+    for(i = 0; i < tx_count; i++){
+	//kyk_seri_tx()
+    }
+    leaf_level = create_mkl_leafs(buf_list, tx_count);
+    root_level = create_mkl_tree(leaf_level);
+
+    return root_level;
+
+error:
+
+    return NULL;
+}
 
 
     

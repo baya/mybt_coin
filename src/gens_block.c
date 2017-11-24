@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "gens_block.h"
+#include "kyk_buff.h"
 
 #define GENS_COINBASE "From 4/Sept/2017 China start suppressing the Bitcoin"
 #define GENS_PEM "data/kyk-gens-priv.pem"
@@ -17,7 +18,7 @@
 
 void create_gens_tx(struct kyk_tx *gens_tx);
 void make_coinbase(struct kyk_txin *txin, const char *cb_note);
-struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len);
+struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len);
 void init_block(struct kyk_block *blk);
 
 struct kyk_block* make_gens_block()
@@ -27,8 +28,8 @@ struct kyk_block* make_gens_block()
     uint8_t tx_buf[TX_BUF_LEN];
     size_t tx_len = 0;
     struct kyk_blk_header* blk_hd;
-    struct kyk_tx_buf tx_buf_list[TX_COUNT];
-    struct kyk_tx_buf *tx_buf_ptr = tx_buf_list;
+    struct kyk_bon_buff tx_buf_list[TX_COUNT];
+    struct kyk_bon_buff *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
     size_t blk_size = 0;
 
@@ -42,7 +43,7 @@ struct kyk_block* make_gens_block()
     create_gens_tx(tx0);
     //create_gens_tx(blk -> tx);
     tx_len = kyk_seri_tx(tx_buf, tx0);
-    tx_buf_ptr -> bdy = tx_buf;
+    tx_buf_ptr -> base = tx_buf;
     tx_buf_ptr -> len = tx_len;
     blk_size += tx_len;
 
@@ -71,7 +72,7 @@ void init_block(struct kyk_block *blk)
     blk -> tx = malloc(sizeof(struct kyk_tx));
 }
 
-struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len)
+struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len)
 {
     struct kyk_mkltree_level *leaf_level;
     struct kyk_mkltree_level *root_level;

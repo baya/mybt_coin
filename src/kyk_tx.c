@@ -269,8 +269,6 @@ int kyk_make_coinbase_tx(struct kyk_tx** tx,
     txin -> seq_no = KYK_COINBASE_SEQ_NO;
     txout -> value = outValue;
 
-    /* addr = make_address_from_pem(GENS_PEM); */
-
     res = build_p2pkh_sc_from_pubkey(pub, pub_len, &pbk_sc);
     check(res == 0, "Failed to kyk_make_coinbase_tx: build_p2pkh_sc_from_pubkey error");
 

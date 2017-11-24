@@ -142,12 +142,43 @@ size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
     buf -> idx += len;
     buf -> len += len;
 
-    len = kyk_ser_blk(buf, blk);
+    len = kyk_ser_blk(buf, blk); 
     check(len == blk -> blk_size, "faile to serialize block");
 
     return(buf -> idx - start_idx);
 
 error:
     return 0;
+}
+
+struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
+					   size_t tx_count,
+					   uint32_t version,
+					   uint8_t* pre_blk_hash,
+					   uint32_t tts,
+					   uint32_t bts)
+{
+    struct kyk_blk_header* hd = NULL;
+    struct kyk_mkltree_level* mkl_root = NULL;
+
+    hd = calloc(1, sizeof(struct kyk_blk_header));
+    check(hd, "Failed to kyk_make_blk_header: calloc failed");
+
+    hd -> version = version;
+    memcpy(hd -> pre_blk_hash, pre_blk_hash, sizeof(hd -> pre_blk_hash));
+
+    hd -> tts = tts;
+    hd -> bts = bts;
+
+    return hd;
+
+error:
+    return NULL;
+}
+
+struct kyk_block* kyk_make_block(struct kyk_blk_header* blk_hd,
+				 struct kyk_tx* tx_list)
+{
+    return NULL;
 }
 

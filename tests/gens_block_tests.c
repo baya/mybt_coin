@@ -17,6 +17,7 @@
 #include "kyk_difficulty.h"
 #include "kyk_hash_nonce.h"
 #include "kyk_pem.h"
+#include "kyk_buff.h"
 #include "mu_unit.h"
 
 #define GENS_COINBASE "From 4/Sept/2017 China start suppressing the Bitcoin"
@@ -30,7 +31,7 @@
 
 void create_gens_tx(struct kyk_tx *gens_tx);
 void make_coinbase(struct kyk_txin *txin, const char *cb_note);
-struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len);
+struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len);
 
 char *test_make_gens_block()
 {
@@ -44,8 +45,8 @@ char *test_make_gens_block()
     size_t hd_len;
     size_t blk_len = 0;
     struct kyk_blk_header blk_hd;
-    struct kyk_tx_buf tx_buf_list[TX_COUNT];
-    struct kyk_tx_buf *tx_buf_ptr = tx_buf_list;
+    struct kyk_bon_buff tx_buf_list[TX_COUNT];
+    struct kyk_bon_buff *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
     char *err_msg = "failed to test making gens block";
     FILE *fp = fopen("tmp/kyk-gens-block.dat", "wb");
@@ -53,7 +54,7 @@ char *test_make_gens_block()
     
     create_gens_tx(&tx0);
     tx_len = kyk_seri_tx(tx_buf, &tx0);
-    tx_buf_ptr -> bdy = tx_buf;
+    tx_buf_ptr -> base = tx_buf;
     tx_buf_ptr -> len = tx_len;
 
     blk_hd.version = 1;
@@ -95,7 +96,7 @@ error:
     return err_msg;
 }
 
-struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_tx_buf *buf_list, size_t len)
+struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len)
 {
     struct kyk_mkltree_level *leaf_level;
     struct kyk_mkltree_level *root_level;

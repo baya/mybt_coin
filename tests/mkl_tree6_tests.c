@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "kyk_buff.h"
 #include "kyk_utils.h"
 #include "kyk_mkl_tree.h"
 #include "mu_unit.h"
@@ -23,9 +24,9 @@
 /* "61839c14b1da5be6544fa8c0ea615d7ddccbbd832047c49ebaa0e0b044377d12" */
 /* ] */
 
-void build_tx_buf_from_hex(struct kyk_tx_buf *tx_buf, const char *hexstr)
+void build_tx_buf_from_hex(struct kyk_bon_buff *tx_buf, const char *hexstr)
 {
-    tx_buf -> bdy = kyk_alloc_hex(hexstr, &tx_buf -> len);    
+    tx_buf -> base = kyk_alloc_hex(hexstr, &tx_buf -> len);    
 }
 
 char *test_make_mkl_tree6()
@@ -38,7 +39,7 @@ char *test_make_mkl_tree6()
     char *tx5_hex = "0100000001f243bb6d8b2b59e0b817c8686f73ffa52857cc5a339d8f5bb0449fa13a65feeb010000006b483045022100e80abaa1ca02057d9e64698a5b836321a9c38e3fd30430d58e56a9f10eaf7c6b02206c68fed885b3640b0dcec1b17f4ac3042d1275f7ca36ea0a21dde21ee15065a30121031abe46f2ab0c43e84539896c5158ecf8d8c4ce492600a95468769b443cef5796ffffffff028ca93d00000000001976a9148b0e6679c7ab7493e3ca0c2070dc5afbeff1ea2f88ac28a85200000000001976a914d967ba784875e4ae98c3205a0925d07eceaea81f88ac00000000";
     char *tx6_hex = "01000000016775d382c0aa7298e5c85dd7d211f58e74f0c6417e0e7ce276d023b0fb41d5900b0000006a47304402204bec0334525b4772acd113a8eafbf2ef20a14ccdac304047ac67ece94fc2141b0220746291e7ce5bb690e969e0d6608c7a0a39fa46d74c9b0f0330f802033015a22a012103ba369c0510197e2f76ae2d2122f98e96b8271d72fa4e815f2bc49dbefeb7330bffffffff02819b8e05000000001976a91486814a802cc06a85cbdfcb72cde1b4a6c842c19788ace018d400000000001976a9149729aafcbd66550f314d15651445cefa114539a188ac00000000";
     
-    struct kyk_tx_buf buf_list[6];
+    struct kyk_bon_buff buf_list[6];
     struct kyk_mkltree_level *leaf_level;
     struct kyk_mkltree_level *root_level;
 
