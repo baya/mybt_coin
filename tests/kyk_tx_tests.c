@@ -7,6 +7,8 @@
 #include "kyk_utils.h"
 #include "mu_unit.h"
 
+/* This target test data source is from: https://webbtc.com/tx/b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082.json */
+/* Txid is b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082 */
 static uint8_t TARGET_TX1_BUF[134] = {
     0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
