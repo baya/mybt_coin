@@ -27,6 +27,8 @@ int kyk_get_tx_size(struct kyk_tx* tx, size_t* tx_size)
     int res = -1;
     struct kyk_txin* txin = NULL;
     struct kyk_txout* txout = NULL;
+
+    check(tx_size, "Failed to kyk_get_tx_size: tx_size is NULL");
     
     len += sizeof(tx -> version);
     len += get_varint_size(tx -> vin_sz);
@@ -108,13 +110,20 @@ int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
     struct kyk_tx* tx = NULL;
     size_t i = 0;
     size_t len = 0;
+    size_t tx_size = 0;
 
     buf = buf_list;
     tx = tx_list;
 
     for(i = 0; i < tx_count; i++){
 	buf = buf_list + i;
+	check(buf, "Failed to kyk_seri_tx_list: buf is NULL");	
 	tx = tx_list + i;
+	check(tx, "Failed to kyk_seri_tx_list: tx is NULL");
+	if(buf -> base) free(buf -> base);
+	kyk_get_tx_size(tx, &tx_size);
+	buf -> base = calloc(tx_size, sizeof(*buf -> base));
+	check(buf -> base, "Failed to kyk_seri_tx_list: calloc buf -> base failed");
 	len = kyk_seri_tx(buf -> base, tx);
 	check(len > 0, "Failed to kyk_seri_tx_list: kyk_seri_tx failed");
 	buf -> len = len;
