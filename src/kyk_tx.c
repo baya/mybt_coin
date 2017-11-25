@@ -7,6 +7,7 @@
 #include "beej_pack.h"
 #include "kyk_utils.h"
 #include "kyk_script.h"
+#include "kyk_buff.h"
 #include "dbg.h"
 
 
@@ -14,10 +15,117 @@ static size_t kyk_seri_txin(unsigned char *buf, struct kyk_txin *txin);
 static size_t kyk_seri_txin_list(unsigned char *buf, struct kyk_txin *txin, size_t count);
 static size_t kyk_seri_txout(unsigned char *buf, struct kyk_txout *txout);
 static size_t kyk_seri_txout_list(unsigned char *buf, struct kyk_txout *txout, size_t count);
-static void kyk_free_txin(struct kyk_txin *txin);
-static void kyk_free_txout(struct kyk_txout *txout);
 static int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note);
+static int get_txin_size(struct kyk_txin* txin, size_t* txin_size);
+static int get_txout_size(struct kyk_txout* txout, size_t* txout_size);
 
+
+int kyk_get_tx_size(struct kyk_tx* tx, size_t* tx_size)
+{
+    size_t len = 0;
+    size_t i = 0;
+    int res = -1;
+    struct kyk_txin* txin = NULL;
+    struct kyk_txout* txout = NULL;
+    
+    len += sizeof(tx -> version);
+    len += get_varint_size(tx -> vin_sz);
+    check(tx -> txin, "Failed to kyk_get_tx_size: tx -> txin is NULL");
+    
+    for(i = 0; i < tx -> vin_sz; i++){
+	size_t txin_size = 0;
+	txin = tx -> txin + i;
+	res = get_txin_size(txin, &txin_size);
+	check(res == 0, "Failed to kyk_get_tx_size: get_txin_size failed");
+
+	len += txin_size;
+    }
+
+    len += get_varint_size(tx -> vout_sz);
+
+    check(tx -> txout, "Failed to kyk_get_tx_size: tx -> txout is NULL");
+    for(i = 0; i < tx -> vout_sz; i++){
+	size_t txout_size = 0;
+	txout = tx -> txout + i;
+	res = get_txout_size(txout, &txout_size);
+	check(res == 0, "Failed to kyk_get_tx_size: get_txout_size failed");
+
+	len += txout_size;
+    }
+
+    len += sizeof(tx -> lock_time);
+
+    *tx_size = len;
+
+    return 0;
+    
+error:
+
+    return -1;
+    
+}
+
+int get_txin_size(struct kyk_txin* txin, size_t* txin_size)
+{
+    size_t len = 0;
+    len += sizeof(txin -> pre_txid);
+    len += sizeof(txin -> pre_tx_inx);
+    check(txin -> sc_size >= 1, "Failed to get_txin_size: txin -> sc_size is invalid");
+    len += get_varint_size(txin -> sc_size);
+    len += txin -> sc_size;
+    len += sizeof(txin -> seq_no);
+
+    *txin_size = len;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int get_txout_size(struct kyk_txout* txout, size_t* txout_size)
+{
+    size_t len = 0;
+    len += sizeof(txout -> value);
+    check(txout -> sc_size >= 1, "Failed to get_txout_size: txout -> sc_size is invalid");
+    len += get_varint_size(txout -> sc_size);
+    len += txout -> sc_size;
+
+    *txout_size = len;
+
+    return 0;
+
+error:
+    return -1;
+}
+
+int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
+		     struct kyk_tx* tx_list,
+		     size_t tx_count)
+{
+    struct kyk_bon_buff* buf = NULL;
+    struct kyk_tx* tx = NULL;
+    size_t i = 0;
+    size_t len = 0;
+
+    buf = buf_list;
+    tx = tx_list;
+
+    for(i = 0; i < tx_count; i++){
+	buf = buf_list + i;
+	tx = tx_list + i;
+	len = kyk_seri_tx(buf -> base, tx);
+	check(len > 0, "Failed to kyk_seri_tx_list: kyk_seri_tx failed");
+	buf -> len = len;
+    }
+    
+    return 0;
+
+error:
+
+    return -1;
+}
 
 size_t kyk_seri_tx(unsigned char *buf, struct kyk_tx *tx)
 {
@@ -130,6 +238,71 @@ size_t kyk_seri_txout(unsigned char *buf, struct kyk_txout *txout)
     total += size;
 
     return total;
+}
+
+int kyk_add_txin(struct kyk_tx* tx,
+		 size_t inx,
+		 struct kyk_txin* out_txin)
+{
+    check(tx, "Failed to kyk_add_txin: tx is NULL");
+    check(inx >= 0, "Failed to kyk_add_txin: inx is invalid");
+    check(out_txin, "Failed to kyk_add_txin: out_txin is NULL");
+
+    struct kyk_txin* txin = NULL;
+
+    txin = tx -> txin + inx;
+    check(txin, "Failed to kyk_add_txin: txin out of memory");
+
+    memcpy(txin -> pre_txid, out_txin -> pre_txid, sizeof(txin -> pre_txid));
+    
+    txin -> pre_tx_inx = out_txin -> pre_tx_inx;
+    txin -> sc_size = out_txin -> sc_size;
+    
+    if(txin -> sc){
+	free(txin -> sc);
+    }
+    txin -> sc = calloc(txin -> sc_size, sizeof(unsigned char));
+    check(txin -> sc, "Failed to kyk_add_txin: txin -> sc is NULL");
+    
+    memcpy(txin -> sc, out_txin -> sc, txin -> sc_size);
+    txin -> seq_no = out_txin -> seq_no;
+
+    return 0;
+
+
+error:
+
+    return -1;
+}
+
+int kyk_add_txout(struct kyk_tx* tx,
+		  size_t inx,
+		  struct kyk_txout* out_txout)
+{
+    check(tx, "Failed to kyk_add_txout: tx is NULL");
+    check(inx >= 0, "Failed to kyk_add_txout: inx is invalid");
+    check(out_txout, "Failed to kyk_add_txout: out_txout is NULL");
+    check(out_txout -> sc_size > 0, "Failed to kyk_add_txout: out_txout -> sc_size is inivalid");
+
+    struct kyk_txout* txout = NULL;
+
+    txout = tx -> txout + inx;
+    check(txout, "Failed to kyk_add_txin: txout out of memory");
+
+    txout -> value = out_txout -> value;
+    txout -> sc_size = out_txout -> sc_size;
+
+    if(txout -> sc) free(txout -> sc);
+    txout -> sc = calloc(txout -> sc_size, sizeof(unsigned char));
+    check(txout -> sc, "Failed to kyk_add_txout: txout -> sc calloc failed");
+    memcpy(txout -> sc, out_txout -> sc, txout -> sc_size);
+
+    return 0;
+ 
+error:
+
+    return -1;
+
 }
 
 
@@ -287,5 +460,36 @@ error:
     if(pbk_sc) free_kyk_buff(pbk_sc);
     return -1;
 
+}
+
+struct kyk_tx* kyk_create_tx(uint32_t version,
+			     varint_t vin_sz,
+			     varint_t vout_sz,
+			     uint32_t lock_time
+    )
+{
+    struct kyk_tx* tx = NULL;
+    tx = calloc(1, sizeof(struct kyk_tx));
+    check(tx, "Failed to kyk_create_tx: calloc failed");
+
+    tx -> version = version;
+    
+    check(vin_sz >= 1, "Failed to kyk_create_tx: vin_sz should be greater than 1");
+    tx -> vin_sz = vin_sz;
+    tx -> txin = calloc(tx -> vin_sz, sizeof(struct kyk_txin));
+    check(tx -> txin, "Failed to kyk_create_tx: calloc txin failed");
+
+    check(vout_sz >= 1, "Failed to kyk_create_tx: vout_sz should be greater than 1");
+    tx -> vout_sz = vout_sz;
+    tx -> txout = calloc(tx -> vout_sz, sizeof(struct kyk_txout));
+    check(tx -> txout, "Failed to kyk_create_tx: calloc txout failed");
+
+    tx -> lock_time = lock_time;
+
+    return tx;
+    
+error:
+
+    return NULL;
 }
 

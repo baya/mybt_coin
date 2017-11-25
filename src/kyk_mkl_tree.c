@@ -241,9 +241,6 @@ struct kyk_mkltree_level* kyk_make_mkl_tree_root_fro_tx_list(struct kyk_tx* tx_l
     buf_list = calloc(tx_count, sizeof(struct kyk_bon_buff));
     check(buf_list, "Failed to kyk_make_mkl_tree_root: calloc failed");
 
-    for(i = 0; i < tx_count; i++){
-	//kyk_seri_tx()
-    }
     leaf_level = create_mkl_leafs(buf_list, tx_count);
     root_level = create_mkl_tree(leaf_level);
 

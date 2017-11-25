@@ -3,9 +3,75 @@
 #include <string.h>
 
 #include "kyk_tx.h"
+#include "kyk_utils.h"
 #include "mu_unit.h"
 
+int build_testing_tx1(struct kyk_tx** out_tx);
+
+char* test_get_tx_size()
+{
+    struct kyk_tx* tx;
+    size_t tx_size = 0;
+    size_t target_size = 134;
+    int res = -1;
+
+    res = build_testing_tx1(&tx);
+    mu_assert(res == 0, "Failed to test_get_tx_size: build_testing_tx1 failed");
+
+    kyk_get_tx_size(tx, &tx_size);
+    mu_assert(tx_size == target_size, "Failed to test_get_tx_size: get tx size failed");
+    
+    return NULL;
+}
+
+char* test_create_tx()
+{
+    struct kyk_tx* tx = NULL;
+    tx = kyk_create_tx(1, 1, 1, 0);
+    mu_assert(tx -> version == 1, "Failed to test_create_tx");
+
+    return NULL;
+}
+
 char* test_seri_tx()
+{
+
+    struct kyk_tx* tx = NULL;
+    int res = -1;
+    uint8_t buf[200];
+    uint8_t target_tx_buf[134] = {
+	0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff,
+	0xff, 0x07, 0x04, 0xff, 0xff, 0x00, 0x1d, 0x01,
+	0x02, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0xf2,
+	0x05, 0x2a, 0x01, 0x00, 0x00, 0x00, 0x43, 0x41,
+	0x04, 0xd4, 0x6c, 0x49, 0x68, 0xbd, 0xe0, 0x28,
+	0x99, 0xd2, 0xaa, 0x09, 0x63, 0x36, 0x7c, 0x7a,
+	0x6c, 0xe3, 0x4e, 0xec, 0x33, 0x2b, 0x32, 0xe4,
+	0x2e, 0x5f, 0x34, 0x07, 0xe0, 0x52, 0xd6, 0x4a,
+	0xc6, 0x25, 0xda, 0x6f, 0x07, 0x18, 0xe7, 0xb3,
+	0x02, 0x14, 0x04, 0x34, 0xbd, 0x72, 0x57, 0x06,
+	0x95, 0x7c, 0x09, 0x2d, 0xb5, 0x38, 0x05, 0xb8,
+	0x21, 0xa8, 0x5b, 0x23, 0xa7, 0xac, 0x61, 0x72,
+	0x5b, 0xac, 0x00, 0x00, 0x00, 0x00
+    };
+    size_t len = 0;
+
+    res = build_testing_tx1(&tx);
+    mu_assert(res == 0, "Failed to test_seri_tx: build_testing_tx1 failed");
+
+    len = kyk_seri_tx(buf, tx);
+    mu_assert(len == sizeof(target_tx_buf), "Failed to test_seri_tx");
+    mu_assert(kyk_digest_eq(buf, target_tx_buf, len), "Failed to test_seri_tx");
+    
+    return NULL;
+
+}
+
+char* test_seri_tx_list()
 {
     return NULL;
 }
@@ -36,11 +102,58 @@ char* test_make_coinbase_tx()
 char *all_tests()
 {
     mu_suite_start();
-    
+
+    mu_run_test(test_get_tx_size);
+    mu_run_test(test_create_tx);
     mu_run_test(test_seri_tx);
+    mu_run_test(test_seri_tx_list);
     mu_run_test(test_make_coinbase_tx);
     
     return NULL;
+}
+
+/* The test data source is: https://webbtc.com/tx/b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082.json */
+/* Txid is b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082 */
+int build_testing_tx1(struct kyk_tx** out_tx)
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_txin* txin = NULL;
+    struct kyk_txout* txout = NULL;
+    char* txout_sc = "4104d46c4968bde02899d2aa0963367c7a6ce34eec332b32e42e5f3407e052d64ac625da6f0718e7b302140434bd725706957c092db53805b821a85b23a7ac61725bac";
+    size_t txout_sc_size = 67;
+    int res = -1;
+
+    txin = create_txin(COINBASE_PRE_TXID,
+		       COINBASE_INX,
+		       7,
+		       "04ffff001d0102",
+		       NORMALLY_TX_SEQ_NO);
+    
+    check(txin, "Failed to test_seri_tx: create_txin failed");
+
+    
+    txout = create_txout(5000000000, (varint_t)txout_sc_size, txout_sc);
+    check(txout, "Failed to test_seri_tx: create_txout failed");
+    
+    tx = kyk_create_tx(1, 1, 1, 0);
+    check(tx, "Failed to test_seri_tx: kyk_create_tx failed");
+
+    res = kyk_add_txin(tx, 0, txin);
+    check(res == 0, "Failed to build_testing_tx1: kyk_add_txin failed");
+
+    res = kyk_add_txout(tx, 0, txout);
+    check(res == 0, "Failed to build_testing_tx1: kyk_add_txout failed");
+
+    kyk_free_txin(txin);
+    kyk_free_txout(txout);
+    
+    *out_tx = tx;
+    return 0;
+
+error:
+
+    return -1;
+
 }
 
 MU_RUN_TESTS(all_tests);
