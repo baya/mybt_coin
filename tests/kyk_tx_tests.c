@@ -96,6 +96,47 @@ char* test_seri_tx_list()
     return NULL;
 }
 
+
+char* test2_seri_tx_list()
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_tx* tx_list = NULL;
+    struct kyk_bon_buff* buf_list = NULL;
+    struct kyk_bon_buff* bufp = NULL;
+    size_t tx_count = 2;
+    int res = -1;
+    char *errmsg = "failed to test2_seri_tx_list";
+
+    tx_list = calloc(tx_count, sizeof(struct kyk_tx));
+    check(tx_list, "Failed to calloc tx_list");
+    
+    buf_list = calloc(tx_count, sizeof(*buf_list));
+    check(buf_list, "Failed to calloc buf_list");
+    
+    bufp = buf_list;
+    res = build_testing_tx1(&tx);
+    mu_assert(res == 0, "Failed to test_seri_tx_list: build_testing_tx1 failed");
+    res = kyk_copy_tx(tx_list, tx);
+    check(res == 0, "Failed to kyk_copy_tx");
+    
+    res = kyk_copy_tx(tx_list+1, tx);
+    check(res == 0, "Failed to kyk_copy_tx");
+
+    res = kyk_seri_tx_list(buf_list, tx_list, tx_count);
+    
+    mu_assert(res == 0, "Failed to test_seri_tx_list: kyk_seri_tx_list failed");
+    mu_assert(kyk_digest_eq(bufp -> base, TARGET_TX1_BUF, bufp -> len), "Failed to test_seri_tx_list");
+    bufp++;
+    mu_assert(kyk_digest_eq(bufp -> base, TARGET_TX1_BUF, bufp -> len), "Failed to test_seri_tx_list");
+
+    return NULL;
+
+error:
+
+    return errmsg;
+}
+
+
 char* test_make_coinbase_tx()
 {
     struct kyk_tx* tx;
@@ -128,6 +169,7 @@ char *all_tests()
     mu_run_test(test_seri_tx);
     mu_run_test(test_seri_tx_list);
     mu_run_test(test_make_coinbase_tx);
+    mu_run_test(test2_seri_tx_list);
     
     return NULL;
 }
@@ -142,6 +184,8 @@ int build_testing_tx1(struct kyk_tx** out_tx)
     char* txout_sc = "4104d46c4968bde02899d2aa0963367c7a6ce34eec332b32e42e5f3407e052d64ac625da6f0718e7b302140434bd725706957c092db53805b821a85b23a7ac61725bac";
     size_t txout_sc_size = 67;
     int res = -1;
+
+    check(out_tx, "Failed to build_testing_tx1: out_tx is NULL");
 
     txin = create_txin(COINBASE_PRE_TXID,
 		       COINBASE_INX,
@@ -175,5 +219,6 @@ error:
     return -1;
 
 }
+
 
 MU_RUN_TESTS(all_tests);

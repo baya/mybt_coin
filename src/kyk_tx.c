@@ -20,6 +20,42 @@ static int get_txin_size(struct kyk_txin* txin, size_t* txin_size);
 static int get_txout_size(struct kyk_txout* txout, size_t* txout_size);
 
 
+int kyk_copy_tx(struct kyk_tx* dest_tx, const struct kyk_tx* src_tx)
+{
+    size_t i = 0;
+    int res = -1;
+    struct kyk_txin* txin = NULL;
+    struct kyk_txout* txout = NULL;
+    check(dest_tx, "Failed to kyk_copy_tx: dest_tx is NULL");
+    check(src_tx, "Failed to kyk_copy_tx: src_tx is NULL");
+
+    dest_tx -> version = src_tx -> version;
+    dest_tx -> vin_sz = src_tx -> vin_sz;
+    txin = src_tx -> txin;
+    dest_tx -> txin = calloc(dest_tx -> vin_sz, sizeof(struct kyk_txin));
+    check(dest_tx -> txin, "Failed to kyk_copy_tx: calloc dest_tx -> txin failed");
+    for(i = 0; i < src_tx -> vin_sz; i++){
+	res = kyk_add_txin(dest_tx, i, txin);
+	check(res == 0, "failed to kyk_copy_tx: kyk_add_txin failed");
+    }
+
+    dest_tx -> vout_sz = src_tx -> vout_sz;
+    txout = src_tx -> txout;
+    dest_tx -> txout = calloc(dest_tx -> vout_sz, sizeof(struct kyk_txout));
+    check(dest_tx -> txout, "Failed to kyk_copy_tx: calloc dest_tx -> txout failed");
+    for(i = 0; i < src_tx -> vout_sz; i++){
+	res = kyk_add_txout(dest_tx, i, txout);
+	check(res == 0, "failed to kyk_copy_tx: kyk_add_txout failed");
+    }
+
+    dest_tx -> lock_time = src_tx -> lock_time;
+
+    return 0;
+error:
+
+    return -1;
+}
+
 int kyk_get_tx_size(struct kyk_tx* tx, size_t* tx_size)
 {
     size_t len = 0;
@@ -111,6 +147,7 @@ int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
     size_t i = 0;
     size_t len = 0;
     size_t tx_size = 0;
+    int res = -1;
 
     buf = buf_list;
     tx = tx_list;
@@ -121,7 +158,8 @@ int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
 	tx = tx_list + i;
 	check(tx, "Failed to kyk_seri_tx_list: tx is NULL");
 	if(buf -> base) free(buf -> base);
-	kyk_get_tx_size(tx, &tx_size);
+	res = kyk_get_tx_size(tx, &tx_size);
+	check(res == 0, "Failed to kyk_seri_tx_list: kyk_get_tx_size failed");
 	buf -> base = calloc(tx_size, sizeof(*buf -> base));
 	check(buf -> base, "Failed to kyk_seri_tx_list: calloc buf -> base failed");
 	len = kyk_seri_tx(buf -> base, tx);
@@ -251,7 +289,7 @@ size_t kyk_seri_txout(unsigned char *buf, struct kyk_txout *txout)
 
 int kyk_add_txin(struct kyk_tx* tx,
 		 size_t inx,
-		 struct kyk_txin* out_txin)
+		 const struct kyk_txin* out_txin)
 {
     check(tx, "Failed to kyk_add_txin: tx is NULL");
     check(inx >= 0, "Failed to kyk_add_txin: inx is invalid");
@@ -286,7 +324,7 @@ error:
 
 int kyk_add_txout(struct kyk_tx* tx,
 		  size_t inx,
-		  struct kyk_txout* out_txout)
+		  const struct kyk_txout* out_txout)
 {
     check(tx, "Failed to kyk_add_txout: tx is NULL");
     check(inx >= 0, "Failed to kyk_add_txout: inx is invalid");

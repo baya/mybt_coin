@@ -68,12 +68,13 @@ struct kyk_tx* kyk_create_tx(uint32_t version,
 int kyk_get_tx_size(struct kyk_tx* tx, size_t* tx_size);
 int kyk_add_txin(struct kyk_tx* tx,
 		 size_t inx,
-		 struct kyk_txin* out_txin);
+		 const struct kyk_txin* out_txin);
 
 int kyk_add_txout(struct kyk_tx* tx,
 		  size_t inx,
-		  struct kyk_txout* out_txout);
+		  const struct kyk_txout* out_txout);
 
+int kyk_copy_tx(struct kyk_tx* dest_tx, const struct kyk_tx* src_tx);
 
 
 #endif
