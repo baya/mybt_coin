@@ -176,9 +176,11 @@ error:
     return NULL;
 }
 
-struct kyk_block* kyk_make_block(struct kyk_blk_header* blk_hd,
-				 struct kyk_tx* tx_list)
+
+int kyk_make_block(struct kyk_block* blk,
+		   struct kyk_blk_header* blk_hd,
+		   struct kyk_tx* tx_list)
 {
-    return NULL;
+    return 0;
 }
 

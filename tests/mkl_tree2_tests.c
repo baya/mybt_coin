@@ -53,22 +53,3 @@ char *all_tests()
 }
 
 MU_RUN_TESTS(all_tests);
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-

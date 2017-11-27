@@ -35,4 +35,9 @@ int kyk_unpack_blk_header(const struct kyk_buff *buf, struct kyk_blk_header *hd)
 size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk);
 size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk);
 
+int kyk_make_block(struct kyk_block* blk,
+		   struct kyk_blk_header* blk_hd,
+		   struct kyk_tx* tx_list);
+
+
 #endif

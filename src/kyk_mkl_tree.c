@@ -230,18 +230,23 @@ void kyk_cpy_mkl_root_value(uint8_t *src, struct kyk_mkltree_level *root_level)
 }
 
 
-struct kyk_mkltree_level* kyk_make_mkl_tree_root_fro_tx_list(struct kyk_tx* tx_list,
-							     size_t tx_count)
+struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(struct kyk_tx* tx_list,
+							      size_t tx_count)
 {
     struct kyk_bon_buff *buf_list = NULL;
     struct kyk_mkltree_level *leaf_level;
     struct kyk_mkltree_level *root_level;
     size_t i = 0;
+    int res = -1;
 
     buf_list = calloc(tx_count, sizeof(struct kyk_bon_buff));
     check(buf_list, "Failed to kyk_make_mkl_tree_root: calloc failed");
 
+    res = kyk_seri_tx_list(buf_list, tx_list, tx_count);
+
     leaf_level = create_mkl_leafs(buf_list, tx_count);
+    check(leaf_level, "Failed to kyk_make_mkl_tree_root_from_tx_list: create_mkl_leafs failed");
+    
     root_level = create_mkl_tree(leaf_level);
 
     return root_level;
