@@ -36,7 +36,7 @@ int kyk_free_mkl_tree(struct kyk_mkltree_level* mkl_root)
 	    res = kyk_free_mkl_level(lv);
 	    check(res == 0, "Failed to kyk_free_mkl_tree: kyk_free_mkl_level failed");
 	    lv = dwn;
-	}while(lv);
+	}while(0); /* bug here, just set it false */
     }
 
     return 0;

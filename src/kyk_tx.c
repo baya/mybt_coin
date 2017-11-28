@@ -621,19 +621,21 @@ int kyk_deseri_tx_list(struct kyk_tx* tx_list,
 		       const uint8_t* buf,
 		       size_t* byte_num)
 {
-    check(tx_list, "Failed to kyk_deseri_tx_list: tx_list is NULL");
-    check(tx_count >= 1, "Failed to kyk_deseri_tx_list: tx_count is invalid");
-    check(buf, "Failed to kyk_deseri_tx_list: buf is NULL");
-
     struct kyk_tx* tx = NULL;
     size_t len = 0;
-    unsigned char* bufp = (unsigned char*)buf;
+    const unsigned char* bufp = (const unsigned char*)buf;
     int res = -1;
     size_t i = 0;
+
+    check(tx_list != NULL, "Failed to kyk_deseri_tx_list: tx_list is NULL");
+    check(tx_count >= 1, "Failed to kyk_deseri_tx_list: tx_count is invalid");
+    check(buf != NULL, "Failed to kyk_deseri_tx_list: buf is NULL");
+    
 
     for(i = 0; i < tx_count; i++){
 	tx = tx_list + i;
 	res = kyk_deseri_tx(tx, bufp, &len);
+	check(res == 0, "Failed to kyk_deseri_tx_list: kyk_deseri_tx failed");
 	bufp += len;
     }
 
@@ -655,10 +657,10 @@ int kyk_deseri_tx(struct kyk_tx* tx,
     int res = -1;
     int arg_checked = 0;
 
-    check(tx, "Failed to kyk_deseri_tx: tx is NULL");
+    check(tx != NULL, "Failed to kyk_deseri_tx: tx is NULL");
     check(tx -> txin == NULL, "Failed to kyk_deseri_tx: tx -> txin is not NULL");
     check(tx -> txout == NULL, "Failed to kyk_deseri_tx: tx -> txout is not NULL");
-    check(buf, "Failed to kyk_deseri_tx: buf is NULL");
+    check(buf != NULL,  "Failed to kyk_deseri_tx: buf is NULL");
     arg_checked = 1;
     
     beej_unpack(bufp, "<L", &tx -> version);
@@ -793,7 +795,7 @@ int kyk_deseri_txout_list(struct kyk_txout* txout_list,
 			  const uint8_t* buf,
 			  size_t* byte_num)
 {
-    unsigned char* bufp = NULL;
+    const unsigned char* bufp = NULL;
     struct kyk_txout* txout = NULL;
     int res = -1;
     size_t i = 0;
@@ -802,7 +804,7 @@ int kyk_deseri_txout_list(struct kyk_txout* txout_list,
     check(txout_list, "Failed to kyk_deseri_txout_list: txout_list is NULL");
     check(buf, "Failed to kyk_deseri_txout_list: buf is NULL");
 
-    bufp = (unsigned char*) buf;
+    bufp = (const unsigned char*) buf;
 
     for(i = 0; i < txout_count; i++){
 	txout = txout_list + i;

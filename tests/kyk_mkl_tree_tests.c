@@ -172,8 +172,8 @@ char* test6_make_mkl_tree_root_from_tx_list()
     fclose(fp);
     fp = NULL;
 
-    blk = malloc(sizeof(*blk));
-    check(blk, "Failed to test6_make_mkl_tree_root_from_tx_list: blk malloc failed");
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to test6_make_mkl_tree_root_from_tx_list: blk calloc failed");
     blk -> hd = NULL;
     blk -> tx = NULL;
 
@@ -226,8 +226,8 @@ char* test15_make_mkl_tree_root_from_tx_list()
     fclose(fp);
     fp = NULL;
 
-    blk = malloc(sizeof(*blk));
-    check(blk, "Failed to test15_make_mkl_tree_root_from_tx_list: blk malloc failed");
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to test15_make_mkl_tree_root_from_tx_list: blk calloc failed");
     blk -> hd = NULL;
     blk -> tx = NULL;
 
@@ -243,13 +243,126 @@ char* test15_make_mkl_tree_root_from_tx_list()
     kyk_free_block(blk);
     blk = NULL;
     res = kyk_free_mkl_tree(mkl_rt);
-    mkl_rt = NULL;
     check(res == 0, "test15_make_mkl_tree_root_from_tx_list: kyk_free_mkl_tree failed");
+    mkl_rt = NULL;
 
     return NULL;
 error:
     if(fp) fclose(fp);
     return "test15_make_mkl_tree_root_from_tx_list failed";
+}
+
+
+char* test32_make_mkl_tree_root_from_tx_list()
+{
+    /* block file is sourced from https://webbtc.com/block/000000000000000012c2feb44df5a5d9e0c3ba1b70ed5d42b36732026025ff9f.bin */
+    /* and the json format is https://webbtc.com/block/000000000000000012c2feb44df5a5d9e0c3ba1b70ed5d42b36732026025ff9f.json */
+    /* its mrkl tree is: */
+    /* "18a40130ae5b27912c13963f6874d46efaa495d72bc82dc0e514859f8e2f6394" */
+    const char* blkfile = "data/blk_32tx_000000000000000012c2feb44df5a5d9e0c3ba1b70ed5d42b36732026025ff9f.dat";
+    struct kyk_block* blk = NULL;
+    struct kyk_tx* tx_list = NULL;
+    size_t blk_size = 0;
+    size_t tx_count = 0;
+    struct kyk_mkltree_level* mkl_rt;
+    int res = -1;
+    const uint8_t target_rt[32] = {
+	0x18, 0xa4, 0x01, 0x30, 0xae, 0x5b, 0x27, 0x91,
+	0x2c, 0x13, 0x96, 0x3f, 0x68, 0x74, 0xd4, 0x6e,
+	0xfa, 0xa4, 0x95, 0xd7, 0x2b, 0xc8, 0x2d, 0xc0,
+	0xe5, 0x14, 0x85, 0x9f, 0x8e, 0x2f, 0x63, 0x94	
+    };
+
+    uint8_t buf[10000];
+    FILE* fp = fopen(blkfile, "rb");
+    check(fp, "Failed to test32_make_mkl_tree_root_from_tx_list: fopen blkfile failed");
+    fread(buf, 100, 100, fp);
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to test32_make_mkl_tree_root_from_tx_list: blk malloc failed");
+    blk -> hd = NULL;
+    blk -> tx = NULL;
+
+    res = kyk_deseri_block(blk, buf, &blk_size);
+    check(res == 0, "Failed to test32_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    
+    tx_list = blk -> tx;
+    tx_count = blk -> tx_count;
+    mkl_rt = kyk_make_mkl_tree_root_from_tx_list(tx_list, tx_count);
+    check(mkl_rt, "Failed to test32_make_mkl_tree_root_from_tx_list: kyk_make_mkl_tree_root_from_tx_list failed");
+    mu_assert(kyk_digest_eq(mkl_rt -> nd -> bdy, target_rt, sizeof(target_rt)), "Failed to test_make_mkl_tree_root_from_tx_list");
+
+    kyk_free_block(blk);
+    blk = NULL;
+    res = kyk_free_mkl_tree(mkl_rt);
+    mkl_rt = NULL;
+    check(res == 0, "test32_make_mkl_tree_root_from_tx_list: kyk_free_mkl_tree failed");
+    fclose(fp);
+    fp = NULL;
+
+    return NULL;
+error:
+    if(fp) fclose(fp);
+    return "test32_make_mkl_tree_root_from_tx_list failed";
+}
+
+
+char* test777_make_mkl_tree_root_from_tx_list()
+{
+    /* block file is sourced from https://webbtc.com/block/00000000000000001544f99d2e133956f5352feabba910ff64d0d87b16daa26c.bin */
+    /* and the json format is https://webbtc.com/block/00000000000000001544f99d2e133956f5352feabba910ff64d0d87b16daa26c.json */
+    /* It contains 777 tx and its mrkl tree is: */
+    /* "64661f58773c0adc28609866fe3942c0b1cdb4cb99a0602cee2903f3f2b9f35a" */
+    const char* blkfile = "data/blk_777tx_00000000000000001544f99d2e133956f5352feabba910ff64d0d87b16daa26c.dat";
+    struct kyk_block* blk = NULL;
+    struct kyk_tx* tx_list = NULL;
+    size_t blk_size = 0;
+    size_t tx_count = 0;
+    size_t target_blk_size = 446843;
+    size_t target_tx_count = 777;
+    struct kyk_mkltree_level* mkl_rt;
+    int res = -1;
+    const uint8_t target_rt[32] = {
+	0x64, 0x66, 0x1f, 0x58, 0x77, 0x3c, 0x0a, 0xdc,
+	0x28, 0x60, 0x98, 0x66, 0xfe, 0x39, 0x42, 0xc0,
+	0xb1, 0xcd, 0xb4, 0xcb, 0x99, 0xa0, 0x60, 0x2c,
+	0xee, 0x29, 0x03, 0xf3, 0xf2, 0xb9, 0xf3, 0x5a	
+    };
+
+    uint8_t buf[1000000];
+    FILE* fp = fopen(blkfile, "rb");
+    check(fp, "Failed to test777_make_mkl_tree_root_from_tx_list: fopen blkfile failed");
+    fread(buf, 10000, 100, fp);
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to test777_make_mkl_tree_root_from_tx_list: blk malloc failed");
+    blk -> hd = NULL;
+    blk -> tx = NULL;
+
+    res = kyk_deseri_block(blk, buf, &blk_size);
+    check(res == 0, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    check(blk -> tx_count == target_tx_count, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    check(blk_size == target_blk_size, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed invalid blk_size");
+    
+    
+    tx_list = blk -> tx;
+    tx_count = blk -> tx_count;
+    mkl_rt = kyk_make_mkl_tree_root_from_tx_list(tx_list, tx_count);
+    check(mkl_rt, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_make_mkl_tree_root_from_tx_list failed");
+    mu_assert(kyk_digest_eq(mkl_rt -> nd -> bdy, target_rt, sizeof(target_rt)), "Failed to test_make_mkl_tree_root_from_tx_list");
+
+    kyk_free_block(blk);
+    blk = NULL;
+    res = kyk_free_mkl_tree(mkl_rt);
+    mkl_rt = NULL;
+    check(res == 0, "test777_make_mkl_tree_root_from_tx_list: kyk_free_mkl_tree failed");
+    fclose(fp);
+    fp = NULL;
+
+    return NULL;
+error:
+    if(fp) fclose(fp);
+    return "test32_make_mkl_tree_root_from_tx_list failed";
 }
 
 
@@ -261,6 +374,8 @@ char *all_tests()
     mu_run_test(test2_make_mkl_tree_root_from_tx_list);
     mu_run_test(test6_make_mkl_tree_root_from_tx_list);
     mu_run_test(test15_make_mkl_tree_root_from_tx_list);
+    mu_run_test(test32_make_mkl_tree_root_from_tx_list);
+    mu_run_test(test777_make_mkl_tree_root_from_tx_list);
     
     return NULL;
 }

@@ -42,7 +42,7 @@ int kyk_deseri_block(struct kyk_block* blk,
     check(blk -> tx_count > 0, "Failed to kyk_deseri_block: blk -> tx_count is invalid");
     bufp += len;
 
-    blk -> tx = calloc(blk -> tx_count, sizeof(struct kyk_tx));
+    blk -> tx = calloc(blk -> tx_count, sizeof(*blk -> tx));
     check(blk -> tx, "Failed to kyk_deseri_block: blk -> tx calloc failed");
 
     res = kyk_deseri_tx_list(blk -> tx, blk -> tx_count, bufp, &len);
