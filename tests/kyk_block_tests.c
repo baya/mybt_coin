@@ -204,7 +204,7 @@ char* test_deseri_block()
     check(blk, "Failed to test_parse_block: blk malloc failed");
 
     res = kyk_deseri_block(blk, BLOCK_BUF, &blk_size);
-    mu_assert(res == 0, "Failed to test_parse_block");
+    mu_assert(res == 0, "Failed to test_deseri_block");
     res = kyk_blk_hash256(blk_hash, blk -> hd);
     mu_assert(res == 0, "Failed to test_parse_block: kyk_blk_hash256 failed");
     mu_assert(kyk_digest_eq(blk_hash, target_blk_hash, sizeof(blk_hash)), "Failed to test_parse_block");

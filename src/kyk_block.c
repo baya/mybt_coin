@@ -16,17 +16,17 @@ int kyk_deseri_block(struct kyk_block* blk,
 		     const uint8_t* buf,
 		     size_t* byte_num)
 {
-    uint8_t* bufp = NULL;
+    const uint8_t* bufp = NULL;
     int res = -1;
     size_t len = 0;
     int arg_checked = 0;
 
     check(blk, "Failed to kyk_parse_block: blk is NULL");
     /* we need a clean block with blank block header */
-    check(blk -> hd == NULL, "Failed to kyk_parse_block: blk -> hd is not NULL");
+    check(blk -> hd == NULL, "Failed to kyk_deseri_block: blk -> hd is not NULL");
     /* we need a clean block with blank tx list */
-    check(blk -> tx == NULL, "Failed to kyk_parse_block: blk -> tx is not NULL");
-    check(buf, "Failed to kyk_parse_block: buf is NULL");
+    check(blk -> tx == NULL, "Failed to kyk_deseri_block: blk -> tx is not NULL");
+    check(buf, "Failed to kyk_deseri_block: buf is NULL");
 
     bufp = buf;
 

@@ -19,6 +19,64 @@ static void kyk_hash_mkltree_node(struct kyk_mkltree_node *nd);
 static void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_level *child_level);
 static int root_mkl_level(const struct kyk_mkltree_level *level);
 void kyk_init_mkl_level(struct kyk_mkltree_level *level);
+void kyk_free_mkl_node(struct kyk_mkltree_node* nd);
+int kyk_free_mkl_level(struct kyk_mkltree_level* lv);
+
+
+int kyk_free_mkl_tree(struct kyk_mkltree_level* mkl_root)
+{
+    struct kyk_mkltree_level* lv = NULL;
+    struct kyk_mkltree_level* dwn = NULL;
+    int res = -1;
+    
+    if(mkl_root){
+	lv = mkl_root;
+	do{
+	    dwn = lv -> dwn;
+	    res = kyk_free_mkl_level(lv);
+	    check(res == 0, "Failed to kyk_free_mkl_tree: kyk_free_mkl_level failed");
+	    lv = dwn;
+	}while(lv);
+    }
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_free_mkl_level(struct kyk_mkltree_level* lv)
+{
+    struct kyk_mkltree_node* nd = NULL;
+    size_t i = 0;
+
+    check(lv -> len > 0, "Failed to kyk_free_mkl_level: invalid lv -> len");
+    
+    if(lv){
+	if(lv -> nd){
+	    for(i = 0; i < lv -> len; i++){
+		nd = lv -> nd + i;
+		kyk_free_mkl_node(nd);
+	    }
+	}
+	lv -> nd = NULL;
+	free(lv);
+    }
+
+    return 0;
+
+error:
+    
+    return -1;
+}
+
+void kyk_free_mkl_node(struct kyk_mkltree_node* nd)
+{
+    if(nd){
+	free(nd);
+    }
+}
 
 
 void kyk_init_mkltree_node(struct kyk_mkltree_node *nd)

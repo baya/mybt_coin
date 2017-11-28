@@ -36,7 +36,7 @@ struct kyk_txout{
 int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx);
 
 int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
-		     struct kyk_tx* tx_list,
+		     const struct kyk_tx* tx_list,
 		     size_t tx_count);
 
 size_t kyk_seri_tx(unsigned char *buf, const struct kyk_tx *tx);

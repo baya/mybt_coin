@@ -187,23 +187,20 @@ error:
 }
 
 int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
-		     struct kyk_tx* tx_list,
+		     const struct kyk_tx* tx_list,
 		     size_t tx_count)
 {
     struct kyk_bon_buff* buf = NULL;
-    struct kyk_tx* tx = NULL;
+    const struct kyk_tx* tx = NULL;
     size_t i = 0;
     size_t len = 0;
     size_t tx_size = 0;
     int res = -1;
 
-    buf = buf_list;
-    tx = tx_list;
-
     for(i = 0; i < tx_count; i++){
 	buf = buf_list + i;
 	check(buf, "Failed to kyk_seri_tx_list: buf is NULL");	
-	tx = tx_list + i;
+	tx = &tx_list[i];
 	check(tx, "Failed to kyk_seri_tx_list: tx is NULL");
 	if(buf -> base) free(buf -> base);
 	res = kyk_get_tx_size(tx, &tx_size);
