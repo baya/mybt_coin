@@ -11,6 +11,57 @@
 #include "kyk_sha.h"
 #include "dbg.h"
 
+/* buf should not have Magic No and Blocksize */
+int kyk_deseri_block(struct kyk_block* blk,
+		     const uint8_t* buf,
+		     size_t* byte_num)
+{
+    uint8_t* bufp = NULL;
+    int res = -1;
+    size_t len = 0;
+    int arg_checked = 0;
+
+    check(blk, "Failed to kyk_parse_block: blk is NULL");
+    /* we need a clean block with blank block header */
+    check(blk -> hd == NULL, "Failed to kyk_parse_block: blk -> hd is not NULL");
+    /* we need a clean block with blank tx list */
+    check(blk -> tx == NULL, "Failed to kyk_parse_block: blk -> tx is not NULL");
+    check(buf, "Failed to kyk_parse_block: buf is NULL");
+
+    bufp = buf;
+
+    blk -> hd = calloc(1, sizeof(*blk -> hd));
+    check(blk -> hd, "Failed to kyk_parse_block: blk -> hd calloc failed");
+
+    res = kyk_deseri_blk_header(blk -> hd, buf, &len);
+    check(res == 0, "Failed to kyk_parse_block: kyk_deseri_blk_header failed");
+    bufp += len;
+
+    len = kyk_unpack_varint(bufp, &blk -> tx_count);
+    check(len > 0, "Failed to kyk_deseri_block: kyk_unpack_varint failed");
+    check(blk -> tx_count > 0, "Failed to kyk_deseri_block: blk -> tx_count is invalid");
+    bufp += len;
+
+    blk -> tx = calloc(blk -> tx_count, sizeof(struct kyk_tx));
+    check(blk -> tx, "Failed to kyk_deseri_block: blk -> tx calloc failed");
+
+    res = kyk_deseri_tx_list(blk -> tx, blk -> tx_count, bufp, &len);
+    check(res == 0, "Failed to kyk_deseri_block: kyk_deseri_tx_list failed");
+    bufp += len;
+
+    *byte_num = bufp - buf;
+    
+    return 0;
+
+error:
+
+    if(arg_checked){
+	if(blk -> hd) free(blk -> hd);
+	if(blk -> tx) kyk_free_tx(blk -> tx);
+    }
+    return -1;
+
+}
 
 size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd)
 {
@@ -49,6 +100,8 @@ int kyk_deseri_blk_header(struct kyk_blk_header *hd,
 			  size_t* len)
 {
     unsigned char* bufp = NULL;
+
+    check(hd, "Failed to kyk_deseri_blk_header: hd is NULL");
     
     bufp = (unsigned char*)buf;
     check(bufp, "Failed to kyk_unpack_blk_header: bufp is NULL");

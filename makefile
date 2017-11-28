@@ -22,7 +22,7 @@ TARGET = build/libMY_LIBARAY.a
 SO_TARGET = $(patsubst %.a, %.so, $(TARGET))
 
 # The Target Build
-all: $(TARGET) $(SO_TARGET) tests
+all: $(TARGET) $(SO_TARGET) clean_tests tests
 
 dev: CFLAGS = -g -Wall -Isrc -Wextra -Wextra $(OPTFLAGS)
 dev: all
@@ -87,6 +87,11 @@ clean:
 	rm -f tests/tests.log
 	find . -name "*.gc" -exec rm {} \;
 	rm -rf `find . -name "*.dSYM" -print`
+
+clean_tests:
+	-rm -f tests/tests.log
+	-rm -f tests/*.out
+	-rm -rf tests/*.out.dSYM
 
 # The Install
 install: all

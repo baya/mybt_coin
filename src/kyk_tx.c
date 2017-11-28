@@ -45,11 +45,13 @@ int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx)
     uint8_t *buf = NULL;
     size_t len = 0;
     size_t tx_size = 0;
+    int res = -1;
 
     check(digest, "Failed to kyk_tx_hash256: digest is NULL");
     check(tx, "Failed to kyk_tx_hash256: tx is NULL");
 
-    kyk_get_tx_size(tx, &tx_size);
+    res = kyk_get_tx_size(tx, &tx_size);
+    check(res == 0, "Failed to kyk_tx_hash256: kyk_get_tx_size failed");
     check(tx_size > 0, "Failed to kyk_tx_hash256: kyk_get_tx_size failed");
 
     buf = calloc(tx_size, sizeof(*buf));
@@ -354,6 +356,7 @@ int kyk_add_txin(struct kyk_tx* tx,
     
     if(txin -> sc){
 	free(txin -> sc);
+	txin -> sc = NULL;
     }
     txin -> sc = calloc(txin -> sc_size, sizeof(unsigned char));
     check(txin -> sc, "Failed to kyk_add_txin: txin -> sc is NULL");
@@ -460,16 +463,28 @@ void kyk_free_tx(struct kyk_tx *tx)
     if(tx) free(tx);
 }
 
-void kyk_free_txin(struct kyk_txin *txin)
+void kyk_free_txin(struct kyk_txin* txin)
 {
-    if(txin -> sc) free(txin -> sc);
-    if(txin) free(txin);
+    if(txin){
+	if(txin -> sc) {
+	    free(txin -> sc);
+	    txin -> sc = NULL;
+	}
+	free(txin);
+    }
+
 }
 
 void kyk_free_txout(struct kyk_txout *txout)
 {
-    if(txout -> sc) free(txout -> sc);
-    if(txout) free(txout);
+    if(txout) {
+	if(txout -> sc){
+	    free(txout -> sc);
+	    txout -> sc = NULL;
+	}
+    
+	free(txout);
+    }
 }
 
 int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note)
@@ -622,14 +637,16 @@ int kyk_deseri_tx(struct kyk_tx* tx,
 		  const uint8_t* buf,
 		  size_t* byte_num)
 {
+    size_t len = 0;
+    unsigned char* bufp = (unsigned char*)buf;
+    int res = -1;
+    int arg_checked = 0;
+
     check(tx, "Failed to kyk_deseri_tx: tx is NULL");
     check(tx -> txin == NULL, "Failed to kyk_deseri_tx: tx -> txin is not NULL");
     check(tx -> txout == NULL, "Failed to kyk_deseri_tx: tx -> txout is not NULL");
     check(buf, "Failed to kyk_deseri_tx: buf is NULL");
-
-    size_t len = 0;
-    unsigned char* bufp = (unsigned char*)buf;
-    int res = -1;
+    arg_checked = 1;
     
     beej_unpack(bufp, "<L", &tx -> version);
     bufp += sizeof(tx -> version);
@@ -654,12 +671,18 @@ int kyk_deseri_tx(struct kyk_tx* tx,
     res = kyk_deseri_txout_list(tx -> txout, tx -> vout_sz, bufp, &len);
     bufp += len;
 
+    beej_unpack(bufp, "<L", &tx -> lock_time);
+    bufp += sizeof(tx -> lock_time);
+
     *byte_num = bufp - buf;
 
     return 0;
 
 error:
-
+    if(arg_checked){
+	if(tx -> txin) kyk_free_txin(tx -> txin);
+	if(tx -> txout) kyk_free_txout(tx -> txout);
+    }
     return -1;
 }
 
@@ -704,10 +727,13 @@ int kyk_deseri_txin(struct kyk_txin* txin,
 {
     unsigned char* bufp = NULL;
     size_t len = 0;
+    int arg_checked = 0;
     
     check(txin, "Failed to kyk_deseri_txin: txin is NULL");
     check(txin -> sc == NULL, "Failed to kyk_deseri_txin: txin -> sc is not NULL");
     check(buf, "Failed to kyk_deseri_txin: buf is NULL");
+    arg_checked = 1;
+    
 
     bufp = (unsigned char*)buf;
 
@@ -733,7 +759,9 @@ int kyk_deseri_txin(struct kyk_txin* txin,
     return 0;
     
 error:
-
+    if(arg_checked){
+	if(txin -> sc) free(txin -> sc);
+    }
     return -1;
 }
 
@@ -778,10 +806,12 @@ int kyk_deseri_txout(struct kyk_txout* txout,
 
     unsigned char* bufp = NULL;
     size_t len = 0;
+    int arg_checked = 0;
 
     check(txout, "Failed to kyk_deseri_txout: txout is NULL");
     check(txout -> sc == NULL, "Failed to kyk_deseri_txout: txout -> sc is not NULL");
     check(buf, "Failed to kyk_deseri_txout: buf is NULL");
+    arg_checked = 1;
 
     bufp = (unsigned char*)buf;
     beej_unpack(bufp, "<Q", &txout -> value);
@@ -800,5 +830,8 @@ int kyk_deseri_txout(struct kyk_txout* txout,
     return 0;
 
 error:
+    if(arg_checked){
+	if(txout -> sc) free(txout -> sc);
+    }
     return -1;
 }

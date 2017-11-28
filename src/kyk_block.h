@@ -33,6 +33,10 @@ size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *
 size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk);
 size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk);
 
+int kyk_deseri_block(struct kyk_block* blk,
+		     const uint8_t* buf,
+		     size_t* byte_num);
+
 int kyk_deseri_blk_header(struct kyk_blk_header *hd,
 			  const uint8_t *buf,
 			  size_t* len);
