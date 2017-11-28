@@ -3,6 +3,9 @@
 
 #define MKL_NODE_BODY_LEN 32
 
+struct kyk_tx;
+struct kyk_bon_buff;
+
 enum mkltree_node_type {
     ROOT_ND_T,
     BR_ND_T,

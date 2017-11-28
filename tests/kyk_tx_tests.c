@@ -75,6 +75,36 @@ char* test_seri_tx()
 
 }
 
+char* test_deseri_tx()
+{
+    uint8_t target_txid[] = {
+	0xb1, 0xfe, 0xa5, 0x24, 0x86, 0xce, 0x0c, 0x62,
+	0xbb, 0x44, 0x2b, 0x53, 0x0a, 0x3f, 0x01, 0x32,
+	0xb8, 0x26, 0xc7, 0x4e, 0x47, 0x3d, 0x1f, 0x2c,
+	0x22, 0x0b, 0xfa, 0x78, 0x11, 0x1c, 0x50, 0x82
+    };
+    uint8_t digest[32];
+    int res = -1;
+    size_t len = 0;
+    struct kyk_tx* tx = NULL;
+    
+    tx = malloc(sizeof(*tx));
+    check(tx, "Failed to test_deseri_tx: tx malloc failed");
+
+    res = kyk_deseri_tx(tx, TARGET_TX1_BUF, &len);
+    mu_assert(res == 0, "Failed to test_deseri_tx");
+
+    res = kyk_tx_hash256(digest, tx);
+    check(res == 0, "Failed to test_deseri_tx: kyk_tx_hash256 failed");
+    mu_assert(kyk_digest_eq(digest, target_txid, sizeof(digest)), "Failed to test_deseri_tx");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_deseri_tx";
+}
+
 char* test_seri_tx_list()
 {
     struct kyk_tx* tx = NULL;
@@ -170,6 +200,7 @@ char *all_tests()
     mu_run_test(test_seri_tx_list);
     mu_run_test(test_make_coinbase_tx);
     mu_run_test(test2_seri_tx_list);
+    mu_run_test(test_deseri_tx);
     
     return NULL;
 }

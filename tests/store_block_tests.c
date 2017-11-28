@@ -87,9 +87,7 @@ char* test_read_block()
     kyk_parse_hex(blk_hash, "0000876c9ef8c1f8b2a3012ec1bdea7296f95ae21681799f8adf967f548bf8f3");
     bval = kyk_read_block(&blk_db, (char *)blk_hash, &errptr);
     check(errptr == NULL, "failed to test read b key value");
-
     mu_assert(bval != NULL, "failed to test read block");
-
     mu_assert(bval -> wVersion == 1, "failed to get the correct wVersion");
     mu_assert(bval -> nHeight == 0, "failed to get the correct nHeight");
     mu_assert(bval -> nStatus == BLOCK_HAVE_MASK, "failed to get the correct nStatus");
@@ -107,7 +105,6 @@ error:
     if(bval) kyk_free_bval(bval);
     kyk_free_block_db(&blk_db);
     return errmsg;
-
 
 }
 

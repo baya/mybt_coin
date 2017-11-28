@@ -7,6 +7,8 @@
 #include "beej_pack.h"
 #include "kyk_utils.h"
 #include "kyk_buff.h"
+#include "kyk_mkl_tree.h"
+#include "kyk_sha.h"
 #include "dbg.h"
 
 
@@ -40,6 +42,62 @@ size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd)
     total += len;
 
     return total;
+}
+
+int kyk_deseri_blk_header(struct kyk_blk_header *hd,
+			  const uint8_t *buf,
+			  size_t* len)
+{
+    unsigned char* bufp = NULL;
+    
+    bufp = (unsigned char*)buf;
+    check(bufp, "Failed to kyk_unpack_blk_header: bufp is NULL");
+
+    beej_unpack(bufp, "<L", &hd -> version);
+    bufp += sizeof(hd -> version);
+
+    kyk_reverse_pack_chars(hd -> pre_blk_hash, bufp, sizeof(hd -> pre_blk_hash));
+    bufp += sizeof(hd -> pre_blk_hash);
+
+    kyk_reverse_pack_chars(hd -> mrk_root_hash, bufp, sizeof(hd -> mrk_root_hash));
+    bufp += sizeof(hd -> mrk_root_hash);
+
+    beej_unpack(bufp, "<L", &hd -> tts);
+    bufp += sizeof(hd -> tts);
+
+    beej_unpack(bufp, "<L", &hd -> bts);
+    bufp += sizeof(hd -> bts);
+
+    beej_unpack(bufp, "<L", &hd -> nonce);
+    bufp += sizeof(hd -> nonce);
+
+    *len = bufp - buf;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_blk_hash256(uint8_t* digest, const struct kyk_blk_header* hd)
+{
+    uint8_t buf[KYK_BLK_HD_LEN];
+    size_t len = 0;
+
+    check(digest, "Failed to kyk_blk_hash256: digest is NULL");
+    
+    len = kyk_seri_blk_hd(buf, hd);
+    check(len == KYK_BLK_HD_LEN, "Failed to kyk_blk_hash256: kyk_seri_blk_hd failed");
+
+    kyk_dgst_hash256(digest, buf, KYK_BLK_HD_LEN);
+    kyk_reverse(digest, SHA256_DIGEST_LENGTH);
+
+    return 0;
+
+error:
+
+    return -1;
 }
 
 size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *hd)
@@ -77,30 +135,6 @@ void kyk_free_block(struct kyk_block *blk)
     if(blk) free(blk);
 }
 
-int kyk_unpack_blk_header(const struct kyk_buff *buf, struct kyk_blk_header *hd)
-{
-    uint8_t* bufp = buf -> base;
-    bufp += buf -> idx;
-
-    beej_unpack((unsigned char*)bufp, "<L", &hd -> version);
-    bufp += sizeof(hd -> version);
-
-    kyk_reverse_pack_chars(hd -> pre_blk_hash, (unsigned char*)bufp, sizeof(hd -> pre_blk_hash));
-    bufp += sizeof(hd -> pre_blk_hash);
-
-    kyk_reverse_pack_chars(hd -> mrk_root_hash, (unsigned char*)bufp, sizeof(hd -> mrk_root_hash));
-    bufp += sizeof(hd -> mrk_root_hash);
-
-    beej_unpack((unsigned char*)bufp, "<L", &hd -> tts);
-    bufp += sizeof(hd -> tts);
-
-    beej_unpack((unsigned char*)bufp, "<L", &hd -> bts);
-    bufp += sizeof(hd -> bts);
-
-    beej_unpack((unsigned char*)bufp, "<L", &hd -> nonce);
-
-    return 1;
-}
 
 size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk)
 {
@@ -166,6 +200,11 @@ struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
 
     hd -> version = version;
     memcpy(hd -> pre_blk_hash, pre_blk_hash, sizeof(hd -> pre_blk_hash));
+
+    mkl_root = kyk_make_mkl_tree_root_from_tx_list(tx_list, tx_count);
+    check(mkl_root, "Failed to kyk_make_blk_header: kyk_make_mkl_tree_root_from_tx_list failed");
+
+    memcpy(hd -> mrk_root_hash, mkl_root -> nd -> bdy, sizeof(hd -> mrk_root_hash));
 
     hd -> tts = tts;
     hd -> bts = bts;

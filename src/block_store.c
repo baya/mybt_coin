@@ -91,8 +91,10 @@ void unpack_bval_buf(struct kyk_bkey_val *bval,
 {
     size_t ofst = 0;
     size_t count = 0;
+    size_t len = 0;
     uint8_t *bufp = buf -> base;
     buf -> idx = 0;
+    int res = -1;
 	
     ofst = read_varint(bufp, buf -> len - count, (uint32_t*)&bval -> wVersion);
     bufp += ofst;
@@ -130,8 +132,10 @@ void unpack_bval_buf(struct kyk_bkey_val *bval,
 
     buf -> idx += count;
 
-    kyk_unpack_blk_header(buf, bval -> blk_hd);
-    
+    res = kyk_deseri_blk_header(bval -> blk_hd, bufp, &len);
+    if(res != 0){
+	printf("Failed to unpack_bval_buf: kyk_deseri_blk_header failed\n");
+    }
     
 }
 

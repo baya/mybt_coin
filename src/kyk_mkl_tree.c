@@ -236,7 +236,6 @@ struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(struct kyk_tx* tx_
     struct kyk_bon_buff *buf_list = NULL;
     struct kyk_mkltree_level *leaf_level;
     struct kyk_mkltree_level *root_level;
-    size_t i = 0;
     int res = -1;
 
     buf_list = calloc(tx_count, sizeof(struct kyk_bon_buff));

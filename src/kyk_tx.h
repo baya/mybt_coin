@@ -33,11 +33,13 @@ struct kyk_txout{
     unsigned char *sc;
 };
 
+int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx);
+
 int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
 		     struct kyk_tx* tx_list,
 		     size_t tx_count);
 
-size_t kyk_seri_tx(unsigned char *buf, struct kyk_tx *tx);
+size_t kyk_seri_tx(unsigned char *buf, const struct kyk_tx *tx);
 
 struct kyk_txin *create_txin(const char *pre_txid,
 			     uint32_t pre_tx_inx,
@@ -65,7 +67,7 @@ struct kyk_tx* kyk_create_tx(uint32_t version,
 			     varint_t vout_sz,
 			     uint32_t lock_time);
 
-int kyk_get_tx_size(struct kyk_tx* tx, size_t* tx_size);
+int kyk_get_tx_size(const struct kyk_tx* tx, size_t* tx_size);
 int kyk_add_txin(struct kyk_tx* tx,
 		 size_t inx,
 		 const struct kyk_txin* out_txin);
@@ -75,6 +77,16 @@ int kyk_add_txout(struct kyk_tx* tx,
 		  const struct kyk_txout* out_txout);
 
 int kyk_copy_tx(struct kyk_tx* dest_tx, const struct kyk_tx* src_tx);
+
+
+int kyk_deseri_tx(struct kyk_tx* tx,
+		  const uint8_t* buf,
+		  size_t* byte_num);
+
+int kyk_deseri_tx_list(struct kyk_tx* tx_list,
+		       size_t tx_count,
+		       const uint8_t* buf,
+		       size_t* byte_num);
 
 
 #endif
