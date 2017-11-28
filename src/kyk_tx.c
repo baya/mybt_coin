@@ -458,9 +458,19 @@ struct kyk_txout *create_txout(uint64_t value,
 
 void kyk_free_tx(struct kyk_tx *tx)
 {
-    if(tx -> txin) kyk_free_txin(tx -> txin);
-    if(tx -> txout) kyk_free_txout(tx -> txout);
-    if(tx) free(tx);
+    if(tx){
+	if(tx -> txin) {
+	    kyk_free_txin(tx -> txin);
+	    tx -> txin = NULL;
+	}
+	if(tx -> txout) {
+	    kyk_free_txout(tx -> txout);
+	    tx -> txout = NULL;
+	}
+	
+	free(tx);
+	tx = NULL;
+    }
 }
 
 void kyk_free_txin(struct kyk_txin* txin)
@@ -471,6 +481,7 @@ void kyk_free_txin(struct kyk_txin* txin)
 	    txin -> sc = NULL;
 	}
 	free(txin);
+	txin = NULL;
     }
 
 }
@@ -484,6 +495,7 @@ void kyk_free_txout(struct kyk_txout *txout)
 	}
     
 	free(txout);
+	txout = NULL;
     }
 }
 
@@ -560,13 +572,17 @@ int kyk_make_coinbase_tx(struct kyk_tx** tx,
     memcpy(txout -> sc, pbk_sc -> base, txout -> sc_size);
 
     free_kyk_buff(pbk_sc);
+    pbk_sc = NULL;
 
     *tx = txcpy;
 
     return 0;
 
 error:
-    if(pbk_sc) free_kyk_buff(pbk_sc);
+    if(pbk_sc) {
+	free_kyk_buff(pbk_sc);
+	pbk_sc = NULL;
+    }
     return -1;
 
 }
@@ -680,8 +696,14 @@ int kyk_deseri_tx(struct kyk_tx* tx,
 
 error:
     if(arg_checked){
-	if(tx -> txin) kyk_free_txin(tx -> txin);
-	if(tx -> txout) kyk_free_txout(tx -> txout);
+	if(tx -> txin) {
+	    kyk_free_txin(tx -> txin);
+	    tx -> txin = NULL;
+	}
+	if(tx -> txout) {
+	    kyk_free_txout(tx -> txout);
+	    tx -> txout = NULL;
+	}
     }
     return -1;
 }
@@ -760,7 +782,10 @@ int kyk_deseri_txin(struct kyk_txin* txin,
     
 error:
     if(arg_checked){
-	if(txin -> sc) free(txin -> sc);
+	if(txin -> sc) {
+	    free(txin -> sc);
+	    txin -> sc = NULL;
+	}
     }
     return -1;
 }
@@ -831,7 +856,10 @@ int kyk_deseri_txout(struct kyk_txout* txout,
 
 error:
     if(arg_checked){
-	if(txout -> sc) free(txout -> sc);
+	if(txout -> sc) {
+	    free(txout -> sc);
+	    txout -> sc = NULL;
+	}
     }
     return -1;
 }

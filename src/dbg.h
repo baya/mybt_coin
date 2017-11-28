@@ -27,4 +27,6 @@
 
 #define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__); errno=0; goto error; }
 
+#define FREE_TO_NULL(A) if((A)) {free(A);(A)=NULL;}
+
 #endif

@@ -7,8 +7,13 @@
 
 void free_kyk_buff(struct kyk_buff *buf)
 {
-    if(buf -> base) free(buf -> base);
-    free(buf);
+    if(buf){
+	if(buf -> base) {
+	    free(buf -> base);
+	    buf -> base = NULL;
+	}
+	free(buf);
+    }
 }
 
 struct kyk_buff* create_kyk_buff(size_t blen)

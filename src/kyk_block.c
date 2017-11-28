@@ -56,8 +56,14 @@ int kyk_deseri_block(struct kyk_block* blk,
 error:
 
     if(arg_checked){
-	if(blk -> hd) free(blk -> hd);
-	if(blk -> tx) kyk_free_tx(blk -> tx);
+	if(blk -> hd) {
+	    free(blk -> hd);
+	    blk -> hd = NULL;
+	}
+	if(blk -> tx) {
+	    kyk_free_tx(blk -> tx);
+	    blk -> tx = NULL;
+	}
     }
     return -1;
 
@@ -183,9 +189,21 @@ size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *
 
 void kyk_free_block(struct kyk_block *blk)
 {
-    if(blk -> hd) free(blk -> hd);
-    if(blk -> tx) kyk_free_tx(blk -> tx);
-    if(blk) free(blk);
+    if(blk){
+	
+	if(blk -> hd) {
+	    free(blk -> hd);
+	    blk -> hd = NULL;
+	}
+	
+	if(blk -> tx) {
+	    kyk_free_tx(blk -> tx);
+	    blk -> tx = NULL;
+	}
+
+	free(blk);
+	blk = NULL;
+    }
 }
 
 
