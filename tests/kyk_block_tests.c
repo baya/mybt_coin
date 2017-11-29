@@ -275,7 +275,6 @@ char* test_make_blk_header()
     res = kyk_blk_hash256(blk_hash, hd);
     check(res == 0, "Failed to test_make_blk_header: kyk_blk_hash256 failed");
 
-    kyk_print_hex("blk_hash", blk_hash, 32);
     mu_assert(kyk_digest_eq(blk_hash, target_blk_hash, sizeof(blk_hash)), "Failed to test_make_blk_header");
     
     return NULL;
@@ -283,6 +282,30 @@ char* test_make_blk_header()
 error:
 
     return "Failed to test_make_blk_header";
+}
+
+char* test_kyk_make_block()
+{
+    struct kyk_block* blk = NULL;
+    struct kyk_block* blk2 = NULL;
+    size_t blk_len = 0;
+    size_t target_blk_size = 490;
+    int res = -1;
+
+    blk = calloc(1, sizeof(*blk));
+    res = kyk_deseri_block(blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+
+    blk2 = calloc(1, sizeof(*blk2));
+    res = kyk_make_block(blk2, blk -> hd, blk -> tx, blk -> tx_count);
+    mu_assert(res == 0, "Failed to test_kyk_make_block");
+    mu_assert(blk2 -> blk_size == target_blk_size, "Failed to test_kyk_make_block: invalid blk_size");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_make_block";
 }
 
 char *all_tests()
@@ -293,6 +316,7 @@ char *all_tests()
     mu_run_test(test_deseri_blk_header);
     mu_run_test(test_deseri_block);
     mu_run_test(test_make_blk_header);
+    mu_run_test(test_kyk_make_block);
     
     return NULL;
 }

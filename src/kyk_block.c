@@ -295,8 +295,38 @@ error:
 
 int kyk_make_block(struct kyk_block* blk,
 		   struct kyk_blk_header* blk_hd,
-		   const struct kyk_tx* tx_list)
+		   struct kyk_tx* tx_list,
+		   varint_t tx_count
+    )
 {
+    check(blk, "Failed to kyk_make_block: blk is NULL");
+    check(blk_hd, "Failed to kyk_make_block: blk_hd is NULL");
+    check(tx_list, "Failed to kyk_make_block: tx_list is NULL");
+
+    struct kyk_tx* tx = NULL;
+    size_t tx_size = 0;
+    int i = 0;
+    int res = -1;
+
+    blk -> blk_size = 0;
+    blk -> hd = blk_hd;
+    blk -> blk_size += KYK_BLK_HD_LEN;
+    blk -> tx_count = tx_count;
+    blk -> blk_size += get_varint_size(blk -> tx_count);
+    blk -> tx = tx_list;
+
+    for(i = 0; (varint_t)i < tx_count; i++){
+	tx = tx_list + i;
+	res = kyk_get_tx_size(tx, &tx_size);
+	check(res == 0, "Failed to kyk_make_block: kyk_get_tx_size failed");
+	blk -> blk_size += tx_size;
+    }
+    
     return 0;
+
+error:
+
+    return -1;
 }
+
 

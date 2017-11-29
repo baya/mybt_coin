@@ -50,7 +50,8 @@ struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
 
 int kyk_make_block(struct kyk_block* blk,
 		   struct kyk_blk_header* blk_hd,
-		   const struct kyk_tx* tx_list);
+		   struct kyk_tx* tx_list,
+		   varint_t tx_count);
 
 int kyk_blk_hash256(uint8_t* digest, const struct kyk_blk_header* hd);
 
