@@ -16,7 +16,7 @@ static void kyk_hash_mkl_leaf(struct kyk_mkltree_node *nd, struct kyk_bon_buff b
 struct kyk_mkltree_level *create_parent_mkl_level(struct kyk_mkltree_level *level);
 static void kyk_hash_mkltree_level(struct kyk_mkltree_level *level);
 static void kyk_hash_mkltree_node(struct kyk_mkltree_node *nd);
-static void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_level *child_level);
+static int kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_level *child_level);
 static int root_mkl_level(const struct kyk_mkltree_level *level);
 void kyk_init_mkl_level(struct kyk_mkltree_level *level);
 void kyk_free_mkl_node(struct kyk_mkltree_node* nd);
@@ -36,7 +36,7 @@ int kyk_free_mkl_tree(struct kyk_mkltree_level* mkl_root)
 	    res = kyk_free_mkl_level(lv);
 	    check(res == 0, "Failed to kyk_free_mkl_tree: kyk_free_mkl_level failed");
 	    lv = dwn;
-	}while(0); /* bug here, just set it false */
+	}while(lv);
     }
 
     return 0;
@@ -48,19 +48,14 @@ error:
 
 int kyk_free_mkl_level(struct kyk_mkltree_level* lv)
 {
-    struct kyk_mkltree_node* nd = NULL;
-    size_t i = 0;
 
     check(lv -> len > 0, "Failed to kyk_free_mkl_level: invalid lv -> len");
     
     if(lv){
 	if(lv -> nd){
-	    for(i = 0; i < lv -> len; i++){
-		nd = lv -> nd + i;
-		kyk_free_mkl_node(nd);
-	    }
+	    kyk_free_mkl_node(lv -> nd);
+	    lv -> nd = NULL;
 	}
-	lv -> nd = NULL;
 	free(lv);
     }
 
@@ -92,30 +87,46 @@ struct kyk_mkltree_level *create_mkl_tree(struct kyk_mkltree_level *leaf_level)
     struct kyk_mkltree_level *pnt_level;
 
     pnt_level = create_parent_mkl_level(leaf_level);
+    check(pnt_level, "Failed to create_mkl_tree: create_parent_mkl_level failed");
     if(root_mkl_level(pnt_level) == 1){
 	return pnt_level;
     } else {
 	do{
 	    pnt_level = create_parent_mkl_level(pnt_level);
+	    check(pnt_level, "Failed to create_mkl_tree: create_parent_mkl_level failed");
 	} while(root_mkl_level(pnt_level) != 1);
     }
 
     return pnt_level;
 
+error:
+
+    return NULL;
 }
 
 
 struct kyk_mkltree_level *create_mkl_leafs(struct kyk_bon_buff *buf_list, size_t len)
 {
-    struct kyk_mkltree_level *mkl_level = malloc(sizeof(struct kyk_mkltree_level));
-    struct kyk_mkltree_node *nd_list = malloc(len * sizeof(struct kyk_mkltree_node));
-    struct kyk_mkltree_node *nd = nd_list;
+    struct kyk_mkltree_level *mkl_level = NULL; 
+    struct kyk_mkltree_node *nd_list = NULL;
+    struct kyk_mkltree_node *nd = NULL;
+    size_t i = 0;
+
+    mkl_level = malloc(sizeof(*mkl_level));
+    check(mkl_level, "Failed to create_mkl_leafs: mkl_level malloc failed");
+
+    nd_list = calloc(len, sizeof(struct kyk_mkltree_node));
+    check(nd_list, "Failed to create_mkl_leafs: nd_list calloc failed");
+
+    nd = nd_list;
+    
     kyk_init_mkl_level(mkl_level);
+    
     mkl_level -> nd = nd_list;
     mkl_level -> len = 0;
     mkl_level -> inx = 1;
 
-    size_t i = 0;
+    
     for(i = 0; i < len; i++){
 	kyk_init_mkltree_node(nd);
 	kyk_hash_mkl_leaf(nd, buf_list[i]);
@@ -128,6 +139,11 @@ struct kyk_mkltree_level *create_mkl_leafs(struct kyk_bon_buff *buf_list, size_t
     }
 
     return mkl_level;
+
+error:
+    if(mkl_level) free(mkl_level);
+    if(nd_list) free(nd_list);
+    return NULL;
 }
 
 void kyk_init_mkl_level(struct kyk_mkltree_level *level)
@@ -152,7 +168,9 @@ struct kyk_mkltree_level *create_parent_mkl_level(struct kyk_mkltree_level *leve
     if(root_mkl_level(level) == 1){
 	pnt_level = level;
     } else {
-	pnt_level = malloc(sizeof(struct kyk_mkltree_level));
+	pnt_level = malloc(sizeof(*pnt_level));
+	check(pnt_level, "Failed to create_parent_mkl_level: pnt_level malloc failed");
+	
 	kyk_up_mkltree_level(pnt_level, level);
 	kyk_hash_mkltree_level(pnt_level);
 
@@ -162,6 +180,10 @@ struct kyk_mkltree_level *create_parent_mkl_level(struct kyk_mkltree_level *leve
     }
 
     return pnt_level;
+
+error:
+
+    return NULL;
 }
 
 int root_mkl_level(const struct kyk_mkltree_level *level)
@@ -193,7 +215,8 @@ void kyk_hash_mkltree_node(struct kyk_mkltree_node *nd)
     kyk_reverse(nd -> bdy, MKL_NODE_BODY_LEN);
 }
 
-void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_level *child_level)
+int kyk_up_mkltree_level(struct kyk_mkltree_level *level,
+			 struct kyk_mkltree_level *child_level)
 {
     size_t len = 0;
     struct kyk_mkltree_node *pnd_cpy;
@@ -203,7 +226,9 @@ void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_le
 	len = child_level -> len / 2 + 1;
     }
     level -> len = len;
-    level -> nd = malloc(len * sizeof(struct kyk_mkltree_node));
+    level -> nd = calloc(len, sizeof(struct kyk_mkltree_node));
+    check(level -> nd, "Failed to kyk_up_mkltree_level: level -> nd calloc failed");
+    
     level -> inx = child_level -> inx + 1;
     level -> dwn = child_level;
     pnd_cpy = level -> nd;
@@ -219,6 +244,11 @@ void kyk_up_mkltree_level(struct kyk_mkltree_level *level, struct kyk_mkltree_le
 	}
 	pnd_cpy++;
     }
+
+    return 0;
+
+error:
+    return -1;
 }
 
 void kyk_print_mkl_tree(const struct kyk_mkltree_level *root_level)
@@ -258,10 +288,18 @@ void kyk_print_mkl_level(const struct kyk_mkltree_level *level)
 
 struct kyk_mkltree_level *create_mkl_leafs_from_txid_hexs(const char *hexs[], size_t row_num)
 {
-    struct kyk_mkltree_level *mkl_level = malloc(sizeof(struct kyk_mkltree_level));
-    struct kyk_mkltree_node *nd_list = malloc(row_num * sizeof(struct kyk_mkltree_node));
-    struct kyk_mkltree_node *nd = nd_list;
+    struct kyk_mkltree_level *mkl_level = NULL;
+    struct kyk_mkltree_node *nd_list = NULL;
+    struct kyk_mkltree_node *nd = NULL;
     size_t i = 0;
+
+    mkl_level = malloc(sizeof(*mkl_level));
+    check(mkl_level, "Failed to create_mkl_leafs_from_txid_hexs: mkl_level malloc failed");
+    
+    nd_list = calloc(row_num, sizeof(*nd_list));
+    check(mkl_level, "Failed to create_mkl_leafs_from_txid_hexs: nd_list calloc failed");
+
+    nd = nd_list;
     
     kyk_init_mkl_level(mkl_level);
     mkl_level -> nd = nd_list;
@@ -280,6 +318,11 @@ struct kyk_mkltree_level *create_mkl_leafs_from_txid_hexs(const char *hexs[], si
     }
 
     return mkl_level;
+
+error:
+    if(mkl_level) free(mkl_level);
+    if(nd_list) free(nd_list);
+    return NULL;
 }
 
 void kyk_cpy_mkl_root_value(uint8_t *src, struct kyk_mkltree_level *root_level)
