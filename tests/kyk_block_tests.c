@@ -121,11 +121,6 @@ error:
     
 }
 
-char* test_make_blk_header()
-{
-    return NULL;
-}
-
 char* test_deseri_blk_header()
 {
     struct kyk_blk_header* hd = NULL;
@@ -229,15 +224,75 @@ error:
     return "Failed to test_deseri_block";
 }
 
+/*
+ * The target block header is sourced from
+ * https://webbtc.com/block/00000000d1145790a8694403d4063f323d499e655c83426834d4ce2f8dd4a2ee.json
+ */
+char* test_make_blk_header()
+{
+    struct kyk_block* blk = NULL;
+    size_t blk_len = 0;
+    struct kyk_blk_header* hd = NULL;
+    struct kyk_tx* tx_list = NULL;
+    uint32_t version = 1;
+    uint8_t pre_blk_hash[32] = {
+	0x00, 0x00, 0x00, 0x00, 0x2a, 0x22, 0xcf, 0xee,
+	0x1f, 0x2c, 0x84, 0x6a, 0xdb, 0xd1, 0x2b, 0x3e,
+	0x18, 0x3d, 0x4f, 0x97, 0x68, 0x3f, 0x85, 0xda,
+	0xd0, 0x8a, 0x79, 0x78, 0x0a, 0x84, 0xbd, 0x55
+    };
+    uint32_t tts = 1231731025;
+    uint32_t bts = 486604799;
+
+    uint8_t blk_hash[32];
+    uint8_t target_blk_hash[32] = {
+	0x00, 0x00, 0x00, 0x00, 0xd1, 0x14, 0x57, 0x90,
+	0xa8, 0x69, 0x44, 0x03, 0xd4, 0x06, 0x3f, 0x32,
+	0x3d, 0x49, 0x9e, 0x65, 0x5c, 0x83, 0x42, 0x68,
+	0x34, 0xd4, 0xce, 0x2f, 0x8d, 0xd4, 0xa2, 0xee
+    };
+    
+    int res = -1;
+
+    blk = calloc(1, sizeof(*blk));
+    res = kyk_deseri_block(blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+
+    tx_list = blk -> tx;
+
+    hd = kyk_make_blk_header(tx_list,
+			     blk -> tx_count,
+			     version,
+			     pre_blk_hash,
+			     tts,
+			     bts);
+
+    /* suppose we have got the nonce by mining */
+    hd -> nonce = 1889418792;
+
+    check(hd, "Failed to test_make_blk_header: kyk_make_blk_header failed");
+
+    res = kyk_blk_hash256(blk_hash, hd);
+    check(res == 0, "Failed to test_make_blk_header: kyk_blk_hash256 failed");
+
+    kyk_print_hex("blk_hash", blk_hash, 32);
+    mu_assert(kyk_digest_eq(blk_hash, target_blk_hash, sizeof(blk_hash)), "Failed to test_make_blk_header");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_make_blk_header";
+}
 
 char *all_tests()
 {
     mu_suite_start();
     
-    mu_run_test(test_kyk_ser_blk);
-    mu_run_test(test_make_blk_header);
+    mu_run_test(test_kyk_ser_blk);    
     mu_run_test(test_deseri_blk_header);
     mu_run_test(test_deseri_block);
+    mu_run_test(test_make_blk_header);
     
     return NULL;
 }

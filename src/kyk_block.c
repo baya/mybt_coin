@@ -21,7 +21,7 @@ int kyk_deseri_block(struct kyk_block* blk,
     size_t len = 0;
     int arg_checked = 0;
 
-    check(blk, "Failed to kyk_parse_block: blk is NULL");
+    check(blk, "Failed to kyk_deseri_block: blk is NULL");
     /* we need a clean block with blank block header */
     check(blk -> hd == NULL, "Failed to kyk_deseri_block: blk -> hd is not NULL");
     /* we need a clean block with blank tx list */
@@ -256,6 +256,7 @@ error:
     return 0;
 }
 
+/* we don't pass nonce here, because noce is computed by mining */
 struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
 					   size_t tx_count,
 					   uint32_t version,
@@ -279,17 +280,22 @@ struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
 
     hd -> tts = tts;
     hd -> bts = bts;
+    hd -> nonce = 0;
+
+    kyk_free_mkl_tree(mkl_root);
+    mkl_root = NULL;
 
     return hd;
 
 error:
+    if(mkl_root) kyk_free_mkl_tree(mkl_root);
     return NULL;
 }
 
 
 int kyk_make_block(struct kyk_block* blk,
 		   struct kyk_blk_header* blk_hd,
-		   struct kyk_tx* tx_list)
+		   const struct kyk_tx* tx_list)
 {
     return 0;
 }

@@ -41,9 +41,16 @@ int kyk_deseri_blk_header(struct kyk_blk_header *hd,
 			  const uint8_t *buf,
 			  size_t* len);
 
+struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
+					   size_t tx_count,
+					   uint32_t version,
+					   uint8_t* pre_blk_hash,
+					   uint32_t tts,
+					   uint32_t bts);
+
 int kyk_make_block(struct kyk_block* blk,
 		   struct kyk_blk_header* blk_hd,
-		   struct kyk_tx* tx_list);
+		   const struct kyk_tx* tx_list);
 
 int kyk_blk_hash256(uint8_t* digest, const struct kyk_blk_header* hd);
 
