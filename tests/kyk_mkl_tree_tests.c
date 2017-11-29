@@ -375,7 +375,7 @@ char *all_tests()
     mu_run_test(test6_make_mkl_tree_root_from_tx_list);
     mu_run_test(test15_make_mkl_tree_root_from_tx_list);
     mu_run_test(test32_make_mkl_tree_root_from_tx_list);
-    /* mu_run_test(test777_make_mkl_tree_root_from_tx_list); */
+    mu_run_test(test777_make_mkl_tree_root_from_tx_list);
     
     return NULL;
 }
