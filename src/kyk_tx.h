@@ -55,7 +55,7 @@ void kyk_free_tx(struct kyk_tx *tx);
 void kyk_free_txin(struct kyk_txin *txin);
 void kyk_free_txout(struct kyk_txout *txout);
 
-int kyk_make_coinbase_tx(struct kyk_tx** tx,
+int kyk_make_coinbase_tx(struct kyk_tx* tx,
 			 const char* note,
 			 uint64_t outValue,
 			 const uint8_t* pub,

@@ -7,6 +7,7 @@
 
 #include "gens_block.h"
 #include "kyk_buff.h"
+#include "dbg.h"
 
 #define GENS_COINBASE "From 4/Sept/2017 China start suppressing the Bitcoin"
 #define GENS_PEM "data/kyk-gens-priv.pem"
@@ -19,7 +20,6 @@
 void create_gens_tx(struct kyk_tx *gens_tx);
 void make_coinbase(struct kyk_txin *txin, const char *cb_note);
 struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len);
-void init_block(struct kyk_block *blk);
 
 struct kyk_block* make_gens_block()
 {
@@ -32,8 +32,10 @@ struct kyk_block* make_gens_block()
     struct kyk_bon_buff *tx_buf_ptr = tx_buf_list;
     struct kyk_mkltree_level *mkl_root;
     size_t blk_size = 0;
+    int res = -1;
 
-    init_block(blk);
+    res = kyk_init_block(blk);
+    check(res == 0, "Failed to make_gens_block: kyk_init_block failed");
 
     blk -> tx_count = TX_COUNT;
     blk_size += get_varint_size(blk -> tx_count);
@@ -64,12 +66,10 @@ struct kyk_block* make_gens_block()
 
     return blk;
 
-}
+error:
 
-void init_block(struct kyk_block *blk)
-{
-    blk -> hd = malloc(sizeof(struct kyk_blk_header));
-    blk -> tx = malloc(sizeof(struct kyk_tx));
+    return NULL;
+
 }
 
 struct kyk_mkltree_level *make_mkl_tree_root(struct kyk_bon_buff *buf_list, size_t len)

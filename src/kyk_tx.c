@@ -522,7 +522,7 @@ error:
     return -1;
 }
 
-int kyk_make_coinbase_tx(struct kyk_tx** tx,
+int kyk_make_coinbase_tx(struct kyk_tx* tx,
 			 const char* note,
 			 uint64_t outValue,
 			 const uint8_t* pub,
@@ -531,27 +531,25 @@ int kyk_make_coinbase_tx(struct kyk_tx** tx,
 {
     struct kyk_txin* txin;
     struct kyk_txout* txout;
-    struct kyk_tx* txcpy = NULL;
     struct kyk_buff* pbk_sc = NULL;
     int res = -1;
 
-    check(tx, "Failed to kyk_make_coinbase_tx: tx can not be NULL");
+    check(tx, "Failed to kyk_make_coinbase_tx: tx is NULL");
+    check(tx -> txin == NULL, "Failed to kyk_make_coinbase_tx: tx -> txin should be NULL");
+    check(tx -> txout == NULL, "Failed to kyk_make_coinbase_tx: tx -> txout should be NULL");
 
-    txcpy = (struct kyk_tx*)calloc(1, sizeof(struct kyk_tx));
-    check(txcpy, "Failed to kyk_make_coinbase_tx: tx calloc error");
-
-    txcpy -> version = 1;
-    txcpy -> vin_sz = 1;
-    txcpy -> lock_time = 0;
-    txcpy -> txin = calloc(txcpy -> vin_sz, sizeof(struct kyk_txin));
-    check(txcpy -> txin, "Failed to kyk_make_coinbase_tx: txin calloc error");
+    tx -> version = 1;
+    tx -> vin_sz = 1;
+    tx -> lock_time = 0;
+    tx -> txin = calloc(tx -> vin_sz, sizeof(struct kyk_txin));
+    check(tx -> txin, "Failed to kyk_make_coinbase_tx: tx -> txin calloc failed");
     
-    txcpy -> vout_sz = 1;
-    txcpy -> txout = calloc(txcpy -> vout_sz, sizeof(struct kyk_txout));
-    check(txcpy -> txout, "Failed to kyk_make_coinbase_tx: txout calloc error");
+    tx -> vout_sz = 1;
+    tx -> txout = calloc(tx -> vout_sz, sizeof(struct kyk_txout));
+    check(tx -> txout, "Failed to kyk_make_coinbase_tx: tx -> txout calloc failed");
     
-    txin = txcpy -> txin;
-    txout =txcpy -> txout;
+    txin = tx -> txin;
+    txout = tx -> txout;
 
     memset(txin -> pre_txid, KYK_COINBASE_PRE_TX_BYTE, sizeof(txin -> pre_txid));
     txin -> pre_tx_inx = KYK_COINBASE_PRE_TX_INX;
@@ -564,14 +562,12 @@ int kyk_make_coinbase_tx(struct kyk_tx** tx,
     check(res == 0, "Failed to kyk_make_coinbase_tx: build_p2pkh_sc_from_pubkey error");
 
     txout -> sc_size = pbk_sc -> len;
-    txout -> sc = calloc(txout -> sc_size, sizeof(uint8_t));
-    check(txout -> sc, "Failed to kyk_make_coinbase_tx: calloc error");
+    txout -> sc = calloc(txout -> sc_size, sizeof(*txout -> sc));
+    check(txout -> sc, "Failed to kyk_make_coinbase_tx: calloc failed");
     memcpy(txout -> sc, pbk_sc -> base, txout -> sc_size);
 
     free_kyk_buff(pbk_sc);
     pbk_sc = NULL;
-
-    *tx = txcpy;
 
     return 0;
 

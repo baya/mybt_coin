@@ -58,4 +58,6 @@ int kyk_blk_hash256(uint8_t* digest, const struct kyk_blk_header* hd);
 
 void kyk_free_block(struct kyk_block *blk);
 
+int kyk_init_block(struct kyk_block *blk);
+
 #endif

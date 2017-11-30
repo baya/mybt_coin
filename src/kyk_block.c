@@ -11,6 +11,24 @@
 #include "kyk_sha.h"
 #include "dbg.h"
 
+
+int kyk_init_block(struct kyk_block *blk)
+{
+    check(blk, "Failed to init_block: blk is NULL");
+    
+    blk -> hd = malloc(sizeof(struct kyk_blk_header));
+    check(blk -> hd, "Failed to init_block: blk -> hd malloc failed");
+    
+    blk -> tx = malloc(sizeof(struct kyk_tx));
+    check(blk -> tx, "Failed to init_block: blk -> tx malloc failed");
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
 /* buf should not have Magic No and Blocksize */
 int kyk_deseri_block(struct kyk_block* blk,
 		     const uint8_t* buf,
