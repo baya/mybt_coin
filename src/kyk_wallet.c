@@ -445,6 +445,7 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
 
     res = kyk_check_create_file(blk_headers_path, "block headers chain");
     check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", blk_headers_path);
+    wallet -> blk_hd_chain_path = blk_headers_path;
     
     res = kyk_check_create_file(wallet_cfg_path, "wallet config");
     check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", wallet_cfg_path);
