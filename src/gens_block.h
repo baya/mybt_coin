@@ -14,6 +14,9 @@
 #include "kyk_hash_nonce.h"
 #include "kyk_pem.h"
 
+/* if you set another new gens block, you need change this to yours */
+#define KYK_GENS_BLK_HASH_HEX "0000876c9ef8c1f8b2a3012ec1bdea7296f95ae21681799f8adf967f548bf8f3"
+
 struct kyk_block* make_gens_block();
 
 #endif

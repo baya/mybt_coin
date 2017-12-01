@@ -394,11 +394,13 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
     char* txdb_path = NULL;
     char* wallet_cfg_path = NULL;
     char* main_cfg_path = NULL;
+    char* blk_headers_path = NULL;
     int res = 0;
 
     peers_dat_path = kyk_asprintf("%s/peers.dat", wdir);
     txdb_path = kyk_asprintf("%s/txdb", wdir);
     wallet_cfg_path = kyk_asprintf("%s/wallet.cfg", wdir);
+    blk_headers_path = kyk_asprintf("%s/block_headers_chain.dat", wdir);
     main_cfg_path = kyk_asprintf("%s/main.cfg", wdir);
 
     if(!kyk_file_exists(main_cfg_path)){
@@ -406,10 +408,12 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
 	       "\n"
 	       "Note that kyk_miner uses the directory: %s to store:\n"
 	       " - blocks:               %s/blocks     \n"
+	       " - block headers chain:  %s/block_headers_chain.dat \n"
 	       " - peer IP addresses:    %s/peers.dat  \n"
 	       " - transaction database: %s/txdb       \n"
 	       " - wallet keys:          %s/wallet.cfg \n"
-	       " - main config file:     %s/main.cfg \n\n",
+	       " - main config file:     %s/main.cfg \n\n",	       
+	       wdir,
 	       wdir,
 	       wdir,
 	       wdir,
@@ -434,17 +438,20 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
     wallet -> wdir = kyk_strdup(wdir);
 
     res = kyk_check_create_file(peers_dat_path, "peers");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", peers_dat_path);
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", peers_dat_path);
     
-    kyk_check_create_file(txdb_path, "txdb");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", txdb_path);
+    res = kyk_check_create_file(txdb_path, "txdb");
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", txdb_path);
+
+    res = kyk_check_create_file(blk_headers_path, "block headers chain");
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", blk_headers_path);
     
-    kyk_check_create_file(wallet_cfg_path, "wallet config");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", wallet_cfg_path);
+    res = kyk_check_create_file(wallet_cfg_path, "wallet config");
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", wallet_cfg_path);
     wallet -> wallet_cfg_path = wallet_cfg_path;
     
-    kyk_check_create_file(main_cfg_path, "main config");
-    check(res == 0, "Failed to kyk_check_create_file '%s'", main_cfg_path);
+    res = kyk_check_create_file(main_cfg_path, "main config");
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", main_cfg_path);
     
 
     return 0;

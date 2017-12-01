@@ -347,4 +347,109 @@ error:
     return -1;
 }
 
+int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain)
+{
+    check(hd_chain, "kyk_init_blk_hd_chain failed: hd_chain is NULL");
+    struct kyk_blk_hd_chain* hdc = NULL;
+    
+    hdc = calloc(1, sizeof(*hdc));
+    check(hdc, "Failed to kyk_init_blk_hd_chain: hdc calloc failed");
+    
+    hdc -> hd = NULL;
+    hdc -> next = NULL;
+    hdc -> prev = NULL;
+
+    *hd_chain = hdc;
+    return 0;
+error:
+    return -1;
+}
+
+void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
+{
+    struct kyk_blk_hd_chain* hdc = NULL;
+
+    hdc = hd_chain;
+    if(hdc){
+	while(hdc -> next){
+	    hdc = hdc -> next;
+	    if(hdc -> prev){
+		if(hdc -> prev -> hd){
+		    free(hdc -> prev -> hd);
+		    hdc -> prev -> hd = NULL;
+		}
+		free(hdc -> prev);
+		hdc -> prev = NULL;
+	    }
+	}
+
+	free(hdc);
+    }
+}
+
+int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
+			    struct kyk_blk_header* hd)
+{
+    check(hd_chain, "Failed to kyk_append_blk_hd_chain: hd_chain is NULL");
+    check(hd_chain -> hd, "Failed to kyk_append_blk_hd_chain: hd_chain -> hd is NULL");
+    check(hd, "Failed to kyk_append_blk_hd_chain: hd is NULL");
+    
+    struct kyk_blk_hd_chain* hdc = hd_chain;
+    struct kyk_blk_hd_chain* newHdc = NULL;
+    int res = -1;
+
+    while(hdc -> next){
+	hdc = hdc -> next;
+    }
+
+    res = kyk_validate_blk_header(hdc, hd);
+    check(res == 0, "Failed to kyk_append_blk_hd_chain: kyk_validate_blk_header failed");
+
+    newHdc = calloc(1, sizeof(*newHdc));
+    check(newHdc, "Failed to kyk_append_blk_hd_chain: calloc newHdc failed");
+
+    newHdc -> hd = hd;
+    newHdc -> prev = hdc;
+    newHdc -> next = NULL;
+
+    hdc -> next = newHdc;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
+			    const struct kyk_blk_header* outHd)
+{
+    check(hd_chain, "Failed to validate_blk_header: hd_chain is NULL");
+    check(outHd, "Failed to validate_blk_header: hd is NULL");
+    check(outHd -> pre_blk_hash, "Failed to validate_blk_header: pre_blk_hash is NULL");
+    
+    struct kyk_blk_hd_chain* hdc = hd_chain;
+    struct kyk_blk_header* prev_hd = NULL;
+    uint8_t digest[32];
+    int res = -1;
+
+    while(hdc -> next){
+	hdc = hdc -> next;
+    }
+
+    prev_hd = hdc -> hd;
+    check(prev_hd, "Failed to kyk_validate_blk_header: prev_hd is NULL");
+    
+    res = kyk_blk_hash256(digest, prev_hd);
+    check(res == 0, "Failed to kyk_validate_blk_header: kyk_blk_hash256 failed");
+
+    check(kyk_digest_eq(outHd -> pre_blk_hash, digest, sizeof(digest)), "Failed to kyk_validate_blk_header: invalid pre_blk_hash");
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
 

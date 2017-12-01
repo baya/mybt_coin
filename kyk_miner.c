@@ -17,10 +17,14 @@
 #define WALLET_NAME ".kyk_miner"
 #define MAIN_ADDR_LABEL "Main Miner Address"
 
-#define CMD_INIT        "init"
-#define CMD_DELETE      "delete"
-#define CMD_ADD_ADDRESS "addAddress"
-#define CMD_QUERY_BLOCK "queryBlock"
+#define CMD_INIT           "init"
+#define CMD_DELETE         "delete"
+#define CMD_ADD_ADDRESS    "addAddress"
+#define CMD_QUERY_BLOCK    "queryBlock"
+#define CMD_MK_INIT_BLOCKS "makeInitBlocks"
+#define CMD_MK_TX          "makeTx"
+#define CMD_Q_BALANCE      "queryBalance"
+#define CMD_SERVE          "serve"
 
 int match_cmd(char *src, char *cmd);
 int set_main_address(struct kyk_wallet* wallet);

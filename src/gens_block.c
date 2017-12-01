@@ -13,9 +13,7 @@
 #define GENS_PEM "data/kyk-gens-priv.pem"
 #define SC_PUBKEY_LEN 1000
 #define TX_BUF_LEN 2000
-#define BLK_HD_LEN 80
 #define TX_COUNT 1
-#define BLK_MAGIC_NO 0xD9B4BEF9
 
 void create_gens_tx(struct kyk_tx *gens_tx);
 void make_coinbase(struct kyk_txin *txin, const char *cb_note);
@@ -43,7 +41,6 @@ struct kyk_block* make_gens_block()
     blk_hd = blk -> hd;
     
     create_gens_tx(tx0);
-    //create_gens_tx(blk -> tx);
     tx_len = kyk_seri_tx(tx_buf, tx0);
     tx_buf_ptr -> base = tx_buf;
     tx_buf_ptr -> len = tx_len;
@@ -58,10 +55,10 @@ struct kyk_block* make_gens_block()
     //blk_hd.bts = 0x1e00ffff;
     blk_hd -> bts = 0x1f00ffff;
     blk_hd -> nonce = 0;
-    blk_size += BLK_HD_LEN;
+    blk_size += KYK_BLK_HD_LEN;
 
     kyk_hsh_nonce(blk_hd);
-    blk -> magic_no = BLK_MAGIC_NO;
+    blk -> magic_no = KYK_BLK_MAGIC_NO;
     blk -> blk_size = blk_size;
 
     return blk;

@@ -8,7 +8,13 @@
 
 #define KYK_BLK_HD_LEN 80
 #define KYK_BLK_HD_NO_NONCE_LEN 76
+#define KYK_BLK_MAGIC_NO 0xD9B4BEF9
 
+struct kyk_blk_hd_chain {
+    struct kyk_blk_header* hd;
+    struct kyk_blk_hd_chain* prev;
+    struct kyk_blk_hd_chain* next;
+};
 
 struct kyk_blk_header {
     uint32_t version;
@@ -59,5 +65,15 @@ int kyk_blk_hash256(uint8_t* digest, const struct kyk_blk_header* hd);
 void kyk_free_block(struct kyk_block *blk);
 
 int kyk_init_block(struct kyk_block *blk);
+
+int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
+			    const struct kyk_blk_header* hd);
+
+int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
+			    struct kyk_blk_header* hd);
+
+int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
+
+void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain);
 
 #endif
