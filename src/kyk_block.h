@@ -76,4 +76,6 @@ int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
 
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain);
 
+int kyk_tail_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
+
 #endif
