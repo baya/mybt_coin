@@ -5,6 +5,8 @@
 #include "kyk_defs.h"
 #include "kyk_ldb.h"
 
+struct kyk_blk_hd_chain;
+
 struct kyk_wallet_key {
     struct kyk_key* key;
     char        *priv_str;
@@ -44,5 +46,9 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir);
 void kyk_destroy_wallet_key(struct kyk_wallet_key* k);
 
 int kyk_wallet_add_address(struct kyk_wallet* wallet, const char* desc);
+
+int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
+			    const struct kyk_blk_hd_chain* hd_chain);
+
 
 #endif

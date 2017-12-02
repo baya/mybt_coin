@@ -58,10 +58,7 @@ struct kyk_bkey_val* kyk_read_block(struct kyk_block_db* blk_db,
     struct db_key key;
     struct kyk_buff bf;
     build_b_key(&key, blk_hash);
-    char *value = NULL;
-    size_t vlen = 0;
-    char *err;
-    bf.base = leveldb_get(blk_db -> db,
+    bf.base = (uint8_t*)leveldb_get(blk_db -> db,
 			  blk_db -> rd_opts,
 			  (char *)key.body,
 			  key.len,
@@ -190,4 +187,5 @@ size_t kyk_ser_bval(uint8_t *buf, struct kyk_bkey_val *bval)
 
     return len;
 }
+
 

@@ -37,6 +37,11 @@ error:
 
 void free_kyk_bon_buff(struct kyk_bon_buff* buf)
 {
-    if(buf -> base) free(buf -> base);
-    free(buf);
+    if(buf){
+	if(buf -> base) {
+	    free(buf -> base);
+	    buf -> base = NULL;
+	}
+	free(buf);
+    }
 }

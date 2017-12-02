@@ -92,6 +92,7 @@ clean_tests:
 	-rm -f tests/tests.log
 	-rm -f tests/*.out
 	-rm -rf tests/*.out.dSYM
+	-rm -rf /tmp/test_*
 
 # The Install
 install: all

@@ -483,23 +483,39 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
 
 /* block header chain */
 
-int save_blk_header_chain_to_wallet(struct kyk_wallet* wlt,
-				    const struct kyk_blk_hd_chain* hd_chain)
+int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
+			    const struct kyk_blk_hd_chain* hd_chain)
 {
-    check(wlt, "Failed to save_blk_header_chain_to_wallet: wlt is NULL");
-    check(wlt -> blk_hd_chain_path, "Failed save_blk_header_chain_to_wallet: wlt -> blk_hd_chain_path is NULL");
-    check(hd_chain, "Failed save_blk_header_chain_to_wallet: hd_chain is NULL");
-
     FILE* fp = NULL;
     const struct kyk_blk_hd_chain* hdc = NULL;
-
-    fp = fopen(wlt -> blk_hd_chain_path, 'wb');
-    check(fp, "Failed save_blk_header_chain_to_wallet: fopen failed");
+    struct kyk_bon_buff* bbuf = NULL;
+    size_t len = 0;
+    int res = -1;
     
 
+    check(wallet, "Failed to kyk_save_blk_head_chain: wallet is NULL");
+    check(wallet -> blk_hd_chain_path, "Failed to kyk_save_blk_head_chain: wallet -> blk_hd_chain_path is NULL");
+    check(hd_chain, "Failed to kyk_save_blk_head_chain: hd_chain is NULL");
+
+    fp = fopen(wallet -> blk_hd_chain_path, "wb");
+    check(fp, "Failed to kyk_save_blk_head_chain: fopen failed");
+
+    hdc = hd_chain;
+
+    res = kyk_seri_blk_hd_chain(&bbuf, hdc);
+    check(res == 0, "Failed to kyk_save_blk_head_chain: kyk_seri_blk_hd_chain failed");
+    check(bbuf -> base, "Failed to kyk_save_blk_head_chain: kyk_seri_blk_hd_chain failed");
+
+    len = fwrite(bbuf -> base, sizeof(*bbuf -> base), bbuf -> len, fp);
+    check(len < bbuf -> len, "Failed to kyk_save_blk_head_chain: fwrite failed");
+
+    free_kyk_bon_buff(bbuf);
+    fclose(fp);
+    
     return 0;
     
 error:
-
+    if(bbuf) free_kyk_bon_buff(bbuf);
+    if(fp) fclose(fp);
     return -1;
 }

@@ -27,7 +27,7 @@ error:
 char* test_kyk_wallet_check_config()
 {
     
-    const char* wdir = "/tmp/kyk_miner_wallet_test";
+    const char* wdir = "/tmp/test_kyk_wallet_check_config";
     struct kyk_wallet* wallet = NULL;
     char* errmsg = "failed to test kyk_wallet_check_config";
     int res = -1;
@@ -47,9 +47,26 @@ error:
 }
 
 
-char* test_wallet_add_key()
+char* test_kyk_wallet_add_address()
 {
+    struct kyk_wallet_key* wkey = NULL;
+    const char* wdir = "/tmp/test_kyk_wallet_add_address";
+    struct kyk_wallet* wallet = NULL;
+    int res = -1;
+
+    wallet = calloc(1, sizeof *wallet);
+    check(wallet, "Failed to test_kyk_wallet_add_address: wallet calloc failed");
+    res = kyk_wallet_check_config(wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_add_address: kyk_wallet_check_config failed");
+
+    res = kyk_wallet_add_address(wallet, "test adding address");
+    mu_assert(res == 0, "Failed to test_kyk_wallet_add_address");
+
     return NULL;
+
+error:
+
+    return "Failed to test_kyk_wallet_add_address";
 }
 
 
@@ -58,7 +75,7 @@ char* all_tests()
     mu_suite_start();
     mu_run_test(test_kyk_create_wallet_key);
     mu_run_test(test_kyk_wallet_check_config);
-    mu_run_test(test_wallet_add_key);
+    mu_run_test(test_kyk_wallet_add_address);
 
     return NULL;
 }
