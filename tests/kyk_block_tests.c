@@ -231,131 +231,17 @@ char* test_kyk_init_blk_hd_chain()
     res = kyk_init_blk_hd_chain(&hdc);
     mu_assert(res == 0, "Failed to test_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
     mu_assert(hdc, "Failed to test_kyk_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
-    mu_assert(hdc -> next == NULL, "Failed to test_kyk_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
-    mu_assert(hdc -> prev == NULL, "Failed to test_kyk_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
-
+    mu_assert(hdc -> len == 0, "Failed to test_kyk_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
+    mu_assert(hdc -> hd_list == NULL, "Failed to test_kyk_init_blk_hd_chain: kyk_init_blk_hd_chain failed");
+    
     kyk_free_blk_hd_chain(hdc);
 
-    return NULL;
-}
-
-char* test_kyk_append_blk_hd_chain()
-{
-    struct kyk_blk_hd_chain* hdc = NULL;
-    struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd2 = NULL;
-    size_t len = 0;
-    int res = -1;
-
-    res = kyk_init_blk_hd_chain(&hdc);
-
-    hd = calloc(1, sizeof(*hd));
-    check(hd, "Failed to test_kyk_append_blk_hd_chain: calloc blk header failed");
-    res = kyk_deseri_blk_header(hd, BLK_HD, &len);
-    check(res == 0, "Failed to test_kyk_append_blk_hd_chain: kyk_deseri_blk_header failed");
-
-    hd2 = calloc(1, sizeof(*hd2));
-    res = kyk_deseri_blk_header(hd2, BLK2_HD, &len);
-
-    hdc -> hd = hd;
-    res = kyk_append_blk_hd_chain(hdc, hd2);
-    mu_assert(res == 0, "Failed to test_kyk_append_blk_hd_chain");
-
-    kyk_free_blk_hd_chain(hdc);
-    
-    return NULL;
-
-error:
-
-    return "Failed to test_kyk_append_blk_hd_chain";
-}
-
-
-char* test2_kyk_append_blk_hd_chain()
-{
-    struct kyk_blk_hd_chain* hdc = NULL;
-    struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd2 = NULL;
-    size_t len = 0;
-    int res = -1;
-
-    res = kyk_init_blk_hd_chain(&hdc);
-
-    hd = calloc(1, sizeof(*hd));
-    check(hd, "Failed to test_kyk_append_blk_hd_chain: calloc blk header failed");
-    res = kyk_deseri_blk_header(hd, BLK2_HD, &len);
-    check(res == 0, "Failed to test_kyk_append_blk_hd_chain: kyk_deseri_blk_header failed");
-
-    hd2 = calloc(1, sizeof(*hd2));
-    res = kyk_deseri_blk_header(hd2, BLK_HD, &len);
-
-    hdc -> hd = hd;
-    res = kyk_append_blk_hd_chain(hdc, hd2);
-    mu_assert(res == -1, "Failed to test_kyk_append_blk_hd_chain");
-
-    kyk_free_blk_hd_chain(hdc);
-    
-    return NULL;
-
-error:
-
-    return "Failed to test_kyk_append_blk_hd_chain";
-}
-
-char* test_kyk_tail_blk_hd_chain()
-{
-    struct kyk_blk_hd_chain* hdc = NULL;
-    struct kyk_blk_hd_chain* hdc_cpy = NULL;
-    struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd2 = NULL;
-    size_t len = 0;
-    int res = -1;
-
-    kyk_init_blk_hd_chain(&hdc);
-    hd = calloc(1, sizeof(*hd));
-    res = kyk_deseri_blk_header(hd, BLK_HD, &len);
-    check(res == 0, "Failed to test_kyk_tail_blk_hd_chain: kyk_deseri_blk_header failed");
-
-    hd2 = calloc(1, sizeof(*hd2));
-    res = kyk_deseri_blk_header(hd2, BLK2_HD, &len);
-    hdc -> hd = hd;
-    res = kyk_append_blk_hd_chain(hdc, hd2);
-    check(res == 0, "Failed to test_kyk_tail_blk_hd_chain: kyk_append_blk_hd_chain failed");
-
-    hdc_cpy = hdc;
-
-    res = kyk_tail_blk_hd_chain(&hdc_cpy);
-    mu_assert(res == 0, "Failed to test_kyk_tail_blk_hd_chain");
-    mu_assert(hdc -> next, "Failed to test_kyk_tail_blk_hd_chain");
-    mu_assert(hdc_cpy -> next == NULL, "Failed to test_kyk_tail_blk_hd_chain");
-
-    return NULL;
-
-error:
-
-    return "Failed to test_kyk_tail_blk_hd_chain";
-}
-
-char* test_get_blk_hd_chain_len()
-{
-    struct kyk_blk_hd_chain* hdc = NULL;
-    size_t len = 9;
-
-    get_blk_hd_chain_len(hdc, &len);
-    mu_assert(len == 0, "Failed to test_get_blk_hd_chain_len");
-
-    kyk_init_blk_hd_chain(&hdc);
-    get_blk_hd_chain_len(hdc, &len);
-    mu_assert(len == 1, "Failed to test_get_blk_hd_chain_len");
-    
     return NULL;
 }
 
 char* test_kyk_seri_blk_hd_chain()
 {
     struct kyk_blk_hd_chain* hdc = NULL;
-    struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd2 = NULL;
     struct kyk_bon_buff* bbuf = NULL;
     uint8_t target_buf[160] = {
 	0x01, 0x00, 0x00, 0x00, 0x55, 0xbd, 0x84, 0x0a,
@@ -379,24 +265,15 @@ char* test_kyk_seri_blk_hd_chain()
 	0x14, 0xd2, 0xf2, 0xd5, 0xc9, 0xba, 0x6a, 0x49,
 	0xff, 0xff, 0x00, 0x1d, 0x07, 0xa8, 0xf2, 0x26,
     };
-    size_t len = 0;
     int res = -1;
 
-    kyk_init_blk_hd_chain(&hdc);
-    hd = calloc(1, sizeof(*hd));
-    res = kyk_deseri_blk_header(hd, BLK_HD, &len);
-    check(res == 0, "Failed to test_kyk_seri_blk_hd_chain: kyk_deseri_blk_header failed");
-
-    hd2 = calloc(1, sizeof(*hd2));
-    res = kyk_deseri_blk_header(hd2, BLK2_HD, &len);
-    hdc -> hd = hd;
-    res = kyk_append_blk_hd_chain(hdc, hd2);
-    check(res == 0, "Failed to test_kyk_seri_blk_hd_chain: kyk_append_blk_hd_chain failed");
-
+    res = make_testing_blk_hd_chain(&hdc);
+    check(res == 0, "Failed to test_kyk_seri_blk_hd_chain");
+    
     res = kyk_seri_blk_hd_chain(&bbuf, hdc);
     check(res == 0, "Failed to test_kyk_seri_blk_hd_chain");
     mu_assert(kyk_digest_eq(bbuf -> base, target_buf, bbuf -> len), "Failed to test_kyk_seri_blk_hd_chain");
-
+    
     return NULL;
 
 error:
@@ -405,6 +282,51 @@ error:
 
 }
 
+char* test_kyk_deseri_blk_hd_chain()
+{
+    struct kyk_blk_hd_chain* hdc = NULL;
+    struct kyk_blk_header* hd = NULL;
+    uint8_t buf[160] = {
+	0x01, 0x00, 0x00, 0x00, 0x55, 0xbd, 0x84, 0x0a,
+	0x78, 0x79, 0x8a, 0xd0, 0xda, 0x85, 0x3f, 0x68,
+	0x97, 0x4f, 0x3d, 0x18, 0x3e, 0x2b, 0xd1, 0xdb,
+	0x6a, 0x84, 0x2c, 0x1f, 0xee, 0xcf, 0x22, 0x2a,
+	0x00, 0x00, 0x00, 0x00, 0xff, 0x10, 0x4c, 0xcb,
+	0x05, 0x42, 0x1a, 0xb9, 0x3e, 0x63, 0xf8, 0xc3,
+	0xce, 0x5c, 0x2c, 0x2e, 0x9d, 0xbb, 0x37, 0xde,
+	0x27, 0x64, 0xb3, 0xa3, 0x17, 0x5c, 0x81, 0x66,
+	0x56, 0x2c, 0xac, 0x7d, 0x51, 0xb9, 0x6a, 0x49,
+	0xff, 0xff, 0x00, 0x1d, 0x28, 0x3e, 0x9e, 0x70,
+	0x01, 0x00, 0x00, 0x00, 0xee, 0xa2, 0xd4, 0x8d,
+	0x2f, 0xce, 0xd4, 0x34, 0x68, 0x42, 0x83, 0x5c,
+	0x65, 0x9e, 0x49, 0x3d, 0x32, 0x3f, 0x06, 0xd4,
+	0x03, 0x44, 0x69, 0xa8, 0x90, 0x57, 0x14, 0xd1,
+	0x00, 0x00, 0x00, 0x00, 0xf2, 0x93, 0xc8, 0x69,
+	0x73, 0xe7, 0x58, 0xcc, 0xd1, 0x19, 0x75, 0xfa,
+	0x46, 0x4d, 0x4c, 0x3e, 0x85, 0x00, 0x97, 0x9c,
+	0x95, 0x42, 0x5c, 0x7b, 0xe6, 0xf0, 0xa6, 0x53,
+	0x14, 0xd2, 0xf2, 0xd5, 0xc9, 0xba, 0x6a, 0x49,
+	0xff, 0xff, 0x00, 0x1d, 0x07, 0xa8, 0xf2, 0x26,
+    };
+    uint8_t digest[32];
+    size_t hd_count = 2;
+    int res = -1;    
+
+    res = kyk_deseri_blk_hd_chain(&hdc, buf, sizeof(buf));
+    mu_assert(res == 0, "Failed to test_kyk_deseri_blk_hd_chain");
+    mu_assert(hdc -> len == hd_count, "Failed to test_kyk_deseri_blk_hd_chain");
+
+    hd = hdc -> hd_list;
+
+    kyk_blk_hash256(digest, hd);
+    mu_assert(kyk_digest_eq(digest, BLK_HASH, sizeof(digest)), "Failed to test_kyk_deseri_blk_hd_chain");
+
+    hd++;
+    kyk_blk_hash256(digest, hd);
+    mu_assert(kyk_digest_eq(digest, BLK2_HASH, sizeof(digest)), "Failed to test_kyk_deseri_blk_hd_chain");
+    
+    return NULL;
+}
 
 char *all_tests()
 {
@@ -416,10 +338,6 @@ char *all_tests()
     mu_run_test(test_make_blk_header);
     mu_run_test(test_kyk_make_block);
     mu_run_test(test_kyk_init_blk_hd_chain);
-    mu_run_test(test_kyk_append_blk_hd_chain);
-    mu_run_test(test2_kyk_append_blk_hd_chain);
-    mu_run_test(test_kyk_tail_blk_hd_chain);
-    mu_run_test(test_get_blk_hd_chain_len);
     mu_run_test(test_kyk_seri_blk_hd_chain);
     
     return NULL;

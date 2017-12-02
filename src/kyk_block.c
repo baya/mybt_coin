@@ -124,10 +124,11 @@ int kyk_seri_blk_hd_chain(struct kyk_bon_buff** bbuf,
 			  const struct kyk_blk_hd_chain* hd_chain)
 {
     struct kyk_bon_buff* bufp = NULL;
-    const struct kyk_blk_hd_chain* hdc = NULL;
+    struct kyk_blk_header* hd = NULL;
     uint8_t* buf_base = NULL;
     size_t chain_len = 0;
     size_t hd_len = 0;
+    size_t i = 0;
 
     check(bbuf, "Failed to kyk_seri_blk_hd_chain: bbuf is NULL");
     check(hd_chain, "Failed to kyk_seri_blk_hd_chain: hd_chain is NULL");
@@ -135,8 +136,7 @@ int kyk_seri_blk_hd_chain(struct kyk_bon_buff** bbuf,
     bufp = calloc(1, sizeof(*bufp));
     check(bufp, "Failed to kyk_seri_blk_hd_chain: bufp calloc failed");
 
-    hdc = hd_chain;
-    get_blk_hd_chain_len(hdc, &chain_len);
+    chain_len = hd_chain -> len;
 
     check(chain_len > 0, "Failed to kyk_seri_blk_hd_chain: chain_len is invalid");
 
@@ -145,20 +145,69 @@ int kyk_seri_blk_hd_chain(struct kyk_bon_buff** bbuf,
     check(bufp -> base, "Failed to kyk_seri_blk_hd_chain: bufp -> base calloc failed");
 
     buf_base = bufp -> base;
+    hd = hd_chain -> hd_list;
 
-    do{
-	hd_len = kyk_seri_blk_hd(buf_base, hdc -> hd);
+    for(i = 0; i < hd_chain -> len; i++){
+	hd_len = kyk_seri_blk_hd(buf_base, hd);
 	check(hd_len == KYK_BLK_HD_LEN, "Failed to kyk_seri_blk_hd_chain: kyk_ser_blk_hd failed");
 	buf_base += hd_len;
-	hdc = hdc -> next;
-    }while(hdc);
-    
+	hd++;
+    }
+
     *bbuf = bufp;
     
     return 0;
     
 error:
     if(bufp) free_kyk_bon_buff(bufp);
+    return -1;
+}
+
+int kyk_deseri_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain,
+			    const uint8_t* buf,
+			    size_t buf_len)
+{
+    struct kyk_blk_hd_chain* hdc = NULL;
+    struct kyk_blk_header* hd = NULL;
+    const uint8_t* bufp = NULL;
+    int hd_chain_len = 0;
+    int i = 0;
+    size_t hd_len = 0;
+    int res = -1;
+
+    check(hd_chain, "Failed to kyk_deseri_blk_hd_chain: hd_chain is NULL");
+    check(buf, "Failed to kyk_deseri_blk_hd_chain: buf is NULL");
+
+    hd_chain_len = buf_len / KYK_BLK_HD_LEN;
+    check(hd_chain_len >= 1, "Failed to kyk_deseri_blk_hd_chain: invalid hd_count");
+
+    res = kyk_init_blk_hd_chain(&hdc);
+    check(res == 0, "Failed to kyk_deseri_blk_hd_chain: kyk_init_blk_hd_chain failed");
+
+    hd = calloc(hd_chain_len, sizeof(*hd));
+    check(hd, "Failed to kyk_deseri_blk_hd_chain: hd calloc failed");
+
+    hdc -> hd_list = hd;
+    bufp = buf;
+
+    for(i = 0; i < hd_chain_len; i++){
+	res = kyk_deseri_blk_header(hd, bufp, &hd_len);
+	check(res == 0, "Failed to kyk_deseri_blk_hd_chain: kyk_deseri_blk_header failed");
+	
+	res = kyk_validate_blk_header(hdc, hd);
+	check(res == 0, "Failed to kyk_deseri_blk_hd_chain: kyk_validate_blk_header failed");
+	
+	bufp += hd_len;
+	hdc -> len += 1;
+	hd += 1;
+    }
+
+    *hd_chain = hdc;
+
+    return 0;
+    
+error:
+    if(hdc) kyk_free_blk_hd_chain(hdc);
     return -1;
 }
 
@@ -398,70 +447,27 @@ int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain)
     hdc = calloc(1, sizeof(*hdc));
     check(hdc, "Failed to kyk_init_blk_hd_chain: hdc calloc failed");
     
-    hdc -> hd = NULL;
-    hdc -> next = NULL;
-    hdc -> prev = NULL;
+    hdc -> hd_list = NULL;
+    hdc -> len = 0;
 
     *hd_chain = hdc;
+    
     return 0;
+    
 error:
+    
     return -1;
 }
 
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
 {
-    struct kyk_blk_hd_chain* hdc = NULL;
-
-    hdc = hd_chain;
-    if(hdc){
-	while(hdc -> next){
-	    hdc = hdc -> next;
-	    if(hdc -> prev){
-		if(hdc -> prev -> hd){
-		    free(hdc -> prev -> hd);
-		    hdc -> prev -> hd = NULL;
-		}
-		free(hdc -> prev);
-		hdc -> prev = NULL;
-	    }
+    if(hd_chain){
+	if(hd_chain -> hd_list){
+	    free(hd_chain -> hd_list);
+	    hd_chain -> hd_list = NULL;
 	}
-
-	free(hdc);
+	free(hd_chain);
     }
-}
-
-int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
-			    struct kyk_blk_header* hd)
-{
-    check(hd_chain, "Failed to kyk_append_blk_hd_chain: hd_chain is NULL");
-    check(hd_chain -> hd, "Failed to kyk_append_blk_hd_chain: hd_chain -> hd is NULL");
-    check(hd, "Failed to kyk_append_blk_hd_chain: hd is NULL");
-    
-    struct kyk_blk_hd_chain* hdc = hd_chain;
-    struct kyk_blk_hd_chain* newHdc = NULL;
-    int res = -1;
-
-    while(hdc -> next){
-	hdc = hdc -> next;
-    }
-
-    res = kyk_validate_blk_header(hdc, hd);
-    check(res == 0, "Failed to kyk_append_blk_hd_chain: kyk_validate_blk_header failed");
-
-    newHdc = calloc(1, sizeof(*newHdc));
-    check(newHdc, "Failed to kyk_append_blk_hd_chain: calloc newHdc failed");
-
-    newHdc -> hd = hd;
-    newHdc -> prev = hdc;
-    newHdc -> next = NULL;
-
-    hdc -> next = newHdc;
-
-    return 0;
-    
-error:
-
-    return -1;
 }
 
 int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
@@ -478,9 +484,11 @@ int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
 
     hdc = hd_chain;
 
-    kyk_tail_blk_hd_chain(&hdc);
+    if(hdc -> len == 0){
+	return 0;
+    }
 
-    prev_hd = hdc -> hd;
+    prev_hd = hdc -> hd_list + hd_chain -> len;
     check(prev_hd, "Failed to kyk_validate_blk_header: prev_hd is NULL");
     
     res = kyk_blk_hash256(digest, prev_hd);
@@ -495,37 +503,3 @@ error:
     return -1;
 }
 
-int kyk_tail_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain)
-{
-    check(hd_chain, "Failed to kyk_tail_blk_hd_chain: hd_chain is NULL");
-    struct kyk_blk_hd_chain* hdc = NULL;
-
-    hdc = *hd_chain;
-    while(hdc -> next){
-	hdc = hdc -> next;
-    }
-
-    *hd_chain = hdc;
-
-    return 0;
-error:
-    return -1;
-}
-
-
-int get_blk_hd_chain_len(const struct kyk_blk_hd_chain* hd_chain, size_t* len)
-{
-
-    const struct kyk_blk_hd_chain* hdc;
-    size_t i = 0;
-
-    hdc = hd_chain;
-    while(hdc){
-      	hdc = hdc -> next;
-	i++;
-    };
-
-    *len = i;
-
-    return 0;
-}

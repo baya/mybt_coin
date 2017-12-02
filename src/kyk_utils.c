@@ -336,3 +336,33 @@ error:
 
     return -1;
 }
+
+int kyk_file_read_all(uint8_t** buf, FILE* fp, size_t* len)
+{
+    int res = -1;
+    size_t blen = 0;
+    size_t fcode = 0;
+    uint8_t* bufp = NULL;
+    
+    res = fseek(fp, 0L, SEEK_END);
+    check(res == 0, "Failed to kyk_file_read_all: fseek failed");
+    
+    blen = ftell(fp);
+
+    res = fseek(fp, 0L, SEEK_SET);
+    check(res == 0, "Failed to kyk_file_read_all: fseek failed");
+
+    bufp = calloc(blen, sizeof(*bufp));
+    check(bufp, "Failed to kyk_file_read_all: bufp calloc failed");
+
+    fcode = fread(bufp, sizeof(*bufp), blen, fp);
+    check(fcode == blen, "Failed to kyk_file_read_all: fread failed");
+
+    *buf = bufp;
+    *len = blen;
+
+    return 0;
+error:
+    if(bufp) free(bufp);
+    return -1;
+}

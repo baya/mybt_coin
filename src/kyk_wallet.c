@@ -518,3 +518,32 @@ error:
     if(fp) fclose(fp);
     return -1;
 }
+
+int kyk_load_blk_head_chain(struct kyk_blk_hd_chain** hd_chain,
+			    const struct kyk_wallet* wallet)
+{
+    struct kyk_blk_hd_chain* hdc = NULL;
+    struct kyk_blk_header* hd = NULL;
+    uint8_t* buf;
+    FILE* fp = NULL;
+    int res = -1;
+    size_t len = 0;
+
+    check(hd_chain, "Failed to kyk_load_blk_head_chain: hd_chain is NULL");
+    check(wallet, "Failed to kyk_load_blk_head_chain: wallet is NULL");
+
+    fp = fopen(wallet -> blk_hd_chain_path, "rb");
+    check(fp, "Failed to kyk_load_blk_head_chain: fopen failed");
+
+    res = kyk_file_read_all(&buf, fp, &len);
+    check(res == 0, "Failed to kyk_load_blk_head_chain: kyk_file_read all failed");
+
+    /* res = kyk_deseri_blk_hd_chain(); */
+
+
+    return 0;
+
+error:
+
+    return -1;
+}

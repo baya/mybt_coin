@@ -11,9 +11,8 @@
 #define KYK_BLK_MAGIC_NO 0xD9B4BEF9
 
 struct kyk_blk_hd_chain {
-    struct kyk_blk_header* hd;
-    struct kyk_blk_hd_chain* prev;
-    struct kyk_blk_hd_chain* next;
+    struct kyk_blk_header* hd_list;
+    size_t len;
 };
 
 struct kyk_blk_header {
@@ -69,19 +68,16 @@ int kyk_init_block(struct kyk_block *blk);
 int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
 			    const struct kyk_blk_header* hd);
 
-int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
-			    struct kyk_blk_header* hd);
-
 int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
 
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain);
 
-int kyk_tail_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
-
-int get_blk_hd_chain_len(const struct kyk_blk_hd_chain* hd_chain, size_t* len);
-
 int kyk_seri_blk_hd_chain(struct kyk_bon_buff** bbuf,
 			  const struct kyk_blk_hd_chain* hd_chain);
+
+int kyk_deseri_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain,
+			    const uint8_t* buf,
+			    size_t buf_len);
 
 
 #endif

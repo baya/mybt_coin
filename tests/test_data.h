@@ -161,6 +161,13 @@ uint8_t BLK_HD[KYK_BLK_HD_LEN] = {
     0xff, 0xff, 0x00, 0x1d, 0x28, 0x3e, 0x9e, 0x70
 };
 
+uint8_t BLK_HASH[32] = {
+    0x00, 0x00, 0x00, 0x00, 0xd1, 0x14, 0x57, 0x90,
+    0xa8, 0x69, 0x44, 0x03, 0xd4, 0x06, 0x3f, 0x32,
+    0x3d, 0x49, 0x9e, 0x65, 0x5c, 0x83, 0x42, 0x68,
+    0x34, 0xd4, 0xce, 0x2f, 0x8d, 0xd4, 0xa2, 0xee
+};
+
 /*
  * this block is sourced from https://webbtc.com/block/00000000c9ec538cab7f38ef9c67a95742f56ab07b0a37c5be6b02808dbfb4e0.json
  * block hash is 00000000c9ec538cab7f38ef9c67a95742f56ab07b0a37c5be6b02808dbfb4e0
@@ -210,27 +217,37 @@ uint8_t BLK2_HD[KYK_BLK_HD_LEN] = {
     0xff, 0xff, 0x00, 0x1d, 0x07, 0xa8, 0xf2, 0x26,
 };
 
+uint8_t BLK2_HASH[32] = {
+    0x00, 0x00, 0x00, 0x00, 0xc9, 0xec, 0x53, 0x8c,
+    0xab, 0x7f, 0x38, 0xef, 0x9c, 0x67, 0xa9, 0x57,
+    0x42, 0xf5, 0x6a, 0xb0, 0x7b, 0x0a, 0x37, 0xc5,
+    0xbe, 0x6b, 0x02, 0x80, 0x8d, 0xbf, 0xb4, 0xe0
+};
+
 
 int make_testing_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain)
 {
     struct kyk_blk_hd_chain* hdc = NULL;
     struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd2 = NULL;
+    size_t hd_count = 2;
     size_t len = 0;
     int res = -1;
 
-    kyk_init_blk_hd_chain(&hdc);
-    hd = calloc(1, sizeof(*hd));
+    res = kyk_init_blk_hd_chain(&hdc);
+    check(res == 0, "Failed to make_testing_blk_hd_chain: kyk_init_blk_hd_chain failed");
+    
+    hd = calloc(hd_count, sizeof(*hd));    
     check(hd, "Failed to make_testing_blk_hd_chain: hd calloc failed");
+    hdc -> hd_list = hd;
+    
     res = kyk_deseri_blk_header(hd, BLK_HD, &len);
     check(res == 0, "Failed to make_testing_blk_hd_chain: kyk_deseri_blk_header failed");
+    hd++;
+    hdc -> len++;
 
-    hd2 = calloc(1, sizeof(*hd2));
-    res = kyk_deseri_blk_header(hd2, BLK2_HD, &len);
+    res = kyk_deseri_blk_header(hd, BLK2_HD, &len);
     check(res == 0, "Failed to make_testing_blk_hd_chain: kyk_deseri_blk_header failed");
-    hdc -> hd = hd;
-    res = kyk_append_blk_hd_chain(hdc, hd2);
-    check(res == 0, "Failed to test_kyk_seri_blk_hd_chain: kyk_append_blk_hd_chain failed");
+    hdc -> len++;
 
     *hd_chain = hdc;
 
@@ -238,8 +255,6 @@ int make_testing_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain)
     
 error:
     if(hdc) kyk_free_blk_hd_chain(hdc);
-    if(hd) free(hd);
-    if(hd2) free(hd2);
     return -1;
 }
 
