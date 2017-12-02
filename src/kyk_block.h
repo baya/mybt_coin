@@ -78,4 +78,10 @@ void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain);
 
 int kyk_tail_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
 
+int get_blk_hd_chain_len(const struct kyk_blk_hd_chain* hd_chain, size_t* len);
+
+int kyk_seri_blk_hd_chain(struct kyk_bon_buff** bbuf,
+			  const struct kyk_blk_hd_chain* hd_chain);
+
+
 #endif

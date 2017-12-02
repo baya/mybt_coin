@@ -34,9 +34,7 @@ struct kyk_bkey_val* w_get_bval(const struct kyk_wallet* wallet,
 void kyk_destroy_wallet(struct kyk_wallet* wallet);
 
 struct kyk_wallet_key* kyk_create_wallet_key(uint32_t cfg_idx,
-					     const char* desc
-    );
-
+					     const char* desc);
 
 int kyk_wallet_add_key(struct kyk_wallet* wallet,
 		       struct kyk_wallet_key* k);
