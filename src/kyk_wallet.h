@@ -47,8 +47,12 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k);
 
 int kyk_wallet_add_address(struct kyk_wallet* wallet, const char* desc);
 
-int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
-			    const struct kyk_blk_hd_chain* hd_chain);
+int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
+			      const struct kyk_blk_hd_chain* hd_chain);
+
+int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
+			      const struct kyk_wallet* wallet);
+
 
 
 #endif

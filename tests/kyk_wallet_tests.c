@@ -69,11 +69,11 @@ error:
     return "Failed to test_kyk_wallet_add_address";
 }
 
-char* test_kyk_save_blk_head_chain()
+char* test_kyk_save_blk_header_chain()
 {
     const char* wdir = "/tmp/test_kyk_save_blk_head_chain";
     struct kyk_wallet* wallet = NULL;
-    struct kyk_blk_hd_chain* hd_chain;
+    struct kyk_blk_hd_chain* hd_chain = NULL;
     int res = -1;
 
     wallet = calloc(1, sizeof *wallet);
@@ -84,15 +84,20 @@ char* test_kyk_save_blk_head_chain()
     res = make_testing_blk_hd_chain(&hd_chain);
     check(res == 0, "Failed to test_kyk_save_blk_head_chain: make_testing_blk_hd_chain failed");
 
-    res = kyk_save_blk_head_chain(wallet, hd_chain);
+    res = kyk_save_blk_header_chain(wallet, hd_chain);
     mu_assert(res == 0, "Failed to test_kyk_save_blk_head_chain");
-    
+
     
     return NULL;
 
 error:
 
     return "Failed to test_kyk_save_blk_head_chain";
+}
+
+char* test_kyk_load_blk_header_chain()
+{
+    return NULL;
 }
 
 
@@ -102,7 +107,8 @@ char* all_tests()
     mu_run_test(test_kyk_create_wallet_key);
     mu_run_test(test_kyk_wallet_check_config);
     mu_run_test(test_kyk_wallet_add_address);
-    mu_run_test(test_kyk_save_blk_head_chain);
+    mu_run_test(test_kyk_save_blk_header_chain);
+    mu_run_test(test_kyk_load_blk_header_chain);
 
     return NULL;
 }

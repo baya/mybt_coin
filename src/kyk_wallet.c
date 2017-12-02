@@ -482,7 +482,7 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
 
 
 /* block header chain */
-int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
+int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
 			    const struct kyk_blk_hd_chain* hd_chain)
 {
     FILE* fp = NULL;
@@ -519,12 +519,11 @@ error:
     return -1;
 }
 
-int kyk_load_blk_head_chain(struct kyk_blk_hd_chain** hd_chain,
+int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
 			    const struct kyk_wallet* wallet)
 {
     struct kyk_blk_hd_chain* hdc = NULL;
-    struct kyk_blk_header* hd = NULL;
-    uint8_t* buf;
+    uint8_t* buf = NULL;
     FILE* fp = NULL;
     int res = -1;
     size_t len = 0;
@@ -538,12 +537,19 @@ int kyk_load_blk_head_chain(struct kyk_blk_hd_chain** hd_chain,
     res = kyk_file_read_all(&buf, fp, &len);
     check(res == 0, "Failed to kyk_load_blk_head_chain: kyk_file_read all failed");
 
-    /* res = kyk_deseri_blk_hd_chain(); */
+    res = kyk_deseri_blk_hd_chain(&hdc, buf, len);
+    check(res == 0, "Failed to kyk_load_blk_head_chain: kyk_deseri_blk_hd_chain failed");
 
-
+    *hd_chain = hdc;
+    
+    fclose(fp);
+    free(buf);
+    
     return 0;
 
 error:
-
+    if(fp) fclose(fp);
+    if(buf) free(buf);
+    if(hdc) kyk_free_blk_hd_chain(hdc);
     return -1;
 }
