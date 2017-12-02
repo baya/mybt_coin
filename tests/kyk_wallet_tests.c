@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "test_data.h"
 #include "kyk_wallet.h"
 #include "mu_unit.h"
 
@@ -49,7 +50,6 @@ error:
 
 char* test_kyk_wallet_add_address()
 {
-    struct kyk_wallet_key* wkey = NULL;
     const char* wdir = "/tmp/test_kyk_wallet_add_address";
     struct kyk_wallet* wallet = NULL;
     int res = -1;
@@ -69,6 +69,32 @@ error:
     return "Failed to test_kyk_wallet_add_address";
 }
 
+char* test_kyk_save_blk_head_chain()
+{
+    const char* wdir = "/tmp/test_kyk_save_blk_head_chain";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_blk_hd_chain* hd_chain;
+    int res = -1;
+
+    wallet = calloc(1, sizeof *wallet);
+    check(wallet, "Failed to test_kyk_save_blk_head_chain: wallet calloc failed");
+    res = kyk_wallet_check_config(wallet, wdir);
+    check(res == 0, "Failed to test_kyk_save_blk_head_chain: kyk_wallet_check_config failed");
+
+    res = make_testing_blk_hd_chain(&hd_chain);
+    check(res == 0, "Failed to test_kyk_save_blk_head_chain: make_testing_blk_hd_chain failed");
+
+    res = kyk_save_blk_head_chain(wallet, hd_chain);
+    mu_assert(res == 0, "Failed to test_kyk_save_blk_head_chain");
+    
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_save_blk_head_chain";
+}
+
 
 char* all_tests()
 {
@@ -76,6 +102,7 @@ char* all_tests()
     mu_run_test(test_kyk_create_wallet_key);
     mu_run_test(test_kyk_wallet_check_config);
     mu_run_test(test_kyk_wallet_add_address);
+    mu_run_test(test_kyk_save_blk_head_chain);
 
     return NULL;
 }

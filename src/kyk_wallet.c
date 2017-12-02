@@ -482,7 +482,6 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
 
 
 /* block header chain */
-
 int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
 			    const struct kyk_blk_hd_chain* hd_chain)
 {
@@ -507,7 +506,7 @@ int kyk_save_blk_head_chain(const struct kyk_wallet* wallet,
     check(bbuf -> base, "Failed to kyk_save_blk_head_chain: kyk_seri_blk_hd_chain failed");
 
     len = fwrite(bbuf -> base, sizeof(*bbuf -> base), bbuf -> len, fp);
-    check(len < bbuf -> len, "Failed to kyk_save_blk_head_chain: fwrite failed");
+    check(len == bbuf -> len, "Failed to kyk_save_blk_head_chain: fwrite failed");
 
     free_kyk_bon_buff(bbuf);
     fclose(fp);
