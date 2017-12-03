@@ -486,7 +486,7 @@ int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
 	check(hd_list, "Failed to kyk_append_blk_hd_chain: hd_list relloc failed");
     }
 
-    memcpy(hd_list + chain_len, hd, count);
+    memcpy(hd_list + chain_len, hd, sizeof(struct kyk_blk_header) * count);
 
     hd_chain -> hd_list = hd_list;
     hd_chain -> len = chain_len + count;
@@ -497,6 +497,7 @@ error:
 
     return -1;
 }
+
 
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
 {
