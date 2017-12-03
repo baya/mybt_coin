@@ -15,7 +15,7 @@
 #include "dbg.h"
 
 #define WALLET_NAME ".kyk_miner"
-#define MAIN_ADDR_LABEL "Main Miner Address"
+
 
 #define CMD_INIT           "init"
 #define CMD_DELETE         "delete"
@@ -53,11 +53,13 @@ int main(int argc, char *argv[])
     
     if(argc == 2){
 	if(match_cmd(argv[1], "init")){
+	    if(kyk_file_exists(wdir)){
+		printf("wallet is already in %s\n", wdir);
+		return 0;
+	    }
 	    res = kyk_setup_wallet(&wallet, wdir);
 	    check(res == 0, "Failed to init wallet: kyk_setup_wallet failed");
 	    check(wallet, "Failed to init wallet: kyk_setup_wallet failed");
-	    res = set_main_address(wallet);
-	    check(res == 0, "Failed to init wallt: set_main_address failed");
 	} else if(match_cmd(argv[1], "delete")){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {
@@ -107,20 +109,6 @@ int match_cmd(char *src, char *cmd)
     res = strcasecmp(src, cmd) == 0 ? 1 : 0;
 
     return res;
-}
-
-int set_main_address(struct kyk_wallet* wallet)
-{
-    int res = -1;
-
-    res = kyk_wallet_add_address(wallet, MAIN_ADDR_LABEL);
-    check(res == 0, "failed to kyk_wallet_add_address");
-    
-    return 0;
-
-error:
-
-    return -1;
 }
 
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc)

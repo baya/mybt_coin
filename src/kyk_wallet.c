@@ -20,6 +20,7 @@
 #include "dbg.h"
 
 #define WCFG_NUM_KEYS "numKeys"
+#define MAIN_ADDR_LABEL "Main Miner Address"
 
 static void set_init_bval(struct kyk_bkey_val *bval,
 			  const struct kyk_block* blk,
@@ -28,8 +29,10 @@ static void set_init_bval(struct kyk_bkey_val *bval,
 static int kyk_load_wallet_cfg(struct kyk_wallet* wallet);
 
 static int save_setup_data_to_wallet(struct kyk_wallet *wallet);
-int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
-			 const struct kyk_block* blk);
+static int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
+				const struct kyk_block* blk);
+
+static int kyk_setup_main_address(struct kyk_wallet* wallet);
 
 int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
 
@@ -50,6 +53,9 @@ int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
     res = save_setup_data_to_wallet(wallet);
     check(res == 0, "failed to init wallet");
 
+    res = kyk_setup_main_address(wallet);
+    check(res == 0, "Failed to kyk_setup_wallet: kyk_setup_main_address failed");
+
     *outWallet = wallet;
 
     return 0;
@@ -59,6 +65,20 @@ error:
     if(wallet) kyk_destroy_wallet(wallet);
     return -1;
 
+}
+
+int kyk_setup_main_address(struct kyk_wallet* wallet)
+{
+    int res = -1;
+
+    res = kyk_wallet_add_address(wallet, MAIN_ADDR_LABEL);
+    check(res == 0, "Failed to kyk_setup_main_address: kyk_wallet_add_address failed");
+
+    return 0;
+    
+error:
+
+    return -1;
 }
 
 
