@@ -27,7 +27,6 @@
 #define CMD_SERVE          "serve"
 
 int match_cmd(char *src, char *cmd);
-int set_main_address(struct kyk_wallet* wallet);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
 
 int main(int argc, char *argv[])
@@ -45,10 +44,14 @@ int main(int argc, char *argv[])
 
     if(argc == 1){
 	printf("usage: %s command [args]\n", argv[0]);
-	printf("init a wallet: %s " CMD_INIT "\n", argv[0]);
-	printf("add address: %s " CMD_ADD_ADDRESS "\n", argv[0]);
-	printf("query block: %s " CMD_QUERY_BLOCK "[block hash]\n", argv[0]);
-	printf("delete wallet: %s " CMD_DELETE "\n", argv[0]);
+	printf("init a wallet:    %s %s\n", argv[0], CMD_INIT);
+	printf("make init blocks: %s %s\n", argv[0], CMD_MK_INIT_BLOCKS);
+	printf("make tx:          %s %s\n", argv[0], CMD_MK_TX);
+	printf("query blance:     %s %s\n", argv[0], CMD_Q_BALANCE);
+	printf("start server:     %s %s\n", argv[0], CMD_SERVE);
+	printf("add address:      %s %s\n", argv[0], CMD_ADD_ADDRESS);
+	printf("query block:      %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
+	printf("delete wallet:    %s %s\n", argv[0], CMD_DELETE);
     }
     
     if(argc == 2){
