@@ -6,6 +6,30 @@
 #include "kyk_wallet.h"
 #include "mu_unit.h"
 
+char* test_kyk_setup_wallet()
+{
+    const char* wdir = "/tmp/test_kyk_setup_wallet";
+    struct kyk_wallet* wallet = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    mu_assert(res == 0, "Failed to test_kyk_setup_wallet");
+    mu_assert(wallet, "Failed to test_kyk_setup_wallet");
+    
+    return NULL;
+}
+
+char* test_kyk_open_wallet()
+{
+    const char* wdir = "/tmp/test_kyk_open_wallet";
+    struct kyk_wallet* wallet = NULL;
+
+    wallet = kyk_open_wallet(wdir);
+    mu_assert(wallet, "Failed to test_kyk_open_wallet");
+    
+    return NULL;
+}
+
 char* test_kyk_create_wallet_key()
 {
     struct kyk_wallet_key* wkey = NULL;
@@ -104,6 +128,8 @@ char* test_kyk_load_blk_header_chain()
 char* all_tests()
 {
     mu_suite_start();
+    mu_run_test(test_kyk_setup_wallet);
+    mu_run_test(test_kyk_open_wallet);
     mu_run_test(test_kyk_create_wallet_key);
     mu_run_test(test_kyk_wallet_check_config);
     mu_run_test(test_kyk_wallet_add_address);

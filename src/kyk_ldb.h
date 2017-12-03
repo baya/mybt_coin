@@ -52,8 +52,7 @@ struct kyk_bkey_val{
     struct kyk_blk_header *blk_hd;
 };
 
-
-void kyk_init_store_db(struct kyk_block_db *blk_db, char *path);
+int kyk_init_store_db(struct kyk_block_db *blk_db, char *path);
 void kyk_free_block_db(struct kyk_block_db *blk_db);
 void kyk_free_db_key(struct db_key *key);
 void build_db_key(struct db_key *key, const char flag, char *src, size_t len);

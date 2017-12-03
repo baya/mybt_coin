@@ -30,5 +30,9 @@ int kyk_file_chmod(const char *filename, uint32_t mode);
 int kyk_check_create_file(const char *filename,
 			  const char *label);
 
+int kyk_check_create_dir(const char* filedir,
+			 const char* label);
+
+
 
 #endif

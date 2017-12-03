@@ -28,8 +28,12 @@ struct kyk_wallet {
     struct config* wallet_cfg;
 };
 
-struct kyk_wallet* kyk_init_wallet(const char *wdir);
+int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir);
+
 struct kyk_wallet* kyk_open_wallet(const char *wdir);
+
+int kyk_init_wallet(struct kyk_wallet* wallet);
+
 struct kyk_bkey_val* w_get_bval(const struct kyk_wallet* wallet,
 				 const char* blk_hash_str,
 				 char **errptr);
@@ -53,6 +57,7 @@ int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
 int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
 			      const struct kyk_wallet* wallet);
 
+struct kyk_wallet* kyk_new_wallet(const char *wdir);
 
 
 #endif

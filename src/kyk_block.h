@@ -79,5 +79,10 @@ int kyk_deseri_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain,
 			    const uint8_t* buf,
 			    size_t buf_len);
 
+int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
+			    const struct kyk_blk_header* hd,
+			    size_t count);
+
+
 
 #endif

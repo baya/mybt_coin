@@ -53,11 +53,11 @@ int main(int argc, char *argv[])
     
     if(argc == 2){
 	if(match_cmd(argv[1], "init")){
-	    wallet = kyk_init_wallet(wdir);
-	    check(wallet != NULL, "failed to init wallet");
-	    kyk_wallet_check_config(wallet, wdir);
+	    res = kyk_setup_wallet(&wallet, wdir);
+	    check(res == 0, "Failed to init wallet: kyk_setup_wallet failed");
+	    check(wallet, "Failed to init wallet: kyk_setup_wallet failed");
 	    res = set_main_address(wallet);
-	    check(res == 0, "failed to set_main_address");
+	    check(res == 0, "Failed to init wallt: set_main_address failed");
 	} else if(match_cmd(argv[1], "delete")){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else {

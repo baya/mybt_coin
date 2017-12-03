@@ -459,6 +459,45 @@ error:
     return -1;
 }
 
+int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
+			    const struct kyk_blk_header* hd,
+			    size_t count)
+{
+    struct kyk_blk_header* hd_list = NULL;
+    size_t chain_len = 0;
+    
+    check(hd_chain, "Failed to kyk_append_blk_hd_chain: hd_chain is NULL");
+    check(hd, "Failed to kyk_append_blk_hd_chain: hd is NULL");
+    check(count > 0, "Failed to kyk_append_blk_hd_chain: invalid count");
+
+    hd_list = hd_chain -> hd_list;
+    if(hd_list == NULL && hd_chain -> len > 0){
+	log_err("Failed to kyk_append_blk_hd_chain: invalid hd_chain");
+	goto error;
+    }
+
+    chain_len = hd_chain -> len;
+
+    if(hd_list == NULL){
+	hd_list = calloc(count, sizeof(*hd_list));
+	check(hd_list, "Failed to kyk_append_blk_hd_chain: hd_list calloc failed");
+    } else {
+	hd_list = realloc(hd_list, (chain_len + count) * sizeof(*hd_list));
+	check(hd_list, "Failed to kyk_append_blk_hd_chain: hd_list relloc failed");
+    }
+
+    memcpy(hd_list + chain_len, hd, count);
+
+    hd_chain -> hd_list = hd_list;
+    hd_chain -> len = chain_len + count;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
 {
     if(hd_chain){

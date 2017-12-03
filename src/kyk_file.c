@@ -193,7 +193,7 @@ error:
 int kyk_check_create_file(const char *filename,
 			  const char *label)
 {
-    int res = 0;
+    int res = -1;
 
     if (kyk_file_exists(filename)) {
 	return 0;
@@ -210,4 +210,26 @@ int kyk_check_create_file(const char *filename,
 error:
 
     return -1;
+}
+
+int kyk_check_create_dir(const char* filedir,
+			 const char* label)
+{
+    int res = -1;
+    if(kyk_file_exists(filedir)){
+	return 0;
+    } else {
+	res = kyk_file_mkdir(filedir);
+	check(res == 0, "Failed to kyk_check_create_dir: kyk_file_mkdir %s:%s failed", label, filedir);
+
+	res = kyk_file_chmod(filedir, 0700);
+	check(res == 0, "Failed to kyk_check_create_dir: kyk_file_chmod %s:%s failed", label, filedir);
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+    
 }

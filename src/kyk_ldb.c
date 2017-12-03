@@ -6,6 +6,7 @@
 #include "kyk_block.h"
 #include "kyk_ldb.h"
 #include "kyk_utils.h"
+#include "dbg.h"
 
 //! Unused.
 const uint32_t BLOCK_VALID_UNKNOWN      =    0;
@@ -46,16 +47,28 @@ const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED
 const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client
 
 
-void kyk_init_store_db(struct kyk_block_db *blk_db, char *path)
+int kyk_init_store_db(struct kyk_block_db *blk_db, char *path)
 {
+    check(blk_db, "Failed to kyk_init_store_db: blk_db is NULL");
+    check(path, "Failed to kyk_init_store_db: path is NULL");
+    
     blk_db -> errptr = NULL;
-    blk_db -> path = malloc(sizeof(char) * (strlen(path) + 1));
-    blk_db -> path = memcpy(blk_db -> path, path, strlen(path) + 1);
+    /* blk_db -> path = malloc(sizeof(char) * (strlen(path) + 1)); */
+    /* blk_db -> path = memcpy(blk_db -> path, path, strlen(path) + 1); */
+    blk_db -> path = kyk_strdup(path);
+    check(blk_db -> path, "Failed to kyk_init_store_db: blk_db -> path kyk_strdup failed");
+    
     blk_db -> db_opts = leveldb_options_create();
     leveldb_options_set_create_if_missing(blk_db -> db_opts, 1);
     blk_db -> db = leveldb_open(blk_db -> db_opts, blk_db -> path, &blk_db -> errptr);
     blk_db -> rd_opts = leveldb_readoptions_create();
     blk_db -> wr_opts = leveldb_writeoptions_create();
+
+    return 0;
+
+error:
+
+    return -1;
 }
 
 void kyk_free_block_db(struct kyk_block_db *blk_db)
