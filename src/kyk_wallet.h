@@ -59,5 +59,11 @@ int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
 
 struct kyk_wallet* kyk_new_wallet(const char *wdir);
 
+int kyk_wallet_get_pubkey(uint8_t** pubkey,
+			  size_t* pbk_len,
+			  const struct kyk_wallet* wallet,
+			  const char* name);
+
+
 
 #endif

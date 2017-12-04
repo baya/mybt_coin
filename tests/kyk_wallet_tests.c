@@ -4,6 +4,7 @@
 
 #include "test_data.h"
 #include "kyk_wallet.h"
+#include "kyk_utils.h"
 #include "mu_unit.h"
 
 char* test_kyk_setup_wallet()
@@ -119,6 +120,29 @@ error:
     return "Failed to test_kyk_save_blk_head_chain";
 }
 
+char* test_kyk_wallet_get_pubkey()
+{
+    const char* wdir = "/tmp/test_kyk_wallet_get_pubkey";
+    struct kyk_wallet* wallet = NULL;
+    uint8_t* pubkey = NULL;
+    size_t pbk_len = 0;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_get_pubkey: kyk_setup_wallet failed");
+
+    res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
+    mu_assert(res == 0, "Failed to test_kyk_wallet_get_pubkey");
+    mu_assert(pbk_len == 33, "Failed to test_kyk_wallet_get_pubkey");
+    /* kyk_print_hex("pubkey", pubkey, pbk_len); */
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_wallet_get_pubkey";
+}
+
 char* test_kyk_load_blk_header_chain()
 {
     return NULL;
@@ -135,6 +159,7 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_add_address);
     mu_run_test(test_kyk_save_blk_header_chain);
     mu_run_test(test_kyk_load_blk_header_chain);
+    mu_run_test(test_kyk_wallet_get_pubkey);
 
     return NULL;
 }

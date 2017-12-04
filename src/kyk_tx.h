@@ -7,6 +7,9 @@
 #define COINBASE_PRE_TXID "0000000000000000000000000000000000000000000000000000000000000000"
 #define COINBASE_INX 0xffffffff
 
+/* 1 BTC = 10 ** 8 Satoshi */
+#define ONE_BTC_COIN_VALUE 100000000
+
 struct kyk_bon_buff;
 
 /* https://bitcoin.org/en/developer-reference#raw-transaction-format */
@@ -55,7 +58,7 @@ void kyk_free_tx(struct kyk_tx *tx);
 void kyk_free_txin(struct kyk_txin *txin);
 void kyk_free_txout(struct kyk_txout *txout);
 
-int kyk_make_coinbase_tx(struct kyk_tx* tx,
+int kyk_make_coinbase_tx(struct kyk_tx** cb_tx,
 			 const char* note,
 			 uint64_t outValue,
 			 const uint8_t* pub,

@@ -522,21 +522,23 @@ error:
     return -1;
 }
 
-int kyk_make_coinbase_tx(struct kyk_tx* tx,
+int kyk_make_coinbase_tx(struct kyk_tx** cb_tx,
 			 const char* note,
 			 uint64_t outValue,
 			 const uint8_t* pub,
 			 size_t pub_len
     )
 {
-    struct kyk_txin* txin;
-    struct kyk_txout* txout;
+    struct kyk_tx* tx = NULL;
+    struct kyk_txin* txin = NULL;
+    struct kyk_txout* txout = NULL;
     struct kyk_buff* pbk_sc = NULL;
     int res = -1;
 
-    check(tx, "Failed to kyk_make_coinbase_tx: tx is NULL");
-    check(tx -> txin == NULL, "Failed to kyk_make_coinbase_tx: tx -> txin should be NULL");
-    check(tx -> txout == NULL, "Failed to kyk_make_coinbase_tx: tx -> txout should be NULL");
+    check(cb_tx, "Failed to kyk_make_coinbase_tx: cb_tx is NULL");
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_make_coinbase_tx: tx calloc failed");
 
     tx -> version = 1;
     tx -> vin_sz = 1;
@@ -566,12 +568,15 @@ int kyk_make_coinbase_tx(struct kyk_tx* tx,
     check(txout -> sc, "Failed to kyk_make_coinbase_tx: calloc failed");
     memcpy(txout -> sc, pbk_sc -> base, txout -> sc_size);
 
+    *cb_tx = tx;
+
     free_kyk_buff(pbk_sc);
     pbk_sc = NULL;
 
     return 0;
 
 error:
+    if(tx) kyk_free_tx(tx);
     if(pbk_sc) {
 	free_kyk_buff(pbk_sc);
 	pbk_sc = NULL;

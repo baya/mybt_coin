@@ -28,6 +28,7 @@
 
 int match_cmd(char *src, char *cmd);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
+int cmd_make_init_blocks(const struct kyk_wallet* wallet);
 
 int main(int argc, char *argv[])
 {
@@ -55,7 +56,7 @@ int main(int argc, char *argv[])
     }
     
     if(argc == 2){
-	if(match_cmd(argv[1], "init")){
+	if(match_cmd(argv[1], CMD_INIT)){
 	    if(kyk_file_exists(wdir)){
 		printf("wallet is already in %s\n", wdir);
 		return 0;
@@ -63,8 +64,11 @@ int main(int argc, char *argv[])
 	    res = kyk_setup_wallet(&wallet, wdir);
 	    check(res == 0, "Failed to init wallet: kyk_setup_wallet failed");
 	    check(wallet, "Failed to init wallet: kyk_setup_wallet failed");
-	} else if(match_cmd(argv[1], "delete")){
+	} else if(match_cmd(argv[1], CMD_DELETE)){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
+	} else if(match_cmd(argv[1], CMD_MK_INIT_BLOCKS)){
+	    wallet = kyk_open_wallet(wdir);
+	    cmd_make_init_blocks(wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -129,5 +133,57 @@ int cmd_add_address(struct kyk_wallet* wallet, const char* desc)
 error:
 
     exit(1);
+}
+
+int cmd_make_init_blocks(const struct kyk_wallet* wallet)
+{
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    struct kyk_tx* tx = NULL;
+    struct kyk_blk_header* hd = NULL;
+    struct kyk_blk_header* hd_list = NULL;
+    struct kyk_blk_header* hd_tail = NULL;
+    const char* note = "void coin";
+    uint64_t btc_count = 100;
+    uint64_t outValue = ONE_BTC_COIN_VALUE * btc_count;
+    uint8_t* pubkey = NULL;
+    size_t pbk_len = 0;
+    uint8_t pre_blk_hash[32];
+    uint32_t tts;
+    uint32_t bts;
+    int res = -1;
+
+    uint8_t buf[80];
+
+    res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_wallet_get_pubkey failed");
+
+    res = kyk_make_coinbase_tx(&tx, note, outValue, pubkey, pbk_len);
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_make_coinbase_tx failed");
+
+    res = kyk_load_blk_header_chain(&hd_chain, wallet);
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_load_blk_header_chain failed");
+
+    hd_list = hd_chain -> hd_list;
+    hd_tail = hd_list + hd_chain -> len - 1;
+    
+
+    res = kyk_blk_hash256(pre_blk_hash, hd_tail);
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_blk_hash256 failed");
+
+    res = time(NULL);
+    check(res != -1, "Failed to cmd_make_init_blocks: time Failed");
+    tts = (uint32_t)res;
+    bts = 0x1f00ffff;
+    hd = kyk_make_blk_header(tx, 1, 1, pre_blk_hash, tts, bts);
+
+    kyk_seri_blk_hd(buf, hd);
+    printf("hd -> tts: %u\n", hd -> tts);
+    kyk_print_hex("block header", buf, 80);
+    
+    return 0;
+
+error:
+    if(pubkey) free(pubkey);
+    return -1;
 }
 

@@ -139,6 +139,9 @@ int kyk_init_wallet(struct kyk_wallet* wallet)
     res = kyk_init_store_db(wallet -> blk_index_db, wallet -> idx_db_path);
     check(res == 0, "Failed to kyk_init_wallet: kyk_init_store_db failed");
     check(wallet -> blk_index_db -> errptr == NULL, "failed to init block index db");
+
+    res = kyk_load_wallet_cfg(wallet);
+    check(res == 0, "Failed to kyk_init_wallet: kyk_load_wallet_cfg failed");
     
     return 0;
     
@@ -516,6 +519,33 @@ int kyk_wallet_add_key(struct kyk_wallet* wallet,
 error:
     
     return -1;
+}
+
+int kyk_wallet_get_pubkey(uint8_t** pubkey,
+			  size_t* pbk_len,
+			  const struct kyk_wallet* wallet,
+			  const char* name)
+{
+    char* pubStr = NULL;
+    uint8_t* pbk_cpy = NULL;
+    
+    check(pubkey, "Failed to kyk_wallet_get_pubkey: pubkey is NULL");
+    check(wallet, "Failed to kyk_wallet_get_pubkey: wallet is NULL");
+    check(wallet -> wallet_cfg, "Failed to kyk_wallet_get_pubkey: wallet -> wallet_cfg is NULL");
+
+    pubStr = kyk_config_getstring(wallet -> wallet_cfg, NULL, name);
+    check(pubStr, "Failed to kyk_wallet_get_pubkey: pubStr is NULL");
+
+    pbk_cpy = kyk_alloc_hex(pubStr, pbk_len);
+
+    *pubkey = pbk_cpy;
+
+    return 0;
+
+error:
+    if(pubStr) free(pubStr);
+    return -1;
+    
 }
 
 int kyk_wallet_add_address(struct kyk_wallet* wallet, const char* desc)

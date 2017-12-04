@@ -377,6 +377,8 @@ struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
     struct kyk_blk_header* hd = NULL;
     struct kyk_mkltree_level* mkl_root = NULL;
 
+    check(tx_list, "Failed to kyk_make_blk_header: tx_list is NULL");
+
     hd = calloc(1, sizeof(struct kyk_blk_header));
     check(hd, "Failed to kyk_make_blk_header: calloc failed");
 

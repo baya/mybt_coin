@@ -213,19 +213,13 @@ char* test_make_coinbase_tx()
     };
     int res = -1;
 
-    tx = calloc(1, sizeof(*tx));
-    check(tx, "Failed to test_make_coinbase_tx: tx calloc failed");
-    res = kyk_make_coinbase_tx(tx, note, outValue, pubkey, sizeof(pubkey));
+    res = kyk_make_coinbase_tx(&tx, note, outValue, pubkey, sizeof(pubkey));
     mu_assert(res == 0, "Failed to kyk_make_coinbase_tx");
     mu_assert(tx -> version == 1, "Failed to test_make_coinbase_tx");
 
     kyk_free_tx(tx);
     
     return NULL;
-
-error:
-
-    return "Failed to test_make_coinbase_tx";
 }
 
 char *all_tests()
