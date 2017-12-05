@@ -112,6 +112,7 @@ int kyk_get_tx_size(const struct kyk_tx* tx, size_t* tx_size)
     struct kyk_txin* txin = NULL;
     struct kyk_txout* txout = NULL;
 
+    check(tx, "Failed to kyk_get_tx_size: tx is NULL");
     check(tx_size, "Failed to kyk_get_tx_size: tx_size is NULL");
     
     len += sizeof(tx -> version);

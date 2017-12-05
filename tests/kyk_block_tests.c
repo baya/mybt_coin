@@ -11,29 +11,64 @@
 #include "gens_block.h"
 #include "mu_unit.h"
 
-char *test_kyk_ser_blk()
+char *test_kyk_seri_blk()
 {
     struct kyk_block* blk = NULL;
-    struct kyk_buff* buf = NULL;
-    char *errmsg = "failed to test kyk ser block";
+    uint8_t* buf = NULL;
+    size_t blk_size = 0;
+    size_t check_size = 0;
+    int res = -1;
 
     blk = make_gens_block();
     check(blk != NULL, "failed to make gens block");
 
-    buf = create_kyk_buff(1000);
-    check(buf != NULL, "failed to create kyk buff");
+    res = kyk_get_blk_size(blk, &blk_size);
+    check(res == 0, "Failed to test_kyk_seri_blk: kyk_get_blk_size failed");
+    buf = calloc(blk_size, sizeof(*buf));
+    check(res == 0, "Failed to test_kyk_seri_blk: buf calloc failed");
 
-    kyk_ser_blk(buf, blk);
+    res = kyk_seri_blk(buf, blk, &check_size);
+    mu_assert(res == 0, "Failed to test_kyk_seri_blk");
+    mu_assert(blk_size == check_size, "Failed to test_kyk_seri_blk");
 
-    mu_assert(buf -> idx == blk -> blk_size, "failed to get the correct block len");
+    free(buf);
+    kyk_free_block(blk);
 
     return NULL;
 
 error:
-    if(buf) free_kyk_buff(buf);
     if(blk) kyk_free_block(blk);
-    return errmsg;
+    if(buf) free(buf);
+    return "Failed to test_kyk_seri_blk";
+}
+
+char* test_kyk_seri_blkself()
+{
+    struct kyk_block* blk = NULL;
+    uint8_t* buf = NULL;
+    size_t blk_size = 0;
+    size_t check_size = 0;
+    int res = -1;
+
+    blk = make_gens_block();
+    check(blk, "Failed to test_kyk_seri_blkself: make_gens_block failed");
     
+    res = kyk_get_blkself_size(blk, &blk_size);
+    check(res == 0, "Failed to kyk_get_blk_selfsize: kyk_get_blkself_size failed");
+
+    buf = calloc(blk_size, sizeof(*buf));
+    check(buf, "Failed to test_kyk_seri_blkself: buf calloc failed");
+    res = kyk_seri_blkself(buf, blk, &check_size);
+    mu_assert(res == 0, "Failed to test_kyk_seri_blkself");
+    mu_assert(blk_size == check_size, "Failed to test_kyk_seri_blkself");
+    
+
+    return NULL;
+
+error:
+
+    return "Failed kyk_seri_blkself";
+
 }
 
 char* test_deseri_blk_header()
@@ -110,10 +145,7 @@ char* test_deseri_block()
     size_t blk_size = 0;
 
     
-    blk = malloc(sizeof(*blk));
-    check(blk, "Failed to test_parse_block: blk malloc failed");
-
-    res = kyk_deseri_block(blk, BLOCK_BUF, &blk_size);
+    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size);
     mu_assert(res == 0, "Failed to test_deseri_block");
     res = kyk_blk_hash256(blk_hash, blk -> hd);
     mu_assert(res == 0, "Failed to test_parse_block: kyk_blk_hash256 failed");
@@ -169,8 +201,7 @@ char* test_make_blk_header()
     
     int res = -1;
 
-    blk = calloc(1, sizeof(*blk));
-    res = kyk_deseri_block(blk, BLOCK_BUF, &blk_len);
+    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
     check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
 
     tx_list = blk -> tx;
@@ -207,19 +238,21 @@ char* test_kyk_make_block()
     size_t target_blk_size = 490;
     int res = -1;
 
-    blk = calloc(1, sizeof(*blk));
-    res = kyk_deseri_block(blk, BLOCK_BUF, &blk_len);
+    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
     check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
 
-    blk2 = calloc(1, sizeof(*blk2));
-    res = kyk_make_block(blk2, blk -> hd, blk -> tx, blk -> tx_count);
+    res = kyk_make_block(&blk2, blk -> hd, blk -> tx, blk -> tx_count);
     mu_assert(res == 0, "Failed to test_kyk_make_block");
     mu_assert(blk2 -> blk_size == target_blk_size, "Failed to test_kyk_make_block: invalid blk_size");
 
+    kyk_free_block(blk);
+    free(blk2);
+    
     return NULL;
 
 error:
-
+    if(blk) kyk_free_block(blk);
+    if(blk2) free(blk2);
     return "Failed to test_kyk_make_block";
 }
 
@@ -328,17 +361,95 @@ char* test_kyk_deseri_blk_hd_chain()
     return NULL;
 }
 
+char* test_kyk_get_blk_size()
+{
+    struct kyk_block* blk = NULL;
+    size_t blk_size1 = 0;
+    size_t blk_size2 = 0;
+    int res = -1;
+
+    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blk_size: kyk_deseri_block failed");
+
+    res = kyk_get_blk_size(blk, &blk_size2);
+    mu_assert(res == 0, "Failed to test_kyk_get_blk_size");
+    mu_assert(blk_size2 == blk_size1, "Failed to test_kyk_get_blk_size");
+
+    kyk_free_block(blk);
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_get_blk_size";
+}
+
+
+char* test_kyk_get_blkself_size()
+{
+    struct kyk_block* blk = NULL;
+    size_t blk_size1 = 0;
+    size_t blk_size2 = 0;
+    int res = -1;
+
+    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blkself_size: kyk_deseri_block failed");
+
+    res = kyk_get_blkself_size(blk, &blk_size2);
+    mu_assert(res == 0, "Failed to test_kyk_get_blkself_size");
+    mu_assert(blk_size2 == blk_size1 + 8, "Failed to test_kyk_get_blkself_size");
+
+    kyk_free_block(blk);
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_get_blk_selfsize";
+}
+
+char* test_kyk_tail_hd_chain()
+{
+    struct kyk_blk_hd_chain* hdc = NULL;
+    struct kyk_blk_header* hd = NULL;
+    uint8_t target_mkl_root[32] = {
+	0xd5, 0xf2, 0xd2, 0x14, 0x53, 0xa6, 0xf0, 0xe6,
+	0x7b, 0x5c, 0x42, 0x95, 0x9c, 0x97, 0x00, 0x85,
+	0x3e, 0x4c, 0x4d, 0x46, 0xfa, 0x75, 0x19, 0xd1,
+	0xcc, 0x58, 0xe7, 0x73, 0x69, 0xc8, 0x93, 0xf2
+    };
+    int res = -1;    
+
+    res = kyk_deseri_blk_hd_chain(&hdc, BLK_HD2_CHAIN_BUF, sizeof(BLK_HD2_CHAIN_BUF));
+    check(res == 0, "Failed to test_kyk_tail_hd_chain: kyk_deseri_blk_hd_chain failed");
+
+    res = kyk_tail_hd_chain(&hd, hdc);
+    mu_assert(res == 0, "Failed to test_kyk_tail_hd_chain");
+    mu_assert(hd, "Failed to test_kyk_tail_hd_chain");
+    mu_assert(kyk_digest_eq(hd -> mrk_root_hash, target_mkl_root, sizeof(target_mkl_root)), "Failed to test_kyk_tail_hd_chain");
+
+
+    return NULL;
+    
+error:
+
+    return "Failed to test_kyk_tail_hd_chain";
+
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
-    mu_run_test(test_kyk_ser_blk);    
+    mu_run_test(test_kyk_seri_blk);
+    mu_run_test(test_kyk_seri_blkself);
     mu_run_test(test_deseri_blk_header);
     mu_run_test(test_deseri_block);
     mu_run_test(test_make_blk_header);
     mu_run_test(test_kyk_make_block);
     mu_run_test(test_kyk_init_blk_hd_chain);
     mu_run_test(test_kyk_seri_blk_hd_chain);
+    mu_run_test(test_kyk_get_blk_size);
+    mu_run_test(test_kyk_get_blkself_size);
+    mu_run_test(test_kyk_tail_hd_chain);
     
     return NULL;
 }

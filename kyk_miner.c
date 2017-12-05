@@ -28,7 +28,7 @@
 
 int match_cmd(char *src, char *cmd);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
-int cmd_make_init_blocks(const struct kyk_wallet* wallet);
+int cmd_make_init_blocks(const struct kyk_wallet* wallet, int count);
 
 int main(int argc, char *argv[])
 {
@@ -135,7 +135,7 @@ error:
     exit(1);
 }
 
-int cmd_make_init_blocks(const struct kyk_wallet* wallet)
+int cmd_make_init_blocks(const struct kyk_wallet* wallet, int count)
 {
     struct kyk_blk_hd_chain* hd_chain = NULL;
     struct kyk_tx* tx = NULL;
@@ -150,6 +150,7 @@ int cmd_make_init_blocks(const struct kyk_wallet* wallet)
     uint8_t pre_blk_hash[32];
     uint32_t tts;
     uint32_t bts;
+    struct kyk_block* blk = NULL;
     int res = -1;
 
     uint8_t buf[80];
@@ -176,10 +177,15 @@ int cmd_make_init_blocks(const struct kyk_wallet* wallet)
     bts = 0x1f00ffff;
     hd = kyk_make_blk_header(tx, 1, 1, pre_blk_hash, tts, bts);
 
+    res = kyk_make_block(&blk, hd, tx, 1);
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_make_block failed");
+
     kyk_seri_blk_hd(buf, hd);
+    kyk_print_hex("hd -> pre_blk_hash", hd -> pre_blk_hash, 32);
+    kyk_print_hex("hd -> mrk_root_hash", hd -> mrk_root_hash, 32);
     printf("hd -> tts: %u\n", hd -> tts);
     kyk_print_hex("block header", buf, 80);
-    
+
     return 0;
 
 error:

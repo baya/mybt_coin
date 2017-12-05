@@ -11,6 +11,61 @@
 #include "kyk_sha.h"
 #include "dbg.h"
 
+int kyk_get_blkself_size(const struct kyk_block* blk,
+			 size_t* blkself_size)
+{
+    size_t len = 0;
+    size_t blk_size = 0;
+    int res = -1;
+
+    check(blk, "Failed to kyk_get_blk_selfsize: blk is NULL");
+
+    len += sizeof(blk -> magic_no);
+    len += sizeof(blk -> blk_size);
+    res = kyk_get_blk_size(blk, &blk_size);
+    check(res == 0, "Failed to kyk_get_blk_selfsize: kyk_get_blk_size failed");
+
+    *blkself_size = len + blk_size;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_get_blk_size(const struct kyk_block* blk,
+		     size_t* blk_size)
+{
+    const struct kyk_tx* tx = NULL;
+    size_t len = 0;
+    size_t tx_size = 0;
+    size_t i = 0;
+    int res = -1;
+
+    check(blk, "kyk_get_blk_size failed: blk si NULL");
+    check(blk -> hd, "Failed to kyk_get_blk_size: blk -> hd is NULL");
+    check(blk -> tx, "Failed to kyk_get_blk_size: blk -> tx is NULL");
+    check(blk -> tx_count > 0, "Failed to kyk_get_blk_size: blk -> tx_count is invalid");
+
+    tx = blk -> tx;
+    len += KYK_BLK_HD_LEN;
+    len += get_varint_size(blk -> tx_count);
+
+    for(i = 0; i < blk -> tx_count; i++){
+	res = kyk_get_tx_size(tx + i, &tx_size);
+	check(res == 0, "Failed to kyk_get_blk_size: kyk_get_tx_size failed");
+	len += tx_size;
+    }
+    
+    *blk_size = len;
+    
+    return 0;
+
+error:
+
+    return -1;
+}
 
 int kyk_init_block(struct kyk_block *blk)
 {
@@ -30,21 +85,20 @@ error:
 }
 
 /* buf should not have Magic No and Blocksize */
-int kyk_deseri_block(struct kyk_block* blk,
+int kyk_deseri_block(struct kyk_block** new_blk,
 		     const uint8_t* buf,
 		     size_t* byte_num)
 {
+    struct kyk_block* blk = NULL;
     const uint8_t* bufp = NULL;
     int res = -1;
     size_t len = 0;
-    int arg_checked = 0;
 
-    check(blk, "Failed to kyk_deseri_block: blk is NULL");
-    /* we need a clean block with blank block header */
-    check(blk -> hd == NULL, "Failed to kyk_deseri_block: blk -> hd is not NULL");
-    /* we need a clean block with blank tx list */
-    check(blk -> tx == NULL, "Failed to kyk_deseri_block: blk -> tx is not NULL");
+    check(new_blk, "Failed to kyk_deseri_block: new_blk is NULL");    
     check(buf, "Failed to kyk_deseri_block: buf is NULL");
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to kyk_deseri_block: blk is NULL");
 
     bufp = buf;
 
@@ -67,21 +121,15 @@ int kyk_deseri_block(struct kyk_block* blk,
     check(res == 0, "Failed to kyk_deseri_block: kyk_deseri_tx_list failed");
     bufp += len;
 
+    *new_blk = blk;
     *byte_num = bufp - buf;
     
     return 0;
 
 error:
 
-    if(arg_checked){
-	if(blk -> hd) {
-	    free(blk -> hd);
-	    blk -> hd = NULL;
-	}
-	if(blk -> tx) {
-	    kyk_free_tx(blk -> tx);
-	    blk -> tx = NULL;
-	}
+    if(blk){
+	kyk_free_block(blk);
     }
     return -1;
 
@@ -317,53 +365,78 @@ void kyk_free_block(struct kyk_block *blk)
 }
 
 
-size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk)
+int kyk_seri_blk(uint8_t* buf, const struct kyk_block* blk, size_t* check_size)
 {
     size_t len = 0;
+    size_t blk_size = 0;
     size_t i = 0;
-    size_t start_idx = buf -> idx;
-    struct kyk_blk_header* hd = blk -> hd;
-    struct kyk_tx* tx = blk -> tx;
-    uint8_t *base = buf -> base;
-    
-    len = kyk_seri_blk_hd(base + buf -> idx, hd);
-    buf -> idx += len;
-    buf -> len += len;
+    struct kyk_blk_header* hd = NULL;
+    struct kyk_tx* tx = NULL;
+    uint8_t *bufp = NULL;
 
-    len = kyk_pack_varint(base + buf -> idx, blk -> tx_count);
-    buf -> idx += len;
-    buf -> len += len;
+    check(buf, "Failed to kyk_seri_blk: buf is NULL");
+    check(blk, "Failed to kyk_seri_blk: blk is NULL");
+
+    bufp = buf;
+    hd = blk -> hd;
+    tx = blk -> tx;
+    
+    len = kyk_seri_blk_hd(bufp, hd);
+    bufp += len;
+    blk_size += len;
+
+    len = kyk_pack_varint(bufp, blk -> tx_count);
+    bufp += len;
+    blk_size += len;
 
     for(i = 0; i < blk -> tx_count; i++){
-	len = kyk_seri_tx(base + buf -> idx, tx + i);
-	buf -> idx += len;
-	buf -> len += len;
+	len = kyk_seri_tx(bufp, tx + i);
+	bufp += len;
+	blk_size += len;
     }
 
-    return(buf -> idx - start_idx);
-}
+    *check_size = blk_size;
 
-size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk)
-{
-    size_t len = 0;
-    size_t start_idx = buf -> idx;
-    uint8_t *base = buf -> base;
-
-    len = beej_pack(base + buf -> idx, "<L", blk -> magic_no);
-    buf -> idx += len;
-    buf -> len += len;
-
-    len = beej_pack(base + buf -> idx, "<L", blk -> blk_size);
-    buf -> idx += len;
-    buf -> len += len;
-
-    len = kyk_ser_blk(buf, blk); 
-    check(len == blk -> blk_size, "faile to serialize block");
-
-    return(buf -> idx - start_idx);
+    return 0;
 
 error:
+
+    return -1;
+
+}
+
+int kyk_seri_blkself(uint8_t* buf, const struct kyk_block* blk, size_t* check_size)
+{
+    size_t len = 0;
+    size_t total_len = 0;
+    uint8_t *bufp = NULL;
+    int res = -1;
+
+    check(buf, "Failed to kyk_seri_blk_for_file: buf is NULL");
+    check(blk, "Failed to kyk_seri_blk_for_file: blk is NULL");
+
+    bufp = buf;
+    
+    len = beej_pack(bufp, "<L", blk -> magic_no);
+    bufp += len;
+    total_len += len;
+    
+    len = beej_pack(bufp, "<L", blk -> blk_size);
+    bufp += len;
+    total_len += len;
+
+    res = kyk_seri_blk(bufp, blk, &len);
+    check(res == 0, "Failed to kyk_seri_blk_for_file: kyk_seri_blk failed");
+    check(len == blk -> blk_size, "Failed to kyk_seri_blk_for_file: kyk_seri_blk failed");
+    total_len += len;
+    
+
+    *check_size = total_len;
+
     return 0;
+
+error:
+    return -1;
 }
 
 /* we don't pass nonce here, because noce is computed by mining */
@@ -405,35 +478,91 @@ error:
 }
 
 
-int kyk_make_block(struct kyk_block* blk,
+int kyk_make_block(struct kyk_block** new_blk,
 		   struct kyk_blk_header* blk_hd,
 		   struct kyk_tx* tx_list,
 		   varint_t tx_count
     )
 {
-    check(blk, "Failed to kyk_make_block: blk is NULL");
+    struct kyk_block* blk = NULL;
+    size_t blk_size = 0;
+    int res = -1;
+
+    check(new_blk, "Failed to kyk_make_block: blk is NULL");
     check(blk_hd, "Failed to kyk_make_block: blk_hd is NULL");
     check(tx_list, "Failed to kyk_make_block: tx_list is NULL");
 
-    struct kyk_tx* tx = NULL;
-    size_t tx_size = 0;
-    int i = 0;
-    int res = -1;
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to kyk_make_block: blk calloc failed");
 
     blk -> blk_size = 0;
     blk -> hd = blk_hd;
-    blk -> blk_size += KYK_BLK_HD_LEN;
     blk -> tx_count = tx_count;
-    blk -> blk_size += get_varint_size(blk -> tx_count);
     blk -> tx = tx_list;
 
-    for(i = 0; (varint_t)i < tx_count; i++){
-	tx = tx_list + i;
-	res = kyk_get_tx_size(tx, &tx_size);
-	check(res == 0, "Failed to kyk_make_block: kyk_get_tx_size failed");
-	blk -> blk_size += tx_size;
-    }
+    res = kyk_get_blk_size(blk, &blk_size);
+    check(res == 0, "Failed to kyk_make_block: kyk_get_blk_size failed");
+    blk -> blk_size = blk_size;
+
+    *new_blk = blk;
     
+    return 0;
+
+error:
+    if(blk) free(blk);
+    return -1;
+}
+
+/* make block which contains only one coinbase Tx */
+int kyk_make_coinbase_block(struct kyk_block** new_blk,
+			    const struct kyk_blk_hd_chain* hd_chain,
+			    const char* note,
+			    const uint8_t* pubkey,
+			    size_t pub_len)
+{
+    struct kyk_block* blk = NULL;
+    struct kyk_blk_header* prev_hd = NULL;
+    struct kyk_tx* tx = NULL;
+    int res = -1;
+
+    check(new_blk, "Failed to kyk_make_coinbase_block: blk is NULL");
+    check(hd_chain, "Failed to kyk_make_coinbase_block: hd_chain is NULL");
+    check(note, "Failed to kyk_make_coinbase_block: note is NULL");
+    check(pubkey, "Failed to kyk_make_coinbase_block: pubkey is NULL");
+
+    res = kyk_tail_hd_chain(&prev_hd, hd_chain);
+    check(res == 0, "Failed to kyk_make_coinbase_block: kyk_tail_hd_chain failed");
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to kyk_make_coinbase_block: blk calloc failed");
+    
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_tail_hd_chain(struct kyk_blk_header** hd,
+		      const struct kyk_blk_hd_chain* hd_chain)
+{
+    struct kyk_blk_header* hd_cpy = NULL;
+
+    check(hd, "Failed to kyk_tail_hd_chain: hd is NULL");
+    check(hd_chain, "Failed to kyk_tail_hd_chain: hd_chain is NULL");
+    check(hd_chain -> len >= 1, "Failed to kyk_tail_hd_chain: hd_chain -> len is invalid");
+
+    hd_cpy = hd_chain -> hd_list;
+
+    if(hd_cpy == NULL){
+	return NULL;
+    } else {
+	hd_cpy = hd_cpy + (hd_chain -> len - 1);
+    }
+
+    *hd = hd_cpy;
+
     return 0;
 
 error:
@@ -530,7 +659,7 @@ int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
 	return 0;
     }
 
-    prev_hd = hdc -> hd_list + hd_chain -> len;
+    prev_hd = hdc -> hd_list + hd_chain -> len - 1;
     check(prev_hd, "Failed to kyk_validate_blk_header: prev_hd is NULL");
     
     res = kyk_blk_hash256(digest, prev_hd);
@@ -544,4 +673,6 @@ error:
 
     return -1;
 }
+
+
 

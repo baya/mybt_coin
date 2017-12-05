@@ -35,10 +35,10 @@ struct kyk_block {
 
 size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd);
 size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *hd);
-size_t kyk_ser_blk(struct kyk_buff* buf, const struct kyk_block* blk);
-size_t kyk_ser_blk_for_file(struct kyk_buff* buf, const struct kyk_block* blk);
+int kyk_seri_blk(uint8_t* buf, const struct kyk_block* blk, size_t* check_size);
+int kyk_seri_blkself(uint8_t* buf, const struct kyk_block* blk, size_t* check_size);
 
-int kyk_deseri_block(struct kyk_block* blk,
+int kyk_deseri_block(struct kyk_block** blk,
 		     const uint8_t* buf,
 		     size_t* byte_num);
 
@@ -53,7 +53,7 @@ struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
 					   uint32_t tts,
 					   uint32_t bts);
 
-int kyk_make_block(struct kyk_block* blk,
+int kyk_make_block(struct kyk_block** blk,
 		   struct kyk_blk_header* blk_hd,
 		   struct kyk_tx* tx_list,
 		   varint_t tx_count);
@@ -82,6 +82,15 @@ int kyk_deseri_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain,
 int kyk_append_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain,
 			    const struct kyk_blk_header* hd,
 			    size_t count);
+
+int kyk_get_blk_size(const struct kyk_block* blk,
+		     size_t* blk_size);
+
+int kyk_get_blkself_size(const struct kyk_block* blk,
+			 size_t* blk_seflsize);
+
+int kyk_tail_hd_chain(struct kyk_blk_header** hd,
+		      const struct kyk_blk_hd_chain* hd_chain);
 
 
 

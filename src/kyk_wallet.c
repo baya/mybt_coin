@@ -318,7 +318,7 @@ int save_setup_data_to_wallet(struct kyk_wallet *wallet)
     check(blk_file != NULL, "failed to create block file");
 
     res = kyk_save_blk_to_file(blk_file, blk);
-    check(res == 1, "failed to save block to file");
+    check(res == 0, "failed to save block to file");
     
     set_init_bval(&bval, blk, blk_file);
     kyk_store_block(wallet -> blk_index_db, &bval, &errptr);
@@ -364,15 +364,26 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 			   const struct kyk_block* blk
     )
 {
-    struct kyk_buff* buf = NULL;
+    uint8_t* buf = NULL;
+    size_t blk_size = 0;
+    size_t buf_len = 0;
     size_t len = 0;
     long int pos = 0;
+    int res = -1;
 
-    buf = create_kyk_buff(1000);
-    check(buf != NULL, "failed to create kyk buff");
-    
-    len = kyk_ser_blk_for_file(buf, blk);
-    check(len > 0, "failed to serialize block");
+    check(blk_file, "Failed to kyk_save_blk_to_file: blk_file is NULL");
+    check(blk, "Failed to kyk_save_blk_to_file: blk is NULL");
+
+    res = kyk_get_blkself_size(blk, &blk_size);
+    check(res == 0, "Failed to kyk_save_blk_to_file: kyk_get_blk_size failed");
+    check(blk_size > 0, "Failed to kyk_save_blk_to_file: blk_size is invalid");
+
+    buf_len += blk_size;
+    buf = calloc(buf_len, sizeof(*buf));
+    check(buf, "Failed to kyk_save_blk_to_file: buf calloc failed");
+
+    res = kyk_seri_blkself(buf, blk, &len);
+    check(res == 0, "Failed to kyk_save_blk_to_file: kyk_seri_blk_for_file failed");
     
     pos = ftell(blk_file -> fp);
     check(pos != -1L, "failed to get the block dat file pos");
@@ -381,15 +392,16 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
     
     blk_file -> nStartPos = (unsigned int)pos + blk_file -> nOffsetPos;
     
-    len = fwrite(buf -> base, sizeof(uint8_t), buf -> len, blk_file -> fp);
-    check(len == buf -> len, "failed to save block to file");
+    len = fwrite(buf, sizeof(*buf), buf_len, blk_file -> fp);
+    check(len == buf_len, "failed to save block to file");
     blk_file -> nEndPos = len;
     
-
-    free_kyk_buff(buf);
-    return 1;
+    free(buf);
+    
+    return 0;
+    
 error:
-    if(buf) free_kyk_buff(buf);
+    if(buf) free(buf);
     return -1;
 }
 
