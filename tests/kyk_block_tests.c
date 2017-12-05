@@ -435,6 +435,34 @@ error:
 
 }
 
+char* test_kyk_make_coinbase_block()
+{
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    struct kyk_block* blk = NULL;
+    const uint8_t pubkey[33] = {
+	0x02, 0x76, 0xe9, 0xd1, 0x87, 0x81, 0xd2, 0xb3,
+	0xad, 0x7e, 0x5a, 0xc8, 0xd3, 0x8e, 0xf0, 0x89,
+	0x9f, 0x94, 0x42, 0xf8, 0x09, 0xbb, 0xbc, 0x67,
+	0xe5, 0x27, 0x27, 0x8d, 0xa2, 0xae, 0xdc, 0x93,
+	0xa4
+    };
+    const char* note = "voidcoin";
+    int res = -1;
+
+    res = kyk_deseri_blk_hd_chain(&hd_chain, BTC_012_BLK_HD_BUF, sizeof(BTC_012_BLK_HD_BUF));
+    check(res == 0, "Failed to test_kyk_make_coinbase_block: kyk_deseri_blk_hd_chain failed");
+
+    res = kyk_make_coinbase_block(&blk, hd_chain, note, pubkey, sizeof(pubkey));
+    mu_assert(res == 0, "Failed to test_kyk_make_coinbase_block");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_make_coinbase_block";
+
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -450,6 +478,7 @@ char *all_tests()
     mu_run_test(test_kyk_get_blk_size);
     mu_run_test(test_kyk_get_blkself_size);
     mu_run_test(test_kyk_tail_hd_chain);
+    mu_run_test(test_kyk_make_coinbase_block);
     
     return NULL;
 }

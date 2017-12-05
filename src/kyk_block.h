@@ -47,7 +47,7 @@ int kyk_deseri_blk_header(struct kyk_blk_header *hd,
 			  size_t* len);
 
 struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
-					   size_t tx_count,
+					   varint_t tx_count,
 					   uint32_t version,
 					   uint8_t* pre_blk_hash,
 					   uint32_t tts,
@@ -92,6 +92,11 @@ int kyk_get_blkself_size(const struct kyk_block* blk,
 int kyk_tail_hd_chain(struct kyk_blk_header** hd,
 		      const struct kyk_blk_hd_chain* hd_chain);
 
+int kyk_make_coinbase_block(struct kyk_block** new_blk,
+			    const struct kyk_blk_hd_chain* hd_chain,
+			    const char* note,
+			    const uint8_t* pubkey,
+			    size_t pub_len);
 
 
 #endif

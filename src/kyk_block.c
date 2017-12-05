@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "kyk_tx.h"
 #include "kyk_block.h"
@@ -441,7 +442,7 @@ error:
 
 /* we don't pass nonce here, because noce is computed by mining */
 struct kyk_blk_header* kyk_make_blk_header(struct kyk_tx* tx_list,
-					   size_t tx_count,
+					   varint_t tx_count,
 					   uint32_t version,
 					   uint8_t* pre_blk_hash,
 					   uint32_t tts,
@@ -522,7 +523,27 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
 {
     struct kyk_block* blk = NULL;
     struct kyk_blk_header* prev_hd = NULL;
+    struct kyk_blk_header* hd = NULL;
     struct kyk_tx* tx = NULL;
+
+    /* TODO: coinbase Tx out value shoud be adjusted according to the block chain height */
+    uint64_t btc_count = 100;
+    uint64_t outValue = ONE_BTC_COIN_VALUE * btc_count;
+
+    uint8_t pre_blk_hash[32];
+
+    /* timestamp */
+    uint32_t tts;
+
+    /* TODO: encoded target should be adjusted according to the block mean generated time */
+    uint32_t bts = 0x1f00ffff;
+
+    /* Block version number */
+    uint32_t version = 1;
+
+    /* Tx count: coinbase block contains only 1 coinbase Tx */
+    varint_t tx_count = 1;
+    
     int res = -1;
 
     check(new_blk, "Failed to kyk_make_coinbase_block: blk is NULL");
@@ -530,17 +551,33 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
     check(note, "Failed to kyk_make_coinbase_block: note is NULL");
     check(pubkey, "Failed to kyk_make_coinbase_block: pubkey is NULL");
 
+    res = kyk_make_coinbase_tx(&tx, note, outValue, pubkey, pub_len);
+    check(res == 0, "Failed to kyk_make_coinbase_block: kyk_make_coinbase_tx failed");
+
     res = kyk_tail_hd_chain(&prev_hd, hd_chain);
     check(res == 0, "Failed to kyk_make_coinbase_block: kyk_tail_hd_chain failed");
 
-    blk = calloc(1, sizeof(*blk));
-    check(blk, "Failed to kyk_make_coinbase_block: blk calloc failed");
-    
+    res = kyk_blk_hash256(pre_blk_hash, prev_hd);
+    check(res == 0, "Failed to kyk_make_coinbase_block: kyk_blk_hash256 failed");
+
+    res = time(NULL);
+    check(res != -1, "Failed to cmd_make_init_blocks: time Failed");
+    tts = (uint32_t)res;
+
+    hd = kyk_make_blk_header(tx, tx_count, version, pre_blk_hash, tts, bts);
+    check(hd, "Failed to kyk_make_coinbase_block: kyk_make_blk_header failed");
+
+    res = kyk_make_block(&blk, hd, tx, tx_count);
+    check(res == 0, "Failed to kyk_make_coinbase_block: kyk_make_block failed");
+
+    *new_blk = blk;
 
     return 0;
     
 error:
-
+    if(tx) kyk_free_tx(tx);
+    if(blk) free(blk);
+    if(hd) free(hd);
     return -1;
 }
 
@@ -556,7 +593,7 @@ int kyk_tail_hd_chain(struct kyk_blk_header** hd,
     hd_cpy = hd_chain -> hd_list;
 
     if(hd_cpy == NULL){
-	return NULL;
+	hd_cpy = NULL;
     } else {
 	hd_cpy = hd_cpy + (hd_chain -> len - 1);
     }
