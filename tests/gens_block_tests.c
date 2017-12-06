@@ -67,7 +67,7 @@ char *test_make_gens_block()
     blk_hd.bts = 0x1f00ffff;
     blk_hd.nonce = 0;
 
-    kyk_hsh_nonce(&blk_hd);
+    kyk_hash_nonce(&blk_hd);
 
     hd_len = kyk_seri_blk_hd(hd_buf, &blk_hd);
     blk_len += kyk_inc_ser(&blk_bfp, "raw-buf", hd_buf, hd_len);

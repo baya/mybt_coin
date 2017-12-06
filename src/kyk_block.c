@@ -10,6 +10,7 @@
 #include "kyk_buff.h"
 #include "kyk_mkl_tree.h"
 #include "kyk_sha.h"
+#include "kyk_hash_nonce.h"
 #include "dbg.h"
 
 int kyk_get_blkself_size(const struct kyk_block* blk,
@@ -535,7 +536,7 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
     /* timestamp */
     uint32_t tts;
 
-    /* TODO: encoded target should be adjusted according to the block mean generated time */
+    /* TODO: encoded target should adjust automatically according to the block mean generated time */
     uint32_t bts = 0x1f00ffff;
 
     /* Block version number */
@@ -566,6 +567,9 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
 
     hd = kyk_make_blk_header(tx, tx_count, version, pre_blk_hash, tts, bts);
     check(hd, "Failed to kyk_make_coinbase_block: kyk_make_blk_header failed");
+
+    /* mining */
+    kyk_hash_nonce(hd);
 
     res = kyk_make_block(&blk, hd, tx, tx_count);
     check(res == 0, "Failed to kyk_make_coinbase_block: kyk_make_block failed");

@@ -9,7 +9,7 @@
 #include "kyk_difficulty.h"
 #include "beej_pack.h"
 
-void kyk_hsh_nonce(struct kyk_blk_header *hd)
+void kyk_hash_nonce(struct kyk_blk_header *hd)
 {
     mpz_t tg, hs;
     size_t len;

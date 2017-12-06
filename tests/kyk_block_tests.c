@@ -446,14 +446,28 @@ char* test_kyk_make_coinbase_block()
 	0xe5, 0x27, 0x27, 0x8d, 0xa2, 0xae, 0xdc, 0x93,
 	0xa4
     };
+    uint8_t target_prev_blk_hash[32] = {
+	0x00, 0x00, 0x00, 0x00, 0x6a, 0x62, 0x5f, 0x06,
+	0x63, 0x6b, 0x8b, 0xb6, 0xac, 0x7b, 0x96, 0x0a,
+	0x8d, 0x03, 0x70, 0x5d, 0x1a, 0xce, 0x08, 0xb1,
+	0xa1, 0x9d, 0xa3, 0xfd, 0xcc, 0x99, 0xdd, 0xbd
+    };
     const char* note = "voidcoin";
     int res = -1;
+
+    uint8_t buf[1000];
+    size_t check_size;
 
     res = kyk_deseri_blk_hd_chain(&hd_chain, BTC_012_BLK_HD_BUF, sizeof(BTC_012_BLK_HD_BUF));
     check(res == 0, "Failed to test_kyk_make_coinbase_block: kyk_deseri_blk_hd_chain failed");
 
     res = kyk_make_coinbase_block(&blk, hd_chain, note, pubkey, sizeof(pubkey));
     mu_assert(res == 0, "Failed to test_kyk_make_coinbase_block");
+    mu_assert(kyk_digest_eq(blk -> hd -> pre_blk_hash, target_prev_blk_hash, 32), "Failed to test_kyk_make_coinbase_block");
+
+    kyk_seri_blk(buf, blk, &check_size);
+    FILE* fp = fopen("/tmp/test_kyk_make_coinbase_block_result.bin", "wb");
+    fwrite(buf, sizeof(*buf), check_size, fp);
 
     return NULL;
 

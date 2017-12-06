@@ -57,7 +57,7 @@ struct kyk_block* make_gens_block()
     blk_hd -> nonce = 0;
     blk_size += KYK_BLK_HD_LEN;
 
-    kyk_hsh_nonce(blk_hd);
+    kyk_hash_nonce(blk_hd);
     blk -> magic_no = KYK_BLK_MAGIC_NO;
     blk -> blk_size = blk_size;
 
