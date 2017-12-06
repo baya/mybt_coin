@@ -65,9 +65,6 @@ void kyk_free_block(struct kyk_block *blk);
 
 int kyk_init_block(struct kyk_block *blk);
 
-int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
-			    const struct kyk_blk_header* hd);
-
 int kyk_init_blk_hd_chain(struct kyk_blk_hd_chain** hd_chain);
 
 void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain);

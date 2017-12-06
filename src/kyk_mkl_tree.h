@@ -34,7 +34,7 @@ void kyk_print_mkl_tree(const struct kyk_mkltree_level *root_level);
 struct kyk_mkltree_level *create_mkl_leafs_from_txid_hexs(const char *hexs[], size_t row_num);
 void kyk_print_mkl_level(const struct kyk_mkltree_level *level);
 void kyk_cpy_mkl_root_value(uint8_t *src, struct kyk_mkltree_level *root_level);
-struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(struct kyk_tx* tx_list,
+struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(const struct kyk_tx* tx_list,
 							      size_t tx_count);
 
 int kyk_free_mkl_tree(struct kyk_mkltree_level* mkl_root);

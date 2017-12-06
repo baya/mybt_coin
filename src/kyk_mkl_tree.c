@@ -331,7 +331,7 @@ void kyk_cpy_mkl_root_value(uint8_t *src, struct kyk_mkltree_level *root_level)
 }
 
 
-struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(struct kyk_tx* tx_list,
+struct kyk_mkltree_level* kyk_make_mkl_tree_root_from_tx_list(const struct kyk_tx* tx_list,
 							      size_t tx_count)
 {
     struct kyk_bon_buff *buf_list = NULL;

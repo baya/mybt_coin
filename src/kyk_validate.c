@@ -9,28 +9,57 @@
 #include "kyk_block.h"
 #include "kyk_tx.h"
 #include "kyk_difficulty.h"
+#include "kyk_mkl_tree.h"
 #include "dbg.h"
 
 static int validate_hd_bts(const struct kyk_blk_header* hd);
+static int validate_hd_mkl_root(const struct kyk_blk_header* hd,
+				const struct kyk_tx* tx_list,
+				varint_t tx_count);
 
-int kyk_validate_blk_header(struct kyk_blk_hd_chain* hd_chain,
+
+int kyk_validate_block(const struct kyk_blk_hd_chain* hd_chain,
+		       const struct kyk_block* blk)
+{
+    int res = -1;
+
+    check(hd_chain, "Failed to kyk_validate_block: hd_chain is NULL");
+    check(blk, "Failed to kyk_validte_block: blk is NULL");
+    check(blk -> hd, "Failed to kyk_validate_block: blk -> hd is NULL");
+
+    res = kyk_validate_blk_header(hd_chain, blk -> hd);
+    check(res == 0, "Failed to kyk_validate_block: kyk_validate_blk_header failed");
+
+    res = validate_hd_mkl_root(blk -> hd, blk -> tx, blk -> tx_count);
+    check(res == 0, "Failed to kyk_validate_block: validate_hd_mkl_root failed");
+    
+    return 0;
+
+error:
+
+    return -1;
+}
+
+
+int kyk_validate_blk_header(const struct kyk_blk_hd_chain* hd_chain,
 			    const struct kyk_blk_header* outHd)
 {
     check(hd_chain, "Failed to validate_blk_header: hd_chain is NULL");
     check(outHd, "Failed to validate_blk_header: hd is NULL");
     check(outHd -> pre_blk_hash, "Failed to validate_blk_header: pre_blk_hash is NULL");
-    struct kyk_blk_hd_chain* hdc = NULL;
     struct kyk_blk_header* prev_hd = NULL;
     uint8_t digest[32];
     int res = -1;
 
-    hdc = hd_chain;
+    check(hd_chain, "Failed to kyk_validate_blk_header: hd_chain is NULL");
+    check(outHd, "Failed to kyk_validate_blk_header: outHd is NULL");
 
-    if(hdc -> len == 0){
+
+    if(hd_chain -> len == 0){
 	return 0;
     }
 
-    prev_hd = hdc -> hd_list + hd_chain -> len - 1;
+    prev_hd = hd_chain -> hd_list + hd_chain -> len - 1;
     check(prev_hd, "Failed to kyk_validate_blk_header: prev_hd is NULL");
     
     res = kyk_blk_hash256(digest, prev_hd);
@@ -74,5 +103,34 @@ error:
 
     return -1;
 
+}
+
+int validate_hd_mkl_root(const struct kyk_blk_header* hd,
+			 const struct kyk_tx* tx_list,
+			 varint_t tx_count)
+{
+    struct kyk_mkltree_level* mkl_root = NULL;
+    uint8_t digest[MKL_NODE_BODY_LEN];
+    int res = -1;
+
+    check(hd, "Failed to validate_hd_mkl_root: hd is NULL");
+    check(tx_list, "Failed to validate_hd_mkl_root: tx_list is NULL");
+    check(tx_count >= 1, "Failed to validate_hd_mkl_root: tx_count is invalid");
+
+    mkl_root = kyk_make_mkl_tree_root_from_tx_list(tx_list, tx_count);
+    check(mkl_root, "Failed to validate_hd_mkl_root: kyk_make_mkl_tree_root_from_tx_list failed");
+
+    kyk_cpy_mkl_root_value(digest, mkl_root);
+
+    res = kyk_digest_eq(hd -> mrk_root_hash, digest, sizeof(digest));
+    check(res == 1, "Failed to validate_hd_mkl_root: hd -> mrk_root_hash is invalide");
+
+    kyk_free_mkl_tree(mkl_root);
+    
+    return 0;
+    
+error:
+    if(mkl_root) kyk_free_mkl_tree(mkl_root);
+    return -1;
 }
 
