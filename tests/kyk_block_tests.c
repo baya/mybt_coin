@@ -7,7 +7,6 @@
 
 #include "test_data.h"
 #include "kyk_block.h"
-#include "kyk_buff.h"
 #include "gens_block.h"
 #include "mu_unit.h"
 
@@ -465,9 +464,11 @@ char* test_kyk_make_coinbase_block()
     mu_assert(res == 0, "Failed to test_kyk_make_coinbase_block");
     mu_assert(kyk_digest_eq(blk -> hd -> pre_blk_hash, target_prev_blk_hash, 32), "Failed to test_kyk_make_coinbase_block");
 
-    kyk_seri_blk(buf, blk, &check_size);
-    FILE* fp = fopen("/tmp/test_kyk_make_coinbase_block_result.bin", "wb");
-    fwrite(buf, sizeof(*buf), check_size, fp);
+    if(0){
+	kyk_seri_blk(buf, blk, &check_size);
+	FILE* fp = fopen("/tmp/test_kyk_make_coinbase_block_result.bin", "wb");
+	fwrite(buf, sizeof(*buf), check_size, fp);
+    }
 
     return NULL;
 
