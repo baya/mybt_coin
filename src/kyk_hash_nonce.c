@@ -42,4 +42,7 @@ void kyk_hash_nonce(struct kyk_blk_header *hd)
 
     memcpy(hd -> blk_hash, dgst, sizeof(dgst));
 
+    mpz_clear(tg);
+    mpz_clear(hs);
+
 }
