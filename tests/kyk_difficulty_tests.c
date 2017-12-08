@@ -84,7 +84,6 @@ char* test_kyk_target2bts()
     mpz_init(target);
     mpz_set_str(target, "0x0404cb000000000000000000000000000000000000000000000000", 0);
     kyk_target2bts(target, &bts);
-
     mu_assert(bts == expect_bts, "Failed to test_kyk_target2bts");
 
     return NULL;
