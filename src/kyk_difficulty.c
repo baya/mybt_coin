@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+
+#include "kyk_utils.h"
 #include "kyk_difficulty.h"
+#include "dbg.h"
 
 
 uint64_t kyk_bts2dlt(uint32_t bts)
@@ -40,6 +44,26 @@ void kyk_bts2target(uint32_t bts, mpz_t tg)
     mpz_mul_ui(tg, tg, mt);
 }
 
+int kyk_target2bts(mpz_t tg, uint32_t* new_bts)
+{
+    uint8_t digest[32];
+    uint32_t bts;
+    uint32_t dlen;
+
+    mpz_export(digest, (size_t*)&dlen, 1, sizeof(*digest), 1, 0, tg);
+    bts = dlen << 24;
+
+    bts |= (digest[0] << 16);
+    bts |= (digest[1] << 8);
+    bts |= (digest[2] << 0);
+
+    *new_bts = bts;
+
+    return 0;
+    
+}
+
+
 /* difficulty = difficulty_1_target / current_target         */
 /* so then current_target = difficulty_1_target / difficulty */
 int kyk_dlt2target(uint32_t dlt, mpz_t tg)
@@ -57,15 +81,6 @@ int kyk_dlt2target(uint32_t dlt, mpz_t tg)
     mpz_clear(q);
     mpz_clear(dlt1_tg);
  
-    return 0;
-}
-
-int kyk_target2bts(mpz_t tg, uint32_t* bts)
-{
-}
-
-int kyk_dlt2bts(uint32_t dlt, uint32_t* bts)
-{
     return 0;
 }
 

@@ -45,7 +45,8 @@ char* test_kyk_bts2dlt()
 char* test_kyk_bts2target()
 {
     /* bits of Gens block: https://webbtc.com/block/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f.json*/
-    uint32_t bts = 486604799;
+    /* uint32_t bts = 486604799; */
+    uint32_t bts = 486588017;
     mpz_t target, hs;
     uint8_t digest[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x19, 0xd6, 0x68,
@@ -62,12 +63,29 @@ char* test_kyk_bts2target()
 
     kyk_bts2target(bts, target);
 
+    /* gmp_printf("?????target is %Zd\n", target); */
+
     mpz_import(hs, sizeof(digest), 1, 1, 1, 0, digest);
 
     mu_assert(mpz_cmp(hs, target) <= 0, "Failed to test_kyk_bts2target");
 
     mpz_clear(target);
     mpz_clear(hs);
+
+    return NULL;
+}
+
+char* test_kyk_target2bts()
+{
+    mpz_t target;
+    uint32_t expect_bts = 0x1b0404cb;
+    uint32_t bts;
+
+    mpz_init(target);
+    mpz_set_str(target, "0x0404cb000000000000000000000000000000000000000000000000", 0);
+    kyk_target2bts(target, &bts);
+
+    mu_assert(bts == expect_bts, "Failed to test_kyk_target2bts");
 
     return NULL;
 }
@@ -129,6 +147,7 @@ char* all_tests()
     mu_run_test(test_kyk_bts2target);
     mu_run_test(test_kyk_dlt2target);
     mu_run_test(test2_kyk_dlt2target);
+    mu_run_test(test_kyk_target2bts);
 
     return NULL;
 }
