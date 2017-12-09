@@ -89,6 +89,45 @@ char* test_kyk_target2bts()
     return NULL;
 }
 
+char* test2_kyk_target2bts()
+{
+    mpz_t tg;
+    uint32_t bts;
+    uint32_t new_bts;
+
+    bts = 0x1d00ffff;
+    mpz_init(tg);
+
+    kyk_bts2target(bts, tg);
+    kyk_target2bts(tg, &new_bts);
+    mu_assert(new_bts == bts, "Failed to test2_kyk_target2bts");
+
+    bts = 0x1b0404cb;
+    kyk_bts2target(bts, tg);
+    kyk_target2bts(tg, &new_bts);
+    mu_assert(new_bts == bts, "Failed to test2_kyk_target2bts");
+
+    bts = 486575299;
+    kyk_bts2target(bts, tg);
+    kyk_target2bts(tg, &new_bts);
+    mu_assert(new_bts == bts, "Failed to test2_kyk_target2bts");
+
+    bts = 486588017;
+    kyk_bts2target(bts, tg);
+    kyk_target2bts(tg, &new_bts);
+    mu_assert(new_bts == bts, "Failed to test2_kyk_target2bts");
+
+    bts = 0x1d00be71;
+    kyk_bts2target(bts, tg);
+    kyk_target2bts(tg, &new_bts);
+    mu_assert(new_bts == bts, "Failed to test2_kyk_target2bts");
+
+    mpz_clear(tg);
+
+    return NULL;
+}
+
+
 char* test_kyk_dlt2target()
 {
     /* difficulty of Gens block: https://webbtc.com/block/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f.json*/
@@ -111,6 +150,7 @@ char* test_kyk_dlt2target()
     
     return NULL;
 }
+
 
 char* test2_kyk_dlt2target()
 {
@@ -138,6 +178,26 @@ char* test2_kyk_dlt2target()
 }
 
 
+char* test_kyk_cal_next_work_req()
+{
+    uint32_t pre_tspan;
+    uint32_t tg_tspan = POW_TARGET_TIME_SPAN;
+    uint32_t pre_bts;
+    uint32_t next_bts;
+
+    /* after block#2016, adjust target bts */
+    pre_tspan = 1174762;
+    pre_bts = 486588017;
+
+
+    kyk_cal_next_work_req(pre_tspan, tg_tspan, pre_bts, &next_bts);
+
+    mu_assert(next_bts == 486604799, "Failed to test_kyk_cal_next_work_target");
+    
+    return NULL;
+}
+
+
 char* all_tests()
 {
     mu_suite_start();
@@ -147,6 +207,8 @@ char* all_tests()
     mu_run_test(test_kyk_dlt2target);
     mu_run_test(test2_kyk_dlt2target);
     mu_run_test(test_kyk_target2bts);
+    mu_run_test(test2_kyk_target2bts);
+    /* mu_run_test(test_kyk_cal_next_work_req); */
 
     return NULL;
 }
