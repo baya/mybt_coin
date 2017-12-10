@@ -154,6 +154,34 @@ error:
     return "Failed to test_kyk_wallet_get_pubkey";
 }
 
+char* test_kyk_wallet_save_block()
+{
+    const char* wdir = "/tmp/test_kyk_wallet_save_block";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_block* blk = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_setup_wallet failed");
+
+    res = kyk_deseri_block(&blk, BLOCK_BUF, NULL);
+    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_deseri_block failed");
+
+    res = kyk_set_blkself_info(blk);
+    check(res == 0, "Failed to test_kyk_wallet_save_block: failed to kyk_set_blkself_info");
+    
+    res = kyk_wallet_save_block(wallet, blk);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_save_block");
+
+    kyk_destroy_wallet(wallet);
+
+    return NULL;
+
+error:
+    if(wallet) kyk_destroy_wallet(wallet);
+    return "Failed to test_kyk_wallet_save_block";
+}
+
 char* test_kyk_load_blk_header_chain()
 {
     return NULL;
@@ -172,6 +200,7 @@ char* all_tests()
     mu_run_test(test_kyk_save_blk_header_chain);
     mu_run_test(test_kyk_load_blk_header_chain);
     mu_run_test(test_kyk_wallet_get_pubkey);
+    mu_run_test(test_kyk_wallet_save_block);
 
     return NULL;
 }

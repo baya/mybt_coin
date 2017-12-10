@@ -12,6 +12,8 @@
 #include "block_store.h"
 #include "kyk_wallet.h"
 #include "kyk_file.h"
+#include "kyk_block.h"
+#include "kyk_validate.h"
 #include "dbg.h"
 
 #define WALLET_NAME ".kyk_miner"
@@ -21,14 +23,14 @@
 #define CMD_DELETE         "delete"
 #define CMD_ADD_ADDRESS    "addAddress"
 #define CMD_QUERY_BLOCK    "queryBlock"
-#define CMD_MK_INIT_BLOCKS "makeInitBlocks"
+#define CMD_MK_BLOCK       "makeBlock"
 #define CMD_MK_TX          "makeTx"
 #define CMD_Q_BALANCE      "queryBalance"
 #define CMD_SERVE          "serve"
 
 int match_cmd(char *src, char *cmd);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
-int cmd_make_init_blocks(const struct kyk_wallet* wallet, int count);
+int cmd_make_block(const struct kyk_wallet* wallet);
 
 int main(int argc, char *argv[])
 {
@@ -46,7 +48,7 @@ int main(int argc, char *argv[])
     if(argc == 1){
 	printf("usage: %s command [args]\n", argv[0]);
 	printf("init a wallet:    %s %s\n", argv[0], CMD_INIT);
-	printf("make init blocks: %s %s\n", argv[0], CMD_MK_INIT_BLOCKS);
+	printf("make init blocks: %s %s\n", argv[0], CMD_MK_BLOCK);
 	printf("make tx:          %s %s\n", argv[0], CMD_MK_TX);
 	printf("query blance:     %s %s\n", argv[0], CMD_Q_BALANCE);
 	printf("start server:     %s %s\n", argv[0], CMD_SERVE);
@@ -66,9 +68,9 @@ int main(int argc, char *argv[])
 	    check(wallet, "Failed to init wallet: kyk_setup_wallet failed");
 	} else if(match_cmd(argv[1], CMD_DELETE)){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
-	} else if(match_cmd(argv[1], CMD_MK_INIT_BLOCKS)){
+	} else if(match_cmd(argv[1], CMD_MK_BLOCK)){
 	    wallet = kyk_open_wallet(wdir);
-	    cmd_make_init_blocks(wallet);
+	    cmd_make_block(wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -135,61 +137,39 @@ error:
     exit(1);
 }
 
-int cmd_make_init_blocks(const struct kyk_wallet* wallet, int count)
+int cmd_make_block(const struct kyk_wallet* wallet)
 {
     struct kyk_blk_hd_chain* hd_chain = NULL;
-    struct kyk_tx* tx = NULL;
-    struct kyk_blk_header* hd = NULL;
-    struct kyk_blk_header* hd_list = NULL;
-    struct kyk_blk_header* hd_tail = NULL;
     const char* note = "void coin";
-    uint64_t btc_count = 100;
-    uint64_t outValue = ONE_BTC_COIN_VALUE * btc_count;
     uint8_t* pubkey = NULL;
     size_t pbk_len = 0;
-    uint8_t pre_blk_hash[32];
-    uint32_t tts;
-    uint32_t bts;
     struct kyk_block* blk = NULL;
     int res = -1;
-
-    uint8_t buf[80];
+    uint8_t digest[32];
 
     res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
     check(res == 0, "Failed to cmd_make_init_blocks: kyk_wallet_get_pubkey failed");
 
-    res = kyk_make_coinbase_tx(&tx, note, outValue, pubkey, pbk_len);
-    check(res == 0, "Failed to cmd_make_init_blocks: kyk_make_coinbase_tx failed");
-
     res = kyk_load_blk_header_chain(&hd_chain, wallet);
-    check(res == 0, "Failed to cmd_make_init_blocks: kyk_load_blk_header_chain failed");
+    check(res == 0, "Failed to cmd_make_block: kyk_load_blk_header_chain failed");
 
-    hd_list = hd_chain -> hd_list;
-    hd_tail = hd_list + hd_chain -> len - 1;
+    res = kyk_make_coinbase_block(&blk, hd_chain, note, pubkey, pbk_len);
+    check(res == 0, "Failed to cmd_make_block: kyk_make_conibase_block failed");
+
+    res = kyk_validate_block(hd_chain, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_validate_block failed");
+
+    res = kyk_wallet_save_block(wallet, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
+
+    kyk_blk_hash256(digest, blk -> hd);
+    kyk_print_hex("maked a new block", digest, sizeof(digest));
     
-
-    res = kyk_blk_hash256(pre_blk_hash, hd_tail);
-    check(res == 0, "Failed to cmd_make_init_blocks: kyk_blk_hash256 failed");
-
-    res = time(NULL);
-    check(res != -1, "Failed to cmd_make_init_blocks: time Failed");
-    tts = (uint32_t)res;
-    bts = 0x1f00ffff;
-    hd = kyk_make_blk_header(tx, 1, 1, pre_blk_hash, tts, bts);
-
-    res = kyk_make_block(&blk, hd, tx, 1);
-    check(res == 0, "Failed to cmd_make_init_blocks: kyk_make_block failed");
-
-    kyk_seri_blk_hd(buf, hd);
-    kyk_print_hex("hd -> pre_blk_hash", hd -> pre_blk_hash, 32);
-    kyk_print_hex("hd -> mrk_root_hash", hd -> mrk_root_hash, 32);
-    printf("hd -> tts: %u\n", hd -> tts);
-    kyk_print_hex("block header", buf, 80);
-
     return 0;
 
 error:
     if(pubkey) free(pubkey);
+    if(blk) kyk_free_block(blk);
     return -1;
 }
 

@@ -302,6 +302,40 @@ void kyk_destroy_wallet(struct kyk_wallet* wallet)
     }
 }
 
+int kyk_wallet_save_block(const struct kyk_wallet* wallet, const struct kyk_block* blk)
+{
+    struct kyk_blk_file* blk_file = NULL;
+    struct kyk_bkey_val bval;
+    int fileNo;
+    char *errptr = NULL;    
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_wallet_save_block: wallet is NULL");
+    check(wallet -> blk_dir, "Failed to kyk_wallet_save_block: wallet -> blk_dir is NULL");
+    check(blk, "Failed to kyk_wallet_save_block: blk is NULL");
+
+    fileNo = 0;
+    blk_file = kyk_create_blk_file(fileNo, wallet -> blk_dir, "ab");
+    check(blk_file, "Failed to kyk_wallet_save_block: kyk_create_blk_file failed");
+
+    res = kyk_save_blk_to_file(blk_file, blk);
+    check(res == 0, "Failed to kyk_wallet_save_block: kyk_save_blk_to_file failed");
+
+    set_init_bval(&bval, blk, blk_file);
+    kyk_store_block(wallet -> blk_index_db, &bval, &errptr);
+    check(errptr == NULL, "Failed to kyk_wallet_save_block: kyk_store_block failed");
+    
+
+    kyk_close_blk_file(blk_file);
+    
+    return 0;
+
+error:
+
+    if(blk_file) kyk_close_blk_file(blk_file);
+    return -1;
+}
+
 int save_setup_data_to_wallet(struct kyk_wallet *wallet)
 {
     struct kyk_block *blk = NULL;
@@ -383,7 +417,7 @@ int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
     check(buf, "Failed to kyk_save_blk_to_file: buf calloc failed");
 
     res = kyk_seri_blkself(buf, blk, &len);
-    check(res == 0, "Failed to kyk_save_blk_to_file: kyk_seri_blk_for_file failed");
+    check(res == 0, "Failed to kyk_save_blk_to_file: kyk_seri_blkself failed");
     
     pos = ftell(blk_file -> fp);
     check(pos != -1L, "failed to get the block dat file pos");

@@ -65,5 +65,7 @@ int kyk_wallet_get_pubkey(uint8_t** pubkey,
 			  const char* name);
 
 
+int kyk_wallet_save_block(const struct kyk_wallet* wallet, const struct kyk_block* blk);
+
 
 #endif

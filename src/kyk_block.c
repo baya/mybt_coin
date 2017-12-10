@@ -37,6 +37,22 @@ error:
     return -1;
 }
 
+int kyk_set_blkself_info(struct kyk_block* blk)
+{
+    int res = -1;
+    size_t len = 0;
+    
+    blk -> magic_no = KYK_BLK_MAGIC_NO;
+    res = kyk_get_blk_size(blk, &len);
+    check(res == 0, "Failed to kyk_set_blkself_info: kyuk_get_blkself_size failed");
+
+    blk -> blk_size = (uint32_t)len;
+    
+    return 0;
+error:
+    return -1;
+}
+
 int kyk_get_blk_size(const struct kyk_block* blk,
 		     size_t* blk_size)
 {
@@ -125,7 +141,9 @@ int kyk_deseri_block(struct kyk_block** new_blk,
     bufp += len;
 
     *new_blk = blk;
-    *byte_num = bufp - buf;
+    if(byte_num){
+	*byte_num = bufp - buf;
+    }
     
     return 0;
 
@@ -137,6 +155,7 @@ error:
     return -1;
 
 }
+
 
 size_t kyk_seri_blk_hd(uint8_t *buf, const struct kyk_blk_header *hd)
 {
@@ -415,8 +434,8 @@ int kyk_seri_blkself(uint8_t* buf, const struct kyk_block* blk, size_t* check_si
     uint8_t *bufp = NULL;
     int res = -1;
 
-    check(buf, "Failed to kyk_seri_blk_for_file: buf is NULL");
-    check(blk, "Failed to kyk_seri_blk_for_file: blk is NULL");
+    check(buf, "Failed to kyk_seri_blkself: buf is NULL");
+    check(blk, "Failed to kyk_seri_blkself: blk is NULL");
 
     bufp = buf;
     
@@ -429,8 +448,8 @@ int kyk_seri_blkself(uint8_t* buf, const struct kyk_block* blk, size_t* check_si
     total_len += len;
 
     res = kyk_seri_blk(bufp, blk, &len);
-    check(res == 0, "Failed to kyk_seri_blk_for_file: kyk_seri_blk failed");
-    check(len == blk -> blk_size, "Failed to kyk_seri_blk_for_file: kyk_seri_blk failed");
+    check(res == 0, "Failed to kyk_seri_blkself: kyk_seri_blk failed");
+    check(len == blk -> blk_size, "Failed to kyk_seri_blkself: kyk_seri_blk failed");
     total_len += len;
     
 
