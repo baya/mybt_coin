@@ -222,6 +222,34 @@ char* test_make_coinbase_tx()
     return NULL;
 }
 
+char* test_kyk_get_utxo_size()
+{
+    struct kyk_utxo utxo;
+    size_t len = 0;
+    size_t expect_len = 136;
+    int res = -1;
+    
+    utxo.addr_len = 34;
+    utxo.btc_addr = "142SuQBUHiBAmcQgNL9Dbhj1aEYuCRmtSv";
+    utxo.sc_size = 23;
+
+    res = kyk_get_utxo_size(&utxo, &len);
+    mu_assert(res == 0, "Failed to test_kyk_get_utxo_size");
+    mu_assert(len == expect_len, "Failed to test_kyk_get_utxo_size");
+
+    return NULL;
+}
+
+char* test_kyk_seri_utxo()
+{
+    return NULL;
+}
+
+char* test_kyk_deseri_utxo()
+{
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -234,6 +262,9 @@ char *all_tests()
     mu_run_test(test_deseri_tx);
     mu_run_test(test_deseri_tx_list);
     mu_run_test(test_make_coinbase_tx);
+    mu_run_test(test_kyk_get_utxo_size);
+    mu_run_test(test_kyk_seri_utxo);
+    mu_run_test(test_kyk_deseri_utxo);
     
     return NULL;
 }

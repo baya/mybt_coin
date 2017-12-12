@@ -24,8 +24,8 @@
 #define CMD_ADD_ADDRESS    "addAddress"
 #define CMD_QUERY_BLOCK    "queryBlock"
 #define CMD_MK_BLOCK       "makeBlock"
-#define CMD_MK_TX          "makeTx"
 #define CMD_Q_BALANCE      "queryBalance"
+#define CMD_MK_TX          "makeTx"
 #define CMD_SERVE          "serve"
 
 int match_cmd(char *src, char *cmd);
@@ -161,6 +161,12 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 
     res = kyk_wallet_save_block(wallet, blk);
     check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
+
+    res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
+    check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
+
+    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    check(res == 0, "Failed to cmd_make_block: kyk_save_blk_header_chain failed");
 
     kyk_blk_hash256(digest, blk -> hd);
     kyk_print_hex("maked a new block", digest, sizeof(digest));

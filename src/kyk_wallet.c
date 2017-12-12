@@ -16,6 +16,7 @@
 #include "kyk_key.h"
 #include "kyk_file.h"
 #include "kyk_config.h"
+#include "beej_pack.h"
 #include "kyk_wallet.h"
 #include "dbg.h"
 
@@ -34,7 +35,9 @@ static int kyk_save_blk_to_file(struct kyk_blk_file* blk_file,
 
 static int kyk_setup_main_address(struct kyk_wallet* wallet);
 
-int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
+static int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
+
+static int read_utxo_count(const uint8_t* buf, uint32_t* count);
 
 int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
 {
@@ -162,6 +165,7 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
     char* wallet_cfg_path = NULL;
     char* main_cfg_path = NULL;
     char* blk_headers_path = NULL;
+    char* utxo_path = NULL;
     int res = -1;
 
     blk_dir = kyk_asprintf("%s/blocks", wdir);
@@ -171,6 +175,7 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
     wallet_cfg_path = kyk_asprintf("%s/wallet.cfg", wdir);
     blk_headers_path = kyk_asprintf("%s/block_headers_chain.dat", wdir);
     main_cfg_path = kyk_asprintf("%s/main.cfg", wdir);
+    utxo_path = kyk_asprintf("%s/utxo.dat", wdir);
 
     if(!kyk_file_exists(main_cfg_path)){
 	printf("\nIt looks like you're a new user. Welcome!\n"
@@ -179,10 +184,12 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
 	       " - blocks:               %s/blocks                  \n"
 	       " - blocks index:         %s/blocks/index            \n"
 	       " - block headers chain:  %s/block_headers_chain.dat \n"
-	       " - peer IP addresses:    %s/peers.dat  \n"
-	       " - transaction database: %s/txdb       \n"
-	       " - wallet keys:          %s/wallet.cfg \n"
-	       " - main config file:     %s/main.cfg \n\n",	       
+	       " - peer IP addresses:    %s/peers.dat               \n"
+	       " - transaction database: %s/txdb                    \n"
+	       " - wallet keys:          %s/wallet.cfg              \n"
+	       " - UTXO:                 %s/utxo.dat                \n"
+	       " - main config file:     %s/main.cfg              \n\n",	       
+	       wdir,
 	       wdir,
 	       wdir,
 	       wdir,
@@ -223,6 +230,10 @@ int kyk_wallet_check_config(struct kyk_wallet* wallet, const char* wdir)
     res = kyk_check_create_file(wallet_cfg_path, "wallet config");
     check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", wallet_cfg_path);
     wallet -> wallet_cfg_path = wallet_cfg_path;
+
+    res = kyk_check_create_file(utxo_path, "UTXO");
+    check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", utxo_path);
+    wallet -> utxo_path = utxo_path;
     
     res = kyk_check_create_file(main_cfg_path, "main config");
     check(res == 0, "Failed to kyk_wallet_check_config: kyk_check_create_file '%s' failed", main_cfg_path);
@@ -683,8 +694,8 @@ int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
     struct kyk_blk_hd_chain* hdc = NULL;
     uint8_t* buf = NULL;
     FILE* fp = NULL;
-    int res = -1;
     size_t len = 0;
+    int res = -1;
 
     check(hd_chain, "Failed to kyk_load_blk_head_chain: hd_chain is NULL");
     check(wallet, "Failed to kyk_load_blk_head_chain: wallet is NULL");
@@ -710,4 +721,56 @@ error:
     if(buf) free(buf);
     if(hdc) kyk_free_blk_hd_chain(hdc);
     return -1;
+}
+
+int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+			const struct kyk_wallet* wallet)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    uint8_t* buf = NULL;
+    uint8_t* bufp = NULL;
+    FILE* fp = NULL;
+    uint32_t chain_len = 0;
+    int res = -1;
+
+    check(utxo_chain, "Failed to kyk_load_utxo_chain: utxo_chain is NULL");
+    check(wallet, "Failed to kyk_load_utxo_chain: wallet is NULL");
+
+    fp = fopen(wallet -> utxo_path, "rb");
+    check(fp, "Failed to kyk_load_utxo_chain: fopen failed");
+
+    res = kyk_file_read_all(&buf, fp, NULL);
+    check(res == 0, "Failed to kyk_load_utxo_chain: kyk_file_read_all failed");
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+
+    bufp = buf;
+    read_utxo_count(bufp, &chain_len);
+    bufp += sizeof(utxo_chain -> len);
+
+    res = kyk_deseri_utxo_chain(&utxo_chain, buf, chain_len, NULL);
+    check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+
+    *new_utxo_chain = utxo_chain;
+
+    fclose(fp);
+    free(buf);
+
+    return 0;
+    
+error:
+    if(fp) fclose(fp);
+    if(buf) free(buf);
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+}
+
+int read_utxo_count(const uint8_t* buf, uint32_t* count)
+{
+    uint32_t len = 0;
+    beej_unpack(buf, "<L", &len);
+
+    *count = len;
+
+    return 0;
 }

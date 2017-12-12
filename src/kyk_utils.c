@@ -359,7 +359,11 @@ int kyk_file_read_all(uint8_t** buf, FILE* fp, size_t* len)
     check(fcode == blen, "Failed to kyk_file_read_all: fread failed");
 
     *buf = bufp;
-    *len = blen;
+    
+    if(len){
+	*len = blen;
+    }
+    
 
     return 0;
 error:

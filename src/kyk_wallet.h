@@ -24,6 +24,7 @@ struct kyk_wallet {
     char* idx_db_path;
     char* wallet_cfg_path;
     char* blk_hd_chain_path;
+    char* utxo_path;
     struct kyk_block_db* blk_index_db;
     struct config* wallet_cfg;
 };
