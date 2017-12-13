@@ -1045,6 +1045,8 @@ int kyk_deseri_utxo(struct kyk_utxo** new_utxo, const uint8_t* buf, size_t* chec
     total += len;
     bufp += len;
 
+    utxo -> sc = calloc(utxo -> sc_size, sizeof(*utxo -> sc));
+    check(utxo -> sc, "Failed to kyk_deseri_utxo: utxo -> sc calloc failed");
     memcpy(utxo -> sc, bufp, utxo -> sc_size);
     len = utxo -> sc_size;
     total += len;
