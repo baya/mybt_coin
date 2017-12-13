@@ -127,6 +127,24 @@ error:
 
 }
 
+int kyk_address_from_pbkhash160(char** new_addr, const uint8_t* pbkhash, size_t len)
+{
+    char* addr = NULL;
+
+    check(new_addr, "Failed to kyk_address_from_pbkhash160: new_addr is NULL");
+    check(pbkhash, "Failed to kyk_address_from_pbkhash160: pbkhash is NULL");
+
+    addr = kyk_base58check(PUBKEY_ADDRESS, pbkhash, len);
+    check(addr, "Failed to kyk_address_from_pbkhash160: kyk_base58check failed");
+
+    *new_addr = addr;
+
+    return 0;
+error:
+
+    return -1;
+}
+
 
 void set_version_byte(uint8_t *vdgst, uint8_t *digest, uint8_t vbyt, size_t len)
 {

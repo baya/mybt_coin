@@ -36,25 +36,6 @@ struct kyk_txout{
     unsigned char *sc;
 };
 
-struct kyk_utxo{
-    uint8_t  txid[32];
-    uint8_t  blkhash[32];
-    uint8_t  addr_len;
-    char*    btc_addr;
-    uint32_t outidx;
-    uint64_t value;
-    varint_t sc_size;
-    unsigned char* sc;
-    uint8_t  spent;
-    struct kyk_utxo* next;
-};
-
-struct kyk_utxo_chain {
-    struct kyk_utxo* hd;
-    struct kyk_utxo* tail;
-    struct kyk_utxo* curr;
-    uint32_t len;
-};
 
 int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx);
 
@@ -112,27 +93,9 @@ int kyk_deseri_tx_list(struct kyk_tx* tx_list,
 		       size_t* byte_num);
 
 
-int kyk_free_utxo_chain(struct kyk_utxo_chain* utxo_chain);
-int kyk_free_utxo(struct kyk_utxo* utxo);
 
-int kyk_deseri_utxo(struct kyk_utxo** new_utxo,
-		    const uint8_t* buf,
-		    size_t* check_num);
+int kyk_get_addr_from_txout(char** new_addr, const struct kyk_txout* txout);
 
-int kyk_seri_utxo(uint8_t* buf,
-		  const struct kyk_utxo* utxo,
-		  size_t* check_num);
 
-int kyk_init_utxo_chain(struct kyk_utxo_chain* utxo_chain);
-
-int kyk_deseri_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
-			  const uint8_t* buf,
-			  size_t count,
-			  size_t* check_num);
-
-int kyk_utxo_chain_append(struct kyk_utxo_chain* utxo_chain,
-			  struct kyk_utxo* utxo);
-
-int kyk_get_utxo_size(const struct kyk_utxo* utxo, size_t* utxo_size);
 
 #endif

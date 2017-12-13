@@ -17,6 +17,7 @@
 #include "kyk_file.h"
 #include "kyk_config.h"
 #include "beej_pack.h"
+#include "kyk_utxo.h"
 #include "kyk_wallet.h"
 #include "dbg.h"
 

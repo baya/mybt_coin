@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "test_data.h"
 #include "kyk_buff.h"
 #include "kyk_tx.h"
 #include "kyk_utils.h"
@@ -28,8 +29,6 @@ static uint8_t TARGET_TX1_BUF[134] = {
     0x21, 0xa8, 0x5b, 0x23, 0xa7, 0xac, 0x61, 0x72,
     0x5b, 0xac, 0x00, 0x00, 0x00, 0x00
 };
-
-int build_testing_utxo(struct kyk_utxo** new_utxo);
 
 int build_testing_tx1(struct kyk_tx** out_tx);
 
@@ -224,81 +223,33 @@ char* test_make_coinbase_tx()
     return NULL;
 }
 
-char* test_kyk_get_utxo_size()
+
+char* test_kyk_get_addr_from_txout()
 {
-    struct kyk_utxo utxo;
-    size_t len = 0;
-    size_t expect_len = 136;
-    int res = -1;
-    
-    utxo.addr_len = 34;
-    utxo.btc_addr = "142SuQBUHiBAmcQgNL9Dbhj1aEYuCRmtSv";
-    utxo.sc_size = 23;
-
-    res = kyk_get_utxo_size(&utxo, &len);
-    mu_assert(res == 0, "Failed to test_kyk_get_utxo_size");
-    mu_assert(len == expect_len, "Failed to test_kyk_get_utxo_size");
-
-    return NULL;
-}
-
-char* test_kyk_seri_utxo()
-{
-    struct kyk_utxo* utxo = NULL;
-    uint8_t buf[1000];
-    size_t len = 0;
+    struct kyk_tx* tx = NULL;
+    struct kyk_txout* txout = NULL;
+    size_t check_num = 0;
+    char* btc_addr = NULL;
+    const char* expect_addr = "1LZ2RvV5jWJ9NV4M3sxHszxd4WZ4iyXTwm";
     int res = -1;
 
-    build_testing_utxo(&utxo);
-    check(utxo, "Failed to test_kyk_seri_utxo: build_testing_utxo failed");
+    tx = calloc(1, sizeof(*tx));
+    res = kyk_deseri_tx(tx, TX_43fcd_BUF, &check_num);
+    check(res ==0, "Failed to test_kyk_get_addr_from_txout: kyk_deseri_tx failed");
 
-    res = kyk_seri_utxo(buf, utxo, &len);
-    mu_assert(res == 0, "Failed to test_kyk_seri_utxo");
+    txout = tx -> txout;
 
-    kyk_free_utxo(utxo);
+    res = kyk_get_addr_from_txout(&btc_addr, txout);
+    mu_assert(res == 0, "Failed to test_kyk_get_addr_from_txout");
+    mu_assert(strcmp(btc_addr, expect_addr) == 0, "Failed to test_kyk_get_addr_from_txout");
     
     return NULL;
 
 error:
 
-    return "Failed to test_kyk_seri_utxo";
+    return "Failed to test_kyk_get_addr_from_txout";
 }
 
-char* test_kyk_deseri_utxo()
-{
-    struct kyk_utxo* utxo = NULL;
-    uint8_t utxo_buf[] = {
-	0x73, 0xd6, 0xac, 0xba, 0x92, 0xd6, 0xdf, 0xaf,
-	0x20, 0x4c, 0x0b, 0x4d, 0xd7, 0xcc, 0x56, 0x1a,
-	0x96, 0xf5, 0x5c, 0x03, 0xe9, 0xbc, 0x15, 0x1d,
-	0x9f, 0x6e, 0x2a, 0x0d, 0x7b, 0x94, 0x3f, 0xcd,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xb6, 0x3f,
-	0xb1, 0xc9, 0x2f, 0x21, 0xb3, 0x61, 0xb6, 0xb8,
-	0xbb, 0xc4, 0x0b, 0xb5, 0xf5, 0x7e, 0x21, 0x97,
-	0xb2, 0x53, 0x25, 0xff, 0x23, 0xbf, 0x85, 0x17,
-	0x22, 0x31, 0x4c, 0x5a, 0x32, 0x52, 0x76, 0x56,
-	0x35, 0x6a, 0x57, 0x4a, 0x39, 0x4e, 0x56, 0x34,
-	0x4d, 0x33, 0x73, 0x78, 0x48, 0x73, 0x7a, 0x78,
-	0x64, 0x34, 0x57, 0x5a, 0x34, 0x69, 0x79, 0x58,
-	0x54, 0x77, 0x6d, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x08, 0xaf, 0x2f, 0x00, 0x00, 0x00, 0x00, 0x18,
-	0xa9, 0x14, 0xd6, 0x78, 0xe4, 0xe4, 0xc7, 0x40,
-	0xaa, 0x77, 0x25, 0x53, 0x02, 0xc4, 0x67, 0x04,
-	0x2e, 0x7c, 0xe2, 0xa3, 0x19, 0x82, 0x88, 0xac,
-	0x00
-    };
-
-    int res = -1;
-    size_t check_num; 
-
-    res = kyk_deseri_utxo(&utxo, utxo_buf, &check_num);
-    mu_assert(res == 0, "Failed to test_kyk_deseri_utxo");
-    mu_assert(check_num == sizeof(utxo_buf), "Failed to test_kyk_deseri_tuxo");
-
-    kyk_free_utxo(utxo);
-    
-    return NULL;
-}
 
 char *all_tests()
 {
@@ -312,61 +263,11 @@ char *all_tests()
     mu_run_test(test_deseri_tx);
     mu_run_test(test_deseri_tx_list);
     mu_run_test(test_make_coinbase_tx);
-    mu_run_test(test_kyk_get_utxo_size);
-    mu_run_test(test_kyk_seri_utxo);
-    mu_run_test(test_kyk_deseri_utxo);
+    mu_run_test(test_kyk_get_addr_from_txout);
     
     return NULL;
 }
 
-/* https://webbtc.com/tx/73d6acba92d6dfaf204c0b4dd7cc561a96f55c03e9bc151d9f6e2a0d7b943fcd.json */
-int build_testing_utxo(struct kyk_utxo** new_utxo)
-{
-    struct kyk_utxo* utxo = NULL;
-    
-    uint8_t txid[32] = {
-	0x73, 0xd6, 0xac, 0xba, 0x92, 0xd6, 0xdf, 0xaf,
-	0x20, 0x4c, 0x0b, 0x4d, 0xd7, 0xcc, 0x56, 0x1a,
-	0x96, 0xf5, 0x5c, 0x03, 0xe9, 0xbc, 0x15, 0x1d,
-	0x9f, 0x6e, 0x2a, 0x0d, 0x7b, 0x94, 0x3f, 0xcd
-    };
-
-    uint8_t blkhash[32] = {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xb6, 0x3f,
-	0xb1, 0xc9, 0x2f, 0x21, 0xb3, 0x61, 0xb6, 0xb8,
-	0xbb, 0xc4, 0x0b, 0xb5, 0xf5, 0x7e, 0x21, 0x97,
-	0xb2, 0x53, 0x25, 0xff, 0x23, 0xbf, 0x85, 0x17
-    };
-
-    uint8_t sc[24] = {
-	0xa9, 0x14, 0xd6, 0x78, 0xe4, 0xe4, 0xc7, 0x40,
-	0xaa, 0x77, 0x25, 0x53, 0x02, 0xc4, 0x67, 0x04,
-	0x2e, 0x7c, 0xe2, 0xa3, 0x19, 0x82, 0x88, 0xac
-    };
-
-    utxo = calloc(1, sizeof(*utxo));
-    check(utxo, "Failed to build_testing_utxo: utxo calloc failed");
-
-    memcpy(utxo -> txid, txid, sizeof(txid));
-    memcpy(utxo -> blkhash, blkhash, sizeof(blkhash));
-    utxo -> addr_len = 34;
-    utxo -> btc_addr = calloc(utxo -> addr_len, sizeof(*utxo -> btc_addr));
-    memcpy(utxo -> btc_addr, "1LZ2RvV5jWJ9NV4M3sxHszxd4WZ4iyXTwm", utxo -> addr_len);
-    utxo -> outidx = 0;
-    utxo -> value = 800000000;
-    utxo -> sc_size = sizeof(sc);
-    utxo -> sc = calloc(utxo -> sc_size, sizeof(*utxo -> sc));
-    memcpy(utxo -> sc, sc, sizeof(sc));
-    utxo -> spent = 0;
-
-    *new_utxo = utxo;
-
-    return 0;
-
-error:
-    return -1;
-    
-}
 
 /* The test data source is: https://webbtc.com/tx/b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082.json */
 /* Txid is b1fea52486ce0c62bb442b530a3f0132b826c74e473d1f2c220bfa78111c5082 */

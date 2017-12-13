@@ -24,13 +24,14 @@
 #define CMD_ADD_ADDRESS    "addAddress"
 #define CMD_QUERY_BLOCK    "queryBlock"
 #define CMD_MK_BLOCK       "makeBlock"
-#define CMD_Q_BALANCE      "queryBalance"
+#define CMD_QUERY_BALANCE  "queryBalance"
 #define CMD_MK_TX          "makeTx"
 #define CMD_SERVE          "serve"
 
 int match_cmd(char *src, char *cmd);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
 int cmd_make_block(const struct kyk_wallet* wallet);
+int cmd_query_balance(const struct kyk_wallet* wallet);
 
 int main(int argc, char *argv[])
 {
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 	printf("init a wallet:    %s %s\n", argv[0], CMD_INIT);
 	printf("make init blocks: %s %s\n", argv[0], CMD_MK_BLOCK);
 	printf("make tx:          %s %s\n", argv[0], CMD_MK_TX);
-	printf("query blance:     %s %s\n", argv[0], CMD_Q_BALANCE);
+	printf("query blance:     %s %s\n", argv[0], CMD_QUERY_BALANCE);
 	printf("start server:     %s %s\n", argv[0], CMD_SERVE);
 	printf("add address:      %s %s\n", argv[0], CMD_ADD_ADDRESS);
 	printf("query block:      %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
@@ -71,6 +72,9 @@ int main(int argc, char *argv[])
 	} else if(match_cmd(argv[1], CMD_MK_BLOCK)){
 	    wallet = kyk_open_wallet(wdir);
 	    cmd_make_block(wallet);
+	} else if(match_cmd(argv[1], CMD_QUERY_BALANCE)){
+	    wallet = kyk_open_wallet(wdir);
+	    cmd_query_balance(wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -177,5 +181,11 @@ error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
     return -1;
+}
+
+int cmd_query_balance(const struct kyk_wallet* wallet)
+{
+    printf("query blance\n");
+    return 0;
 }
 

@@ -122,8 +122,26 @@ char* test3_make_address_from_pubkey()
     char* target_addr = "12ZYkesYJNdHmg3DPxx64LhYWq8Ddmx3HW";
     char* addr = NULL;
 
-    addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));
+    addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));    
     mu_assert(strcmp(addr, target_addr) == 0, "failed to get the correct address");
+    
+    return NULL;
+}
+
+char* test_kyk_address_from_pbkhash160()
+{
+    char* addr = NULL;
+    uint8_t pbk160[20] = {
+	0xd6, 0x78, 0xe4, 0xe4, 0xc7, 0x40, 0xaa, 0x77,
+	0x25, 0x53, 0x02, 0xc4, 0x67, 0x04, 0x2e, 0x7c,
+	0xe2, 0xa3, 0x19, 0x82
+    };
+    char* expect_addr = "1LZ2RvV5jWJ9NV4M3sxHszxd4WZ4iyXTwm";
+    int res = -1;
+
+    res = kyk_address_from_pbkhash160(&addr, pbk160, sizeof(pbk160));
+    mu_assert(res == 0, "Failed to test_kyk_address_from_pbkhash160");
+    mu_assert(strcmp(addr, expect_addr)== 0, "Failed to test_kyk_address_from_pbkhash160");
     
     return NULL;
 }
@@ -136,6 +154,7 @@ char *all_tests()
     mu_run_test(test_make_address_from_pubkey);
     mu_run_test(test2_make_address_from_pubkey);
     mu_run_test(test2_make_address);
+    mu_run_test(test_kyk_address_from_pbkhash160);
     
     return NULL;
 }
