@@ -677,7 +677,7 @@ int kyk_deseri_tx(struct kyk_tx* tx,
     len = kyk_unpack_varint(bufp, &tx -> vin_sz);
     check(len > 0, "Failed to kyk_deseri_tx: kyk_unpack_varint failed");
     bufp += len;
-    
+
     tx -> txin = calloc(tx -> vin_sz, sizeof(struct kyk_txin));
     check(tx -> txin, "Failed to kyk_deseri_tx: calloc tx -> txin failed");
     
@@ -773,6 +773,7 @@ int kyk_deseri_txin(struct kyk_txin* txin,
 
     beej_unpack(bufp, "<L", &txin -> pre_tx_inx);
     bufp += sizeof(txin -> pre_tx_inx);
+
 
     len = kyk_unpack_varint(bufp, &txin -> sc_size);
     bufp += len;
@@ -876,27 +877,48 @@ error:
 
 int kyk_get_addr_from_txout(char** new_addr, const struct kyk_txout* txout)
 {
-    char* addr = NULL;
-    uint8_t pbkhash[20];
+    char* addr = NULL;    
     unsigned char* pbk_sc = NULL;
     int res = -1;
     
     check(new_addr, "Failed to kyk_get_addr_from_txout: addr is NULL");
     check(txout, "Failed to kyk_get_addr_from_txout: txout is NULL");
+    check(txout -> sc_size > 0, "Failed to kyk_get_addr_from_txout: txout -> sc_size is invalid");
     check(txout -> sc, "Failed to kyk_get_addr_from_txout: txout -> sc is NULL");
 
     pbk_sc = txout -> sc;
-    check(*pbk_sc == OP_DUP, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
-    pbk_sc++;
-    check(*pbk_sc == OP_HASH160, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
-    pbk_sc++;
-    check(*pbk_sc == 0x14, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
-    pbk_sc++;
 
-    memcpy(pbkhash, pbk_sc, sizeof(pbkhash));
+    if(*pbk_sc == OP_DUP){
+	/* pay-to-pubkey-hash */
+	uint8_t pbkhash[20];
+	check(*pbk_sc == OP_DUP, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
+	pbk_sc++;
+	check(*pbk_sc == OP_HASH160, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
+	pbk_sc++;
+	check(*pbk_sc == 0x14, "Failed to kyk_get_addr_from_txout: invalid pbk_sc");
+	pbk_sc++;
 
-    res = kyk_address_from_pbkhash160(&addr, pbkhash, sizeof(pbkhash));
-    check(res == 0, "Failed to kyk_get_addr_from_txout: kyk_address_from_pbkhash160 failed");
+	memcpy(pbkhash, pbk_sc, sizeof(pbkhash));
+
+	res = kyk_address_from_pbkhash160(&addr, pbkhash, sizeof(pbkhash));
+	check(res == 0, "Failed to kyk_get_addr_from_txout: kyk_address_from_pbkhash160 failed");
+
+    } else if(*pbk_sc == 0x41){
+	/* pay-to-pubkey uncompressed pubkey */
+	uint8_t pubkey[65];
+	pbk_sc++;
+	memcpy(pubkey, pbk_sc, sizeof(pubkey));
+	addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));
+    } else if(*pbk_sc == 0x21){
+	/* pay-to-pubkey compressed pubkey */
+	uint8_t pubkey[33];
+	pbk_sc++;
+	memcpy(pubkey, pbk_sc, sizeof(pubkey));
+	addr = kyk_make_address_from_pubkey(pubkey, sizeof(pubkey));
+    } else {
+	check(0, "Failed to kyk_get_addr_from_txout: invalid txout -> sc");
+    }
+
 
     *new_addr = addr;
 

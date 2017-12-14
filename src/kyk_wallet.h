@@ -7,6 +7,8 @@
 
 struct kyk_blk_hd_chain;
 
+struct kyk_utxo_chain;
+
 struct kyk_wallet_key {
     struct kyk_key* key;
     char        *priv_str;
@@ -68,5 +70,10 @@ int kyk_wallet_get_pubkey(uint8_t** pubkey,
 
 int kyk_wallet_save_block(const struct kyk_wallet* wallet, const struct kyk_block* blk);
 
+int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+			const struct kyk_wallet* wallet);
+
+int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet,
+			       const struct kyk_utxo_chain* utxo_chain);
 
 #endif

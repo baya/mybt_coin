@@ -734,7 +734,7 @@ int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     uint32_t chain_len = 0;
     int res = -1;
 
-    check(utxo_chain, "Failed to kyk_load_utxo_chain: utxo_chain is NULL");
+    check(new_utxo_chain, "Failed to kyk_load_utxo_chain: utxo_chain is NULL");
     check(wallet, "Failed to kyk_load_utxo_chain: wallet is NULL");
 
     fp = fopen(wallet -> utxo_path, "rb");
@@ -763,6 +763,37 @@ error:
     if(fp) fclose(fp);
     if(buf) free(buf);
     if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+}
+
+int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet, const struct kyk_utxo_chain* utxo_chain)
+{
+    FILE* fp = NULL;
+    uint8_t* buf = NULL;
+    size_t chain_size = 0;
+    size_t len = 0;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_wallet_save_utxo_chain: wallet is NULL");
+    check(utxo_chain, "Failed to kyk_wallet_save_utxo_chain: utxo_chain is NULL");
+
+    fp = fopen(wallet -> utxo_path, "wb");
+    check(fp, "Failed to kyk_wallet_save_utxo_chain: fopen %s failed", wallet -> utxo_path);
+
+    res = kyk_seri_utxo_chain(&buf, utxo_chain, &chain_size);
+    check(res == 0, "Failed to kyk_wallet_save_utxo_chain: kyk_seri_utxo_chain failed");
+
+    len = fwrite(buf, sizeof(*buf), chain_size, fp);
+    check(len == chain_size, "Failed to kyk_wallet_save_utxo_chain: fwrite failed");
+
+    free(buf);
+    fclose(fp);
+	
+    return 0;
+    
+error:
+    if(buf) free(buf);
+    if(fp) fclose(fp);
     return -1;
 }
 

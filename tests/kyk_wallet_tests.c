@@ -187,6 +187,16 @@ char* test_kyk_load_blk_header_chain()
     return NULL;
 }
 
+char* test_kyk_load_utxo_chain()
+{
+    return NULL;
+}
+
+char* test_kyk_wallet_save_utxo_chain()
+{
+    return NULL;
+}
+
 
 char* all_tests()
 {
@@ -201,6 +211,8 @@ char* all_tests()
     mu_run_test(test_kyk_load_blk_header_chain);
     mu_run_test(test_kyk_wallet_get_pubkey);
     mu_run_test(test_kyk_wallet_save_block);
+    mu_run_test(test_kyk_load_utxo_chain);
+    mu_run_test(test_kyk_wallet_save_utxo_chain);
 
     return NULL;
 }

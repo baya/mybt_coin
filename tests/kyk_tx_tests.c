@@ -250,6 +250,31 @@ error:
     return "Failed to test_kyk_get_addr_from_txout";
 }
 
+char* test2_kyk_get_addr_from_txout()
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_txout* txout = NULL;
+    char* btc_addr = NULL;
+    const char* expect_addr = "16zR6bvFXDvLJW4Gy4kCPNCNbZST4zUmfb";
+    int res = -1;
+
+    tx = calloc(1, sizeof(*tx));
+    res = kyk_deseri_tx(tx, TX_27d0f_BUF, NULL);
+    check(res ==0, "Failed to test_kyk_get_addr_from_txout: kyk_deseri_tx failed");
+
+    txout = tx -> txout;
+
+    res = kyk_get_addr_from_txout(&btc_addr, txout);
+    mu_assert(res == 0, "Failed to test_kyk_get_addr_from_txout");
+    mu_assert(strcmp(btc_addr, expect_addr) == 0, "Failed to test_kyk_get_addr_from_txout");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_get_addr_from_txout";
+}
+
 
 char *all_tests()
 {
@@ -264,6 +289,7 @@ char *all_tests()
     mu_run_test(test_deseri_tx_list);
     mu_run_test(test_make_coinbase_tx);
     mu_run_test(test_kyk_get_addr_from_txout);
+    mu_run_test(test2_kyk_get_addr_from_txout);
     
     return NULL;
 }

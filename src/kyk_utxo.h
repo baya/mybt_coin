@@ -53,4 +53,23 @@ int kyk_make_utxo(struct kyk_utxo** new_utxo,
 		  const struct kyk_txout* txout,
 		  uint32_t txout_idx);
 
+int kyk_valid_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
+
+int kyk_combine_utxo_chain(struct kyk_utxo_chain* utxo_chain,
+			   const struct kyk_utxo_chain* tmp_chain);
+
+int kyk_append_utxo_chain_from_tx(struct kyk_utxo_chain* utxo_chain,
+				  uint8_t* blkhash,
+				  const struct kyk_tx* tx);
+
+int kyk_append_utxo_chain_from_block(struct kyk_utxo_chain* utxo_chain,
+				     const struct kyk_block* blk);
+
+int kyk_get_utxo_chain_size(const struct kyk_utxo_chain* utxo_chain, size_t* len);
+
+int kyk_seri_utxo_chain(uint8_t** new_buf,
+			const struct kyk_utxo_chain* utxo_chain,
+			size_t* check_num);
+
+
 #endif

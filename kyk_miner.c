@@ -14,6 +14,7 @@
 #include "kyk_file.h"
 #include "kyk_block.h"
 #include "kyk_validate.h"
+#include "kyk_utxo.h"
 #include "dbg.h"
 
 #define WALLET_NAME ".kyk_miner"
@@ -148,6 +149,7 @@ int cmd_make_block(const struct kyk_wallet* wallet)
     uint8_t* pubkey = NULL;
     size_t pbk_len = 0;
     struct kyk_block* blk = NULL;
+    struct kyk_utxo_chain* utxo_chain = NULL;
     int res = -1;
     uint8_t digest[32];
 
@@ -163,14 +165,23 @@ int cmd_make_block(const struct kyk_wallet* wallet)
     res = kyk_validate_block(hd_chain, blk);
     check(res == 0, "Failed to cmd_make_block: kyk_validate_block failed");
 
-    res = kyk_wallet_save_block(wallet, blk);
-    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
-
     res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
     check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
 
+    res = kyk_load_utxo_chain(&utxo_chain, wallet);
+    check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
+
+    res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_append_utxo_chain_from_block failed");
+
+    res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
+    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_utxo_chain failed");
+
     res = kyk_save_blk_header_chain(wallet, hd_chain);
     check(res == 0, "Failed to cmd_make_block: kyk_save_blk_header_chain failed");
+
+    res = kyk_wallet_save_block(wallet, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
 
     kyk_blk_hash256(digest, blk -> hd);
     kyk_print_hex("maked a new block", digest, sizeof(digest));
@@ -180,6 +191,7 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
     return -1;
 }
 
