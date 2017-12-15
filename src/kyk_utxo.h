@@ -71,5 +71,7 @@ int kyk_seri_utxo_chain(uint8_t* buf,
 			const struct kyk_utxo_chain* utxo_chain,
 			size_t* check_num);
 
+void kyk_print_utxo(const struct kyk_utxo* utxo);
+
 
 #endif

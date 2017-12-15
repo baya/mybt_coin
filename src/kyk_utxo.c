@@ -413,7 +413,7 @@ int kyk_deseri_utxo(struct kyk_utxo** new_utxo, const uint8_t* buf, size_t* chec
     bufp += len;
 
     check(utxo -> addr_len > 0, "Failed to kyk_deseri_utxo: utxo -> addr_len is invalid");
-    utxo -> btc_addr = calloc(utxo -> addr_len, sizeof(*utxo -> btc_addr));
+    utxo -> btc_addr = calloc(utxo -> addr_len + 1, sizeof(*utxo -> btc_addr));
     check(utxo -> btc_addr, "Failed to kyk_deseri_utxo: utxo -> btc_addr calloc failed");
     memcpy(utxo -> btc_addr, bufp, utxo -> addr_len);
     len = utxo -> addr_len;
@@ -542,4 +542,18 @@ int kyk_utxo_chain_append(struct kyk_utxo_chain* utxo_chain,
 error:
 
     return -1;
+}
+
+
+void kyk_print_utxo(const struct kyk_utxo* utxo)
+{
+    kyk_print_hex("txid", utxo -> txid, sizeof(utxo -> txid));
+    kyk_print_hex("blkhash", utxo -> blkhash, sizeof(utxo -> blkhash));
+    printf("addr_len:%d\n", utxo -> addr_len);
+    printf("btc_addr:%s\n", utxo -> btc_addr);
+    printf("outidx:  %d\n", utxo -> outidx);
+    printf("value:   %llu\n", utxo -> value);
+    printf("sc_size: %llu\n", utxo -> sc_size);
+    kyk_print_hex("sc", utxo -> sc, utxo -> sc_size);
+    printf("spent:   %d\n", utxo -> spent);
 }

@@ -20,8 +20,8 @@ static uint64_t pack754(long double f, unsigned bits, unsigned expbits);
 static long double unpack754(uint64_t i, unsigned bits, unsigned expbits);
 static void packi16(unsigned char *buf, unsigned int i, const unsigned char bytodr);
 static void packi16_little(unsigned char *buf, unsigned int i);
-static void packi32(unsigned char *buf, unsigned long int i, const unsigned char bytodr);
-static void packi32_little(unsigned char *buf, unsigned long int i);
+static void packi32(unsigned char *buf, uint32_t i, const unsigned char bytodr);
+static void packi32_little(unsigned char *buf, uint32_t i);
 static void packi64(unsigned char *buf, unsigned long long int i, const unsigned char bytodr);
 static void packi64_little(unsigned char *buf, unsigned long long int i);
 static int unpacki16(const unsigned char *buf, const unsigned char bytodr);
@@ -33,9 +33,9 @@ static unsigned int unpacku16_little(const unsigned char *buf);
 static long int unpacki32(const unsigned char *buf, const unsigned char bytodr);
 static long int unpacki32_big(const unsigned char *buf);
 static long int unpacki32_little(const unsigned char *buf);
-static unsigned long int unpacku32(const unsigned char *buf, const unsigned char bytodr);
-static unsigned long int unpacku32_big(const unsigned char *buf);
-static unsigned long int unpacku32_little(const unsigned char *buf);
+static uint32_t unpacku32(const unsigned char *buf, const unsigned char bytodr);
+static uint32_t unpacku32_big(const unsigned char *buf);
+static uint32_t unpacku32_little(const unsigned char *buf);
 static long long int unpacki64(const unsigned char *buf, const unsigned char bytodr);
 static unsigned long long int unpacku64(const unsigned char *buf, const unsigned char bytodr);
 static long long int unpacki64_little(const unsigned char *buf);
@@ -121,7 +121,7 @@ void packi16_little(unsigned char *buf, unsigned int i)
 /*
 ** packi32() -- store a 32-bit int into a char buffer (like htonl())
 */ 
-void packi32(unsigned char *buf, unsigned long int i, const unsigned char bytodr)
+void packi32(unsigned char *buf, uint32_t i, const unsigned char bytodr)
 {
     if(bytodr == '<'){
 	packi32_little(buf, i);
@@ -131,7 +131,7 @@ void packi32(unsigned char *buf, unsigned long int i, const unsigned char bytodr
     }
 }
 
-void packi32_little(unsigned char *buf, unsigned long int i)
+void packi32_little(unsigned char *buf, uint32_t i)
 {
     *buf++ = ((i<<24)>>24) & 0xFF;
     *buf++ = ((i<<16)>>24) & 0xFF;
@@ -251,9 +251,9 @@ long int unpacki32(const unsigned char *buf, const unsigned char bytodr)
 
 long int unpacki32_big(const unsigned char *buf)
 {
-    unsigned long int i2 = ((unsigned long int)buf[0]<<24) |
-                           ((unsigned long int)buf[1]<<16) |
-                           ((unsigned long int)buf[2]<<8)  |
+    uint32_t i2 = ((uint32_t)buf[0]<<24) |
+                           ((uint32_t)buf[1]<<16) |
+                           ((uint32_t)buf[2]<<8)  |
                            buf[3];
     long int i;
 
@@ -266,9 +266,9 @@ long int unpacki32_big(const unsigned char *buf)
 
 long int unpacki32_little(const unsigned char *buf)
 {
-    unsigned long int i2 = ((unsigned long int)buf[3]<<24) |
-                           ((unsigned long int)buf[2]<<16) |
-                           ((unsigned long int)buf[1]<<8)  |
+    uint32_t i2 = ((uint32_t)buf[3]<<24) |
+                           ((uint32_t)buf[2]<<16) |
+                           ((uint32_t)buf[1]<<8)  |
                            buf[0];
     long int i;
 
@@ -283,9 +283,9 @@ long int unpacki32_little(const unsigned char *buf)
 /*
 ** unpacku32() -- unpack a 32-bit unsigned from a char buffer (like ntohl())
 */ 
-unsigned long int unpacku32(const unsigned char *buf, const unsigned char bytodr)
+uint32_t unpacku32(const unsigned char *buf, const unsigned char bytodr)
 {
-    unsigned long int i;
+    uint32_t i;
 
     if(bytodr == '<'){
 	i = unpacku32_little(buf);
@@ -297,19 +297,19 @@ unsigned long int unpacku32(const unsigned char *buf, const unsigned char bytodr
 }
 
 
-unsigned long int unpacku32_big(const unsigned char *buf)
+uint32_t unpacku32_big(const unsigned char *buf)
 {
-    return ((unsigned long int)buf[0]<<24) |
-           ((unsigned long int)buf[1]<<16) |
-           ((unsigned long int)buf[2]<<8)  |
+    return ((uint32_t)buf[0]<<24) |
+           ((uint32_t)buf[1]<<16) |
+           ((uint32_t)buf[2]<<8)  |
            buf[3];
 }
 
-unsigned long int unpacku32_little(const unsigned char *buf)
+uint32_t unpacku32_little(const unsigned char *buf)
 {
-    return ((unsigned long int)buf[3]<<24) |
-           ((unsigned long int)buf[2]<<16) |
-           ((unsigned long int)buf[1]<<8)  |
+    return ((uint32_t)buf[3]<<24) |
+           ((uint32_t)buf[2]<<16) |
+           ((uint32_t)buf[1]<<8)  |
            buf[0];
 }
 
@@ -455,7 +455,7 @@ unsigned int beej_pack(unsigned char *buf, char *format, ...)
     unsigned int H;
 
     long int l;                 // 32-bit
-    unsigned long int L;
+    uint32_t L;
 
     long long int q;            // 64-bit
     unsigned long long int Q;
@@ -524,7 +524,7 @@ unsigned int beej_pack(unsigned char *buf, char *format, ...)
 
         case 'L': // 32-bit unsigned
             size += 4;
-            L = va_arg(ap, unsigned long int);
+            L = va_arg(ap, uint32_t);
             packi32(buf, L, bytodr);
 	    bytodr = NUL_BYT_ORD;
             buf += 4;
@@ -621,7 +621,7 @@ void beej_unpack(const unsigned char *buf, char *format, ...)
     unsigned int *H;
 
     long int *l;                 // 32-bit
-    unsigned long int *L;
+    uint32_t *L;
 
     long long int *q;            // 64-bit
     unsigned long long int *Q;
@@ -680,7 +680,7 @@ void beej_unpack(const unsigned char *buf, char *format, ...)
             break;
 
         case 'L': // 32-bit unsigned
-            L = va_arg(ap, unsigned long int*);
+            L = va_arg(ap, uint32_t*);
             *L = unpacku32(buf, bytodr);
             buf += 4;
             break;

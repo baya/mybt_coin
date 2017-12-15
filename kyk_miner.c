@@ -172,11 +172,9 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 
     res = kyk_load_utxo_chain(&utxo_chain, wallet);
     check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
-    printf("??????? utxo_chain -> len: %u\n", utxo_chain -> len);
 
     res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
     check(res == 0, "Failed to cmd_make_block: kyk_append_utxo_chain_from_block failed");
-    printf("???????+++++++++ utxo_chain -> len: %u\n", utxo_chain -> len);
 
     res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
     check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_utxo_chain failed");
@@ -195,7 +193,7 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
-    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    /* if(utxo_chain) kyk_free_utxo_chain(utxo_chain); */
     return -1;
 }
 

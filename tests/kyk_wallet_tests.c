@@ -248,6 +248,47 @@ error:
     return "Failed to test_kyk_wallet_save_utxo_chain";
 }
 
+char* test_kyk_load_utxo_chain_from_chainfile_buf()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_load_utxo_chain_from_chainfile_buf(utxo_chain, UTXO1_CHAIN_FILE_BUF, sizeof(UTXO1_CHAIN_FILE_BUF));
+    mu_assert(res == 0, "Failed to test_kyk_load_utxo_chain_from_chainfile_buf");
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+        kyk_print_utxo(utxo);
+    	utxo = utxo -> next;
+    }
+    
+
+    return NULL;
+}
+
+
+char* test2_kyk_load_utxo_chain_from_chainfile_buf()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_load_utxo_chain_from_chainfile_buf(utxo_chain, UTXO7_CHAIN_FILE_BUF, sizeof(UTXO7_CHAIN_FILE_BUF));
+    mu_assert(res == 0, "Failed to test_kyk_load_utxo_chain_from_chainfile_buf");
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+        kyk_print_utxo(utxo);
+    	utxo = utxo -> next;
+    }
+    
+
+    return NULL;
+}
+
 
 char* all_tests()
 {
@@ -264,6 +305,8 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_save_block);
     mu_run_test(test_kyk_load_utxo_chain);
     mu_run_test(test_kyk_wallet_save_utxo_chain);
+    mu_run_test(test_kyk_load_utxo_chain_from_chainfile_buf);
+    mu_run_test(test2_kyk_load_utxo_chain_from_chainfile_buf);
 
     return NULL;
 }

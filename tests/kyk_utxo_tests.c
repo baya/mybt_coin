@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "test_data.h"
+#include "beej_pack.h"
 #include "kyk_buff.h"
 #include "kyk_tx.h"
 #include "kyk_utils.h"
@@ -78,6 +79,27 @@ char* test_kyk_deseri_utxo_chain()
 
     res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, &check_num);
     mu_assert(res == 0, "Failed to test_kyk_deseri_utxo_chain");
+
+    return NULL;
+    
+}
+
+char* test2_kyk_deseri_utxo_chain()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    uint8_t* bufp = NULL;
+    uint32_t chain_len = 0;
+    int res = -1;
+    size_t check_num = 0;
+
+    bufp = UTXO1_CHAIN_FILE_BUF;
+    beej_unpack(bufp, "<L", &chain_len);
+    bufp += sizeof(chain_len);
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, bufp, chain_len, &check_num);
+    mu_assert(res == 0, "Failed to test_kyk_deseri_utxo_chain");
+    kyk_print_utxo(utxo_chain -> hd);
 
     return NULL;
     
@@ -242,7 +264,8 @@ char* test_kyk_get_utxo_chain_size()
     size_t chain_size = 0;
     int res = -1;
 
-    res = kyk_deseri_utxo_chain(&utxo_chain, UTXO_BUF, 1, NULL);
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, NULL);
     check(res == 0, "Failed to test_kyk_get_utxo_chain_size: kyk_deseri_tuxo_chain Failed");
 
     res = kyk_get_utxo_chain_size(utxo_chain, &chain_size);
@@ -263,7 +286,8 @@ char* test_kyk_seri_utxo_chain()
     size_t chain_size = 0;
     int res = -1;
 
-    res = kyk_deseri_utxo_chain(&utxo_chain, UTXO_BUF, 1, NULL);
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, NULL);
     check(res == 0, "Failed to test_kyk_seri_utxo_chain: kyk_deseri_tuxo_chain Failed");
 
     res = kyk_get_utxo_chain_size(utxo_chain, &chain_size);
@@ -299,10 +323,11 @@ char *all_tests()
     mu_run_test(test_kyk_make_utxo);
     mu_run_test(test_kyk_valid_utxo_chain);
     mu_run_test(test_kyk_combine_utxo_chain);
-    /* mu_run_test(test_kyk_append_utxo_chain_from_tx); */
-    /* mu_run_test(test_kyk_append_utxo_chain_from_block); */
-    /* mu_run_test(test_kyk_get_utxo_chain_size); */
-    /* mu_run_test(test_kyk_seri_utxo_chain); */
+    mu_run_test(test_kyk_append_utxo_chain_from_tx);
+    mu_run_test(test_kyk_append_utxo_chain_from_block);
+    mu_run_test(test_kyk_get_utxo_chain_size);
+    mu_run_test(test_kyk_seri_utxo_chain);
+    mu_run_test(test2_kyk_deseri_utxo_chain);
     
     return NULL;
 }

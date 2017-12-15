@@ -76,4 +76,8 @@ int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
 int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet,
 			       const struct kyk_utxo_chain* utxo_chain);
 
+int kyk_load_utxo_chain_from_chainfile_buf(struct kyk_utxo_chain* utxo_chain,
+					   const uint8_t* buf,
+					   size_t buf_len);
+
 #endif
