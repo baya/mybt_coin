@@ -731,7 +731,7 @@ int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     uint8_t* buf = NULL;
     uint8_t* bufp = NULL;
     FILE* fp = NULL;
-    uint32_t chain_len = 0;
+    unsigned long int chain_len = 0;
     int res = -1;
 
     check(new_utxo_chain, "Failed to kyk_load_utxo_chain: utxo_chain is NULL");
@@ -740,23 +740,27 @@ int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     fp = fopen(wallet -> utxo_path, "rb");
     check(fp, "Failed to kyk_load_utxo_chain: fopen failed");
 
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_deseri_utxo_chain: utxo_chain calloc failed");
+    kyk_init_utxo_chain(utxo_chain);
+
+
     res = kyk_file_read_all(&buf, fp, NULL);
     check(res == 0, "Failed to kyk_load_utxo_chain: kyk_file_read_all failed");
 
-    utxo_chain = calloc(1, sizeof(*utxo_chain));
-
     if(buf){
-	bufp = buf;
-	read_utxo_count(bufp, &chain_len);
-	bufp += sizeof(utxo_chain -> len);
+    	bufp = buf;
+    	/* read_utxo_count(bufp, &chain_len); */
+	beej_unpack(bufp, "<L", &chain_len);
+    	bufp += sizeof(chain_len);
 
-	res = kyk_deseri_utxo_chain(&utxo_chain, buf, chain_len, NULL);
-	check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+    	res = kyk_deseri_utxo_chain(utxo_chain, bufp, chain_len, NULL);
+    	check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
     }
 
     *new_utxo_chain = utxo_chain;
 
-    if(fp)  fclose(fp);
+    if(fp) fclose(fp);
     if(buf) free(buf);
 
     return 0;
@@ -779,6 +783,7 @@ int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet, const struct kyk
     int res = -1;
 
     check(wallet, "Failed to kyk_wallet_save_utxo_chain: wallet is NULL");
+    check(wallet -> utxo_path, "Failed to kyk_wallet_save_utxo_chain: wallet -> utxo_path is NULL");
     check(utxo_chain, "Failed to kyk_wallet_save_utxo_chain: utxo_chain is NULL");
 
     fp = fopen(wallet -> utxo_path, "wb");

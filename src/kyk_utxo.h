@@ -37,7 +37,7 @@ int kyk_seri_utxo(uint8_t* buf,
 
 int kyk_init_utxo_chain(struct kyk_utxo_chain* utxo_chain);
 
-int kyk_deseri_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+int kyk_deseri_utxo_chain(struct kyk_utxo_chain* utxo_chain,
 			  const uint8_t* buf,
 			  size_t count,
 			  size_t* check_num);

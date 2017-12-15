@@ -407,12 +407,12 @@ int kyk_deseri_utxo(struct kyk_utxo** new_utxo, const uint8_t* buf, size_t* chec
     total += len;
     bufp += len;
 
-    memcpy(&utxo -> addr_len, bufp, sizeof(utxo -> addr_len));
+    utxo -> addr_len = *bufp;
     len = sizeof(utxo -> addr_len);
     total += len;
     bufp += len;
 
-    check(utxo -> addr_len > 0, "Failed to kyk_deseri_utxo: utxo -> add_len is invalid");
+    check(utxo -> addr_len > 0, "Failed to kyk_deseri_utxo: utxo -> addr_len is invalid");
     utxo -> btc_addr = calloc(utxo -> addr_len, sizeof(*utxo -> btc_addr));
     check(utxo -> btc_addr, "Failed to kyk_deseri_utxo: utxo -> btc_addr calloc failed");
     memcpy(utxo -> btc_addr, bufp, utxo -> addr_len);
@@ -442,7 +442,7 @@ int kyk_deseri_utxo(struct kyk_utxo** new_utxo, const uint8_t* buf, size_t* chec
     total += len;
     bufp += len;
 
-    memcpy(&utxo -> spent, bufp, sizeof(utxo -> spent));
+    utxo -> spent = *bufp;
     len = sizeof(utxo -> spent);
     total += len;
     bufp += len;
@@ -475,12 +475,11 @@ error:
     return -1;
 }
 
-int kyk_deseri_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+int kyk_deseri_utxo_chain(struct kyk_utxo_chain* utxo_chain,
 			  const uint8_t* buf,
 			  size_t count,
 			  size_t* check_num)
 {
-    struct kyk_utxo_chain* utxo_chain = NULL;
     struct kyk_utxo* utxo = NULL;
     const uint8_t* bufp = NULL;
     size_t len = 0;
@@ -488,26 +487,20 @@ int kyk_deseri_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     size_t i = 0;
     int res = -1;
 
-    check(new_utxo_chain, "Failed to kyk_deseri_utxo_chain: new_utxo_chain is NULL");
+    check(utxo_chain, "Failed to kyk_deseri_utxo_chain: new_utxo_chain is NULL");
     check(buf, "Failed to kyk_deseri_utxo_chain: buf is NULL");
-
-    utxo_chain = calloc(1, sizeof(*utxo_chain));
-    check(utxo_chain, "Failed to kyk_deseri_utxo_chain: utxo_chain calloc failed");
-    kyk_init_utxo_chain(utxo_chain);
 
     bufp = buf;
 
     for(i = 0; i < count; i++){
-	res = kyk_deseri_utxo(&utxo, bufp, &len);
-	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_deseri_utxo failed");
-	check(utxo, "Failed to kyk_deseri_utxo_chain: utxo is NULL");
-	res = kyk_utxo_chain_append(utxo_chain, utxo);
-	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_utxo_chain append failed");
-	bufp += len;
-	total += len;
+    	res = kyk_deseri_utxo(&utxo, bufp, &len);
+    	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_deseri_utxo failed");
+    	check(utxo, "Failed to kyk_deseri_utxo_chain: utxo is NULL");
+    	res = kyk_utxo_chain_append(utxo_chain, utxo);
+    	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_utxo_chain append failed");
+    	bufp += len;
+    	total += len;
     }
-
-    *new_utxo_chain = utxo_chain;
 
     if(check_num){
 	*check_num = total;

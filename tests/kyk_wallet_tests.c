@@ -232,7 +232,8 @@ char* test_kyk_wallet_save_utxo_chain()
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_save_utxo_chain: kyk_setup_wallet failed");
 
-    res = kyk_deseri_utxo_chain(&utxo_chain, UTXO_BUF, 1, NULL);
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, NULL);
     check(res == 0, "Failed to test_kyk_wallet_save_utxo_chain: kyk_deseri_utxo_chain failed");
 
     res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);

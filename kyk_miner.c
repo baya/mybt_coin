@@ -72,6 +72,7 @@ int main(int argc, char *argv[])
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else if(match_cmd(argv[1], CMD_MK_BLOCK)){
 	    wallet = kyk_open_wallet(wdir);
+	    check(wallet, "Failed to kyk_open_wallet");
 	    cmd_make_block(wallet);
 	} else if(match_cmd(argv[1], CMD_QUERY_BALANCE)){
 	    wallet = kyk_open_wallet(wdir);
@@ -168,11 +169,14 @@ int cmd_make_block(const struct kyk_wallet* wallet)
     res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
     check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
 
+
     res = kyk_load_utxo_chain(&utxo_chain, wallet);
     check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
+    printf("??????? utxo_chain -> len: %u\n", utxo_chain -> len);
 
     res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
     check(res == 0, "Failed to cmd_make_block: kyk_append_utxo_chain_from_block failed");
+    printf("???????+++++++++ utxo_chain -> len: %u\n", utxo_chain -> len);
 
     res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
     check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_utxo_chain failed");
