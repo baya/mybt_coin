@@ -54,7 +54,6 @@ char* test_kyk_create_wallet_key()
     check(wkey, "failed to kyk_create_wallet_key");
     mu_assert(wkey -> cfg_idx == cfg_idx, "failed to set the correct cfgidx");
     mu_assert(strcmp(wkey -> desc, desc) == 0, "failed to set the correct desc");
-    // printf("btc address: %s\n", wkey -> btc_addr);
     
     return NULL;
 
@@ -278,6 +277,7 @@ char* test2_kyk_load_utxo_chain_from_chainfile_buf()
     utxo_chain = calloc(1, sizeof(*utxo_chain));
     res = kyk_load_utxo_chain_from_chainfile_buf(utxo_chain, UTXO7_CHAIN_FILE_BUF, sizeof(UTXO7_CHAIN_FILE_BUF));
     mu_assert(res == 0, "Failed to test_kyk_load_utxo_chain_from_chainfile_buf");
+    mu_assert(utxo_chain -> len == 7, "Failed to test_kyk_load_utxo_chain_from_chainfile_buf");
 
     utxo = utxo_chain -> hd;
     while(utxo){
