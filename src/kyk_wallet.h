@@ -80,4 +80,9 @@ int kyk_load_utxo_chain_from_chainfile_buf(struct kyk_utxo_chain* utxo_chain,
 					   const uint8_t* buf,
 					   size_t buf_len);
 
+int kyk_wallet_query_value_by_addr(const char* btc_addr,
+				   const struct kyk_utxo_chain* utxo_chain,
+				   uint64_t* value);
+
+
 #endif

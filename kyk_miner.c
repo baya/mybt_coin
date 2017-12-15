@@ -169,7 +169,6 @@ int cmd_make_block(const struct kyk_wallet* wallet)
     res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
     check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
 
-
     res = kyk_load_utxo_chain(&utxo_chain, wallet);
     check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
 
@@ -187,13 +186,17 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 
     kyk_blk_hash256(digest, blk -> hd);
     kyk_print_hex("maked a new block", digest, sizeof(digest));
+
+    free(pubkey);
+    kyk_free_block(blk);
+    kyk_free_utxo_chain(utxo_chain);
     
     return 0;
 
 error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
-    /* if(utxo_chain) kyk_free_utxo_chain(utxo_chain); */
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
     return -1;
 }
 

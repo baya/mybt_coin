@@ -73,5 +73,7 @@ int kyk_seri_utxo_chain(uint8_t* buf,
 
 void kyk_print_utxo(const struct kyk_utxo* utxo);
 
+int kyk_utxo_match_addr(const struct kyk_utxo* utxo, const char* btc_addr);
+
 
 #endif

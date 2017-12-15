@@ -837,3 +837,30 @@ error:
     if(fp) fclose(fp);
     return -1;
 }
+
+int kyk_wallet_query_value_by_addr(const char* btc_addr,
+				   const struct kyk_utxo_chain* utxo_chain,
+				   uint64_t* value)
+{
+    struct kyk_utxo* utxo = NULL;
+    uint64_t utxo_value = 0;
+
+    check(btc_addr, "Failed to kyk_wallet_query_value_by_addr: btc_addr is NULL");
+    check(utxo_chain, "Failed to kyk_wallet_query_value_by_addr: utxo_chain is NULL");
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	if(kyk_utxo_match_addr(utxo, btc_addr) == 0 && utxo -> spent == 0){
+	    utxo_value += utxo -> value;
+	}
+	utxo = utxo -> next;
+    }
+
+    *value = utxo_value;
+
+    return 0;
+    
+error:
+
+    return -1;
+}

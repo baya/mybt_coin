@@ -289,6 +289,30 @@ char* test2_kyk_load_utxo_chain_from_chainfile_buf()
     return NULL;
 }
 
+char* test_kyk_wallet_query_value_by_addr()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
+    uint64_t value = 0;
+    uint64_t expect_value = 70000000000;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_load_utxo_chain_from_chainfile_buf(utxo_chain, UTXO7_CHAIN_FILE_BUF, sizeof(UTXO7_CHAIN_FILE_BUF));
+    check(res == 0, "Failed to test_kyk_wallet_query_value_by_addr: kyk_load_utxo_chain_from_chainfile_buf failed");
+
+    res = kyk_wallet_query_value_by_addr(btc_addr, utxo_chain, &value);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_query_value_by_addr");
+    mu_assert(expect_value == value, "Failed to test_kyk_wallet_query_value_by_addr");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_wallet_query_value_by_addr";
+
+}
+
 
 char* all_tests()
 {
@@ -307,6 +331,7 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_save_utxo_chain);
     mu_run_test(test_kyk_load_utxo_chain_from_chainfile_buf);
     mu_run_test(test2_kyk_load_utxo_chain_from_chainfile_buf);
+    mu_run_test(test_kyk_wallet_query_value_by_addr);
 
     return NULL;
 }

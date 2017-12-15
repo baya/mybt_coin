@@ -557,3 +557,21 @@ void kyk_print_utxo(const struct kyk_utxo* utxo)
     kyk_print_hex("sc", utxo -> sc, utxo -> sc_size);
     printf("spent:   %d\n", utxo -> spent);
 }
+
+int kyk_utxo_match_addr(const struct kyk_utxo* utxo, const char* btc_addr)
+{
+    int res = -1;
+    
+    check(utxo, "Failed to kyk_utxo_match_addr: utxo is NULL");
+    check(utxo -> addr_len > 0, "Failed to kyk_utxo_match_addr: utxo -> addr_len is invalid");
+    check(utxo -> btc_addr, "Failed to kyk_utxo_match_addr: utxo -> btc_addr is NULL");
+    check(btc_addr, "Failed to kyk_utxo_match_addr: btc_addr is NULL");
+
+    res = strncmp(btc_addr, utxo -> btc_addr, utxo -> addr_len);
+
+    return res;
+    
+error:
+
+    return -1;
+}
