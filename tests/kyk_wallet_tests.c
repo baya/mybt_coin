@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "test_data.h"
+#include "kyk_utxo.h"
 #include "kyk_wallet.h"
 #include "kyk_utils.h"
 #include "mu_unit.h"
@@ -184,17 +185,66 @@ error:
 
 char* test_kyk_load_blk_header_chain()
 {
+    const char* wdir = "/tmp/test_kyk_load_blk_header_chain";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_load_blk_header_chain: kyk_setup_wallet failed");
+
+    res = kyk_load_blk_header_chain(&hd_chain, wallet);
+    mu_assert(res == 0, "Failed to test_kyk_load_blk_header_chain");
+
     return NULL;
+
+error:
+
+    return "Failed to test_kyk_load_blk_header_chain";
 }
 
 char* test_kyk_load_utxo_chain()
 {
+    const char* wdir = "/tmp/test_kyk_load_utxo_chain";
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_wallet* wallet = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_load_utxo_chain: kyk_setup_wallet failed");
+
+    res = kyk_load_utxo_chain(&utxo_chain, wallet);
+    mu_assert(res == 0, "Failed to test_kyk_load_utxo_chain");
+
     return NULL;
+
+error:
+    return "Failed to test_kyk_load_utxo_chain";
 }
 
 char* test_kyk_wallet_save_utxo_chain()
 {
+    const char* wdir = "/tmp/test_kyk_wallet_save_utxo_chain";
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_wallet* wallet = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_save_utxo_chain: kyk_setup_wallet failed");
+
+    res = kyk_deseri_utxo_chain(&utxo_chain, UTXO_BUF, 1, NULL);
+    check(res == 0, "Failed to test_kyk_wallet_save_utxo_chain: kyk_deseri_utxo_chain failed");
+
+    res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_save_utxo_chain");
+
+    kyk_free_utxo_chain(utxo_chain);
+    
     return NULL;
+
+error:
+
+    return "Failed to test_kyk_wallet_save_utxo_chain";
 }
 
 

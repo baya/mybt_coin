@@ -281,26 +281,18 @@ error:
 }
 
 
-int kyk_seri_utxo_chain(uint8_t** new_buf,
+int kyk_seri_utxo_chain(uint8_t* buf,
 			const struct kyk_utxo_chain* utxo_chain,
 			size_t* check_num)
 {
     struct kyk_utxo* utxo_cpy = NULL;
-    uint8_t* buf = NULL;
     uint8_t* bufp = NULL;
-    size_t chain_size = 0;
     size_t total_size = 0;
     size_t utxo_size = 0;
     int res = -1;
 
-    check(new_buf, "Failed to kyk_seri_utxo_chain: new_buf is NULL");
+    check(buf, "Failed to kyk_seri_utxo_chain: buf is NULL");
     check(utxo_chain, "Failed to kyk_seri_utxo_chain: utxo_chain is NULL");
-
-    res = kyk_get_utxo_chain_size(utxo_chain, &chain_size);
-    check(res == 0, "Failed to kyk_seri_utxo_chain: kyk_get_utxo_chain_size");
-
-    buf = calloc(chain_size, sizeof(*buf));
-    check(buf, "Failed to kyk_seri_utxo_chain: buf calloc failed");
 
     bufp = buf;
     utxo_cpy = utxo_chain -> hd;
@@ -313,12 +305,8 @@ int kyk_seri_utxo_chain(uint8_t** new_buf,
 	total_size += utxo_size;
     }
 
-    check(total_size == chain_size, "Failed to kyk_seri_utxo_chain: invalid chain_size");
-
-    *new_buf = buf;
-
     if(check_num){
-	*check_num = chain_size;
+	*check_num = total_size;
     }
 
     return 0;
@@ -513,7 +501,8 @@ int kyk_deseri_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
 	res = kyk_deseri_utxo(&utxo, bufp, &len);
 	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_deseri_utxo failed");
 	check(utxo, "Failed to kyk_deseri_utxo_chain: utxo is NULL");
-	kyk_utxo_chain_append(utxo_chain, utxo);
+	res = kyk_utxo_chain_append(utxo_chain, utxo);
+	check(res == 0, "Failed to kyk_deseri_utxo_chain: kyk_utxo_chain append failed");
 	bufp += len;
 	total += len;
     }

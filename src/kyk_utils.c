@@ -352,6 +352,11 @@ int kyk_file_read_all(uint8_t** buf, FILE* fp, size_t* len)
     res = fseek(fp, 0L, SEEK_SET);
     check(res == 0, "Failed to kyk_file_read_all: fseek failed");
 
+    if(blen == 0){
+	if(len) *len = blen;
+	return 0;
+    }
+
     bufp = calloc(blen, sizeof(*bufp));
     check(bufp, "Failed to kyk_file_read_all: bufp calloc failed");
 

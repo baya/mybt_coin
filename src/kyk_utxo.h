@@ -67,7 +67,7 @@ int kyk_append_utxo_chain_from_block(struct kyk_utxo_chain* utxo_chain,
 
 int kyk_get_utxo_chain_size(const struct kyk_utxo_chain* utxo_chain, size_t* len);
 
-int kyk_seri_utxo_chain(uint8_t** new_buf,
+int kyk_seri_utxo_chain(uint8_t* buf,
 			const struct kyk_utxo_chain* utxo_chain,
 			size_t* check_num);
 

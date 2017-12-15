@@ -745,17 +745,19 @@ int kyk_load_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
 
     utxo_chain = calloc(1, sizeof(*utxo_chain));
 
-    bufp = buf;
-    read_utxo_count(bufp, &chain_len);
-    bufp += sizeof(utxo_chain -> len);
+    if(buf){
+	bufp = buf;
+	read_utxo_count(bufp, &chain_len);
+	bufp += sizeof(utxo_chain -> len);
 
-    res = kyk_deseri_utxo_chain(&utxo_chain, buf, chain_len, NULL);
-    check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+	res = kyk_deseri_utxo_chain(&utxo_chain, buf, chain_len, NULL);
+	check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+    }
 
     *new_utxo_chain = utxo_chain;
 
-    fclose(fp);
-    free(buf);
+    if(fp)  fclose(fp);
+    if(buf) free(buf);
 
     return 0;
     
@@ -770,6 +772,8 @@ int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet, const struct kyk
 {
     FILE* fp = NULL;
     uint8_t* buf = NULL;
+    uint8_t* bufp = NULL;
+    size_t buf_size = 0;
     size_t chain_size = 0;
     size_t len = 0;
     int res = -1;
@@ -780,11 +784,24 @@ int kyk_wallet_save_utxo_chain(const struct kyk_wallet* wallet, const struct kyk
     fp = fopen(wallet -> utxo_path, "wb");
     check(fp, "Failed to kyk_wallet_save_utxo_chain: fopen %s failed", wallet -> utxo_path);
 
-    res = kyk_seri_utxo_chain(&buf, utxo_chain, &chain_size);
-    check(res == 0, "Failed to kyk_wallet_save_utxo_chain: kyk_seri_utxo_chain failed");
+    res = kyk_get_utxo_chain_size(utxo_chain, &buf_size);
+    check(res == 0, "Failed to kyk_wallet_save_utxo_chain: kyk_get_utxo_chain_size failed");
 
-    len = fwrite(buf, sizeof(*buf), chain_size, fp);
-    check(len == chain_size, "Failed to kyk_wallet_save_utxo_chain: fwrite failed");
+    buf_size += sizeof(utxo_chain -> len);
+    buf = calloc(buf_size, sizeof(*buf));
+    check(buf, "Failed to kyk_wallet_save_utxo_chain: buf calloc failed");
+
+    bufp = buf;
+
+    beej_pack(bufp, "<L", utxo_chain -> len);
+    bufp += sizeof(utxo_chain -> len);
+    
+    res = kyk_seri_utxo_chain(bufp, utxo_chain, &chain_size);
+    check(res == 0, "Failed to kyk_wallet_save_utxo_chain: kyk_seri_utxo_chain failed");
+    check(chain_size == buf_size - sizeof(utxo_chain -> len), "Failed to kyk_wallet_save_utxo_chain: kyk_seri_utxo_chain failed");
+
+    len = fwrite(buf, sizeof(*buf), buf_size, fp);
+    check(len == buf_size, "Failed to kyk_wallet_save_utxo_chain: fwrite failed");
 
     free(buf);
     fclose(fp);
