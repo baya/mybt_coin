@@ -319,7 +319,6 @@ char* test_kyk_wallet_load_addr_list()
     struct kyk_wallet* wallet = NULL;
     char** addr_list = NULL;
     size_t len = 0;
-    size_t i = 0;
     int res = -1;
 
     res = kyk_setup_wallet(&wallet, wdir);

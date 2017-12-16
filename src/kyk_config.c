@@ -566,7 +566,6 @@ int kyk_config_get_item_count(const struct config* cfg,
 {
     struct KeyValuePair* ev = NULL;
     size_t tmp_count = 0;
-    int res = -1;
     
     check(cfg, "Failed to kyk_config_get_item_count: cfg is NULL");
 

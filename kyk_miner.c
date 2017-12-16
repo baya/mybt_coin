@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 	printf("query blance:      %s %s\n", argv[0], CMD_QUERY_BALANCE);
 	printf("show address list: %s %s\n", argv[0], CMD_SHOW_ADDR_LIST);
 	printf("start server:      %s %s\n", argv[0], CMD_SERVE);
-	printf("add address:       %s %s\n", argv[0], CMD_ADD_ADDRESS);
+	printf("add address:       %s %s [address label]\n", argv[0], CMD_ADD_ADDRESS);
 	printf("query block:       %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
 	printf("delete wallet:     %s %s\n", argv[0], CMD_DELETE);
     }
