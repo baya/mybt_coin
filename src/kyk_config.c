@@ -8,25 +8,6 @@
 #include "kyk_utils.h"
 #include "dbg.h"
 
-enum ConfigKVType {
-   CONFIG_KV_UNKNOWN,
-   CONFIG_KV_STRING,
-   CONFIG_KV_INT64,
-   CONFIG_KV_BOOL,
-};
-
-
-struct KeyValuePair {
-    char* key;
-    bool  save;
-    struct KeyValuePair* next;
-    enum ConfigKVType    type;
-    union {
-	int64_t  val;
-	bool  trueOrFalse;
-	char* str;
-    } u;
-};
 
 static void config_freekvlist(struct KeyValuePair *list);
 
@@ -578,3 +559,39 @@ error:
 
     return -1;
 }
+
+int kyk_config_get_item_count(const struct config* cfg,
+			      const char* label,
+			      size_t* count)
+{
+    struct KeyValuePair* ev = NULL;
+    size_t tmp_count = 0;
+    int res = -1;
+    
+    check(cfg, "Failed to kyk_config_get_item_count: cfg is NULL");
+
+    ev = cfg -> list;
+    if(label == NULL){
+	while(ev){
+	    tmp_count += 1;
+	    ev = ev -> next;
+	}
+
+    } else {
+	while(ev){
+	    if(strstr(ev -> key, label)){
+		tmp_count += 1;
+	    }
+	    ev = ev -> next;
+	}
+    }
+
+    *count = tmp_count;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+

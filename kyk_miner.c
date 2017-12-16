@@ -27,6 +27,7 @@
 #define CMD_QUERY_BLOCK    "queryBlock"
 #define CMD_MK_BLOCK       "makeBlock"
 #define CMD_QUERY_BALANCE  "queryBalance"
+#define CMD_SHOW_ADDR_LIST "showAddrList"
 #define CMD_MK_TX          "makeTx"
 #define CMD_SERVE          "serve"
 
@@ -34,6 +35,7 @@ int match_cmd(char *src, char *cmd);
 int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
 int cmd_make_block(const struct kyk_wallet* wallet);
 int cmd_query_balance(const struct kyk_wallet* wallet);
+int cmd_show_addr_list(const struct kyk_wallet* wallet);
 
 int main(int argc, char *argv[])
 {
@@ -50,14 +52,15 @@ int main(int argc, char *argv[])
 
     if(argc == 1){
 	printf("usage: %s command [args]\n", argv[0]);
-	printf("init a wallet:    %s %s\n", argv[0], CMD_INIT);
-	printf("make init blocks: %s %s\n", argv[0], CMD_MK_BLOCK);
-	printf("make tx:          %s %s\n", argv[0], CMD_MK_TX);
-	printf("query blance:     %s %s\n", argv[0], CMD_QUERY_BALANCE);
-	printf("start server:     %s %s\n", argv[0], CMD_SERVE);
-	printf("add address:      %s %s\n", argv[0], CMD_ADD_ADDRESS);
-	printf("query block:      %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
-	printf("delete wallet:    %s %s\n", argv[0], CMD_DELETE);
+	printf("init a wallet:     %s %s\n", argv[0], CMD_INIT);
+	printf("make init blocks:  %s %s\n", argv[0], CMD_MK_BLOCK);
+	printf("make tx:           %s %s\n", argv[0], CMD_MK_TX);
+	printf("query blance:      %s %s\n", argv[0], CMD_QUERY_BALANCE);
+	printf("show address list: %s %s\n", argv[0], CMD_SHOW_ADDR_LIST);
+	printf("start server:      %s %s\n", argv[0], CMD_SERVE);
+	printf("add address:       %s %s\n", argv[0], CMD_ADD_ADDRESS);
+	printf("query block:       %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
+	printf("delete wallet:     %s %s\n", argv[0], CMD_DELETE);
     }
     
     if(argc == 2){
@@ -78,6 +81,9 @@ int main(int argc, char *argv[])
 	} else if(match_cmd(argv[1], CMD_QUERY_BALANCE)){
 	    wallet = kyk_open_wallet(wdir);
 	    cmd_query_balance(wallet);
+	} else if(match_cmd(argv[1], CMD_SHOW_ADDR_LIST)){
+	    wallet = kyk_open_wallet(wdir);
+	    cmd_show_addr_list(wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -233,6 +239,29 @@ int cmd_query_balance(const struct kyk_wallet* wallet)
 error:
     if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
     if(btc_addr) free(btc_addr);
+    return -1;
+}
+
+int cmd_show_addr_list(const struct kyk_wallet* wallet)
+{
+    char** addr_list = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    int res = -1;
+
+    check(wallet, "Failed to cmd_show_addr_list: wallet is NULL");
+
+    res = kyk_wallet_load_addr_list(wallet, &addr_list, &len);
+    check(res == 0, "Failed to cmd_show_addr_list: kyk_wallet_load_addr_list failed");
+    
+    for(i = 0; i < len; i++){
+	printf("%s\n", addr_list[i]);
+    }
+
+    return 0;
+
+error:
+
     return -1;
 }
 

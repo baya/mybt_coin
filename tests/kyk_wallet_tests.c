@@ -313,6 +313,34 @@ error:
 
 }
 
+char* test_kyk_wallet_load_addr_list()
+{
+    const char* wdir = "/tmp/test_kyk_wallet_load_addr_list";
+    struct kyk_wallet* wallet = NULL;
+    char** addr_list = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_load_addr_list: kyk_setup_wallet failed");
+
+    res = kyk_wallet_load_addr_list(wallet, &addr_list, &len);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_load_addr_list");
+    mu_assert(len == 1, "Failed to tst_kyk_wallet_load_addr_list");
+
+    /* for(i = 0; i < len; i++){ */
+    /* 	printf("btc address: %s\n", addr_list[i]); */
+    /* } */
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_wallet_load_addr_list";
+
+}
+
 
 char* all_tests()
 {
@@ -332,6 +360,7 @@ char* all_tests()
     mu_run_test(test_kyk_load_utxo_chain_from_chainfile_buf);
     mu_run_test(test2_kyk_load_utxo_chain_from_chainfile_buf);
     mu_run_test(test_kyk_wallet_query_value_by_addr);
+    mu_run_test(test_kyk_wallet_load_addr_list);
 
     return NULL;
 }

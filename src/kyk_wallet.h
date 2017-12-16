@@ -84,5 +84,8 @@ int kyk_wallet_query_value_by_addr(const char* btc_addr,
 				   const struct kyk_utxo_chain* utxo_chain,
 				   uint64_t* value);
 
+int kyk_wallet_load_addr_list(const struct kyk_wallet* wallet,
+			      char** new_addr_list[],
+			      size_t* nlen);
 
 #endif

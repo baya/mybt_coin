@@ -60,6 +60,27 @@ char* test_kyk_config_load()
     return NULL;
 }
 
+char* test_kyk_config_get_item_count()
+{
+    struct config* cfg = NULL;
+    char* filename = "data/contacts.cfg";
+    size_t count = 0;
+    int res = -1;
+
+    res = kyk_config_load(filename, &cfg);
+    check(res == 0, "Failed to test_kyk_config_get_item_count: kyk_config_load failed");
+
+    res = kyk_config_get_item_count(cfg, "addr", &count);
+    mu_assert(res == 0, "Failed to test_kyk_config_get_item_count");
+    mu_assert(count == 3, "Failed to test_kyk_config_get_item_count");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_config_get_item_count";
+}
+
 char* test_kyk_config_write()
 {
 
@@ -164,6 +185,7 @@ char *all_tests()
     mu_run_test(test_kyk_config_setint64);
     mu_run_test(test_kyk_config_get_cfg_idx);
     mu_run_test(test_kyk_config_get_cfg_idx2);
+    mu_run_test(test_kyk_config_get_item_count);
     
     return NULL;
 }

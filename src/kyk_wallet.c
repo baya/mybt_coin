@@ -38,6 +38,8 @@ static int kyk_setup_main_address(struct kyk_wallet* wallet);
 
 static int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
 
+static int get_address(const struct KeyValuePair* ev, char** new_addr);
+
 int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
 {
     struct kyk_wallet* wallet = NULL;
@@ -862,5 +864,88 @@ int kyk_wallet_query_value_by_addr(const char* btc_addr,
     
 error:
 
+    return -1;
+}
+
+int kyk_wallet_load_addr_list(const struct kyk_wallet* wallet,
+			      char** new_addr_list[],
+			      size_t* nlen)
+{
+    const struct config* cfg;
+    struct KeyValuePair* ev = NULL;
+    char** addr_list = NULL;
+    char** addr = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_wallet_load_addr_list: wallet is NULL");
+    check(wallet -> wallet_cfg, "Failed to kyk_wallet_load_addr_list: wallet -> wallet_cfg is NULL");
+    check(new_addr_list, "Failed to kyk_wallet_load_addr_list: new_addr_list is NULL");
+    check(nlen, "Failed to kyk_wallet_load_addr_list: len is NULL");
+
+    cfg = wallet -> wallet_cfg;
+
+    res = kyk_config_get_item_count(cfg, "pubkey", &len);
+    check(res == 0, "Failed to kyk_wallet_load_addr_list: kyk_config_get_item_count failed");
+
+    if(len == 0) return 0;
+
+    addr_list = calloc(len, sizeof(*addr_list));
+    check(addr_list, "Failed to kyk_wallet_load_addr_list: addr_list calloc failed");
+    
+    ev = cfg -> list;
+    i = 0;
+    
+    while(ev && i < len){
+	if(strstr(ev -> key, "pubkey")){
+	    addr = addr_list + i;
+	    res = get_address(ev, addr);
+	    check(res == 0, "Failed to kyk_wallet_load_addr_list: get_address failed");
+	    i++;
+	}
+	ev = ev -> next;
+    }
+
+    *new_addr_list = addr_list;
+    *nlen = len;
+
+    return 0;
+
+error:
+    if(addr_list){
+	for(i = 0; i < len; i++){
+	    addr = addr_list + i;
+	    if(*addr) free(*addr);
+	}
+	free(addr_list);
+    }
+    return -1;
+}
+
+int get_address(const struct KeyValuePair* ev, char** new_addr)
+{
+    uint8_t* pubkey = NULL;
+    size_t pbk_len = 0;
+    char* addr = NULL;
+    
+    check(ev, "Failed to get_address: ev is NULL");
+    check(new_addr, "Failed to get_address: new_addr is NULL");
+    check(strstr(ev -> key, "pubkey"), "Failed to get_address: ev is not pubkey");
+
+    pubkey = kyk_alloc_hex(ev -> u.str, &pbk_len);
+    check(pbk_len > 0, "Failed to get_address: kyk_alloc_hex failed");
+
+    addr = kyk_make_address_from_pubkey(pubkey, pbk_len);
+    check(addr, "Failed to get_address: kyk_make_address_from_pubkey failed");
+
+    *new_addr = addr;
+
+    free(pubkey);
+
+    return 0;
+    
+error:
+    if(pubkey) free(pubkey);
     return -1;
 }

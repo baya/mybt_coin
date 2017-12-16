@@ -5,7 +5,26 @@
 
 #define CFG_KEY_COL_COUNT 4
 
-struct KeyValuePair;
+
+enum ConfigKVType {
+   CONFIG_KV_UNKNOWN,
+   CONFIG_KV_STRING,
+   CONFIG_KV_INT64,
+   CONFIG_KV_BOOL,
+};
+
+
+struct KeyValuePair {
+    char* key;
+    bool  save;
+    struct KeyValuePair* next;
+    enum ConfigKVType    type;
+    union {
+	int64_t  val;
+	bool  trueOrFalse;
+	char* str;
+    } u;
+};
 
 struct config {
     char *fileName;
@@ -43,5 +62,10 @@ int kyk_config_getint64(struct config *config,
 			...);
 
 int kyk_config_get_cfg_idx(const struct config* cfg, int* idx);
+
+int kyk_config_get_item_count(const struct config* cfg,
+			      const char* label,
+			      size_t* count);
+
 
 #endif
