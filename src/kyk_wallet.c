@@ -40,6 +40,8 @@ static int kyk_wallet_get_cfg_idx(struct kyk_wallet* wallet, int* cfg_idx);
 
 static int get_address(const struct KeyValuePair* ev, char** new_addr);
 
+static void free_addr_list(char** addr_list, size_t len);
+
 int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
 {
     struct kyk_wallet* wallet = NULL;
@@ -838,6 +840,61 @@ error:
     if(buf) free(buf);
     if(fp) fclose(fp);
     return -1;
+}
+
+int kyk_wallet_query_total_balance(const struct kyk_wallet* wallet, uint64_t* balance)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    char** addr_list = NULL;
+    char* addr = NULL;
+    size_t addr_list_len = 0;
+    uint64_t value = 0;
+    uint64_t total_value = 0;
+    size_t i = 0;
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_wallet_query_total_balance: wallet is NULL");
+
+    res = kyk_load_utxo_chain(&utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_query_total_balance: kyk_load_utxo_chain failed");
+
+    res = kyk_wallet_load_addr_list(wallet, &addr_list, &addr_list_len);
+    check(res == 0, "Failed to kyk_wallet_query_total_balance: kyk_wallet_load_addr_list failed");
+
+    for(i = 0; i < addr_list_len; i++){
+	addr = addr_list[i];
+	res = kyk_wallet_query_value_by_addr(addr, utxo_chain, &value);
+	check(res == 0, "Failed to kyk_wallet_query_total_balance: kyk_wallet_query_value_by_addr failed");
+	total_value += value;
+    }
+
+    *balance = total_value;
+
+    free_addr_list(addr_list, addr_list_len);
+    kyk_free_utxo_chain(utxo_chain);
+
+    return 0;
+
+error:
+    if(addr_list) free_addr_list(addr_list, addr_list_len);
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    
+    return -1;
+}
+
+void free_addr_list(char** addr_list, size_t len)
+{
+    size_t i = 0;
+    
+    if(addr_list){
+	for(i = 0; i < len; i++){
+	    if(addr_list[i]){
+		free(addr_list[i]);
+	    }
+	}
+
+	free(addr_list);
+    }
 }
 
 int kyk_wallet_query_value_by_addr(const char* btc_addr,

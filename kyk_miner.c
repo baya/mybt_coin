@@ -209,36 +209,22 @@ error:
 
 int cmd_query_balance(const struct kyk_wallet* wallet)
 {
-    uint8_t* pubkey = NULL;
-    char* btc_addr = NULL;
-    size_t pbk_len = 0;
-    struct kyk_utxo_chain* utxo_chain = NULL;
     uint64_t value = 0;
     double balance = 0.0;
     int res = -1;
 
-    res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
-    check(res == 0, "Failed to cmd_query_balance: kyk_wallet_get_pubkey failed");
-
-    res = kyk_load_utxo_chain(&utxo_chain, wallet);
-    check(res == 0, "Failed to cmd_query_balance: kyk_load_utxo_chain failed");
-
-    btc_addr = kyk_make_address_from_pubkey(pubkey, pbk_len);
-
-    res = kyk_wallet_query_value_by_addr(btc_addr, utxo_chain, &value);
-    check(res == 0, "Failed to cmd_query_balance: kyk_wallet_query_value_by_addr failed");
+    res = kyk_wallet_query_total_balance(wallet, &value);
+    check(res == 0, "Failed to cmd_query_balance: kyk_wallet_query_total_balance failed");
 
     balance = value / ONE_BTC_COIN_VALUE;
 
     printf("%f BTC\n", balance);
 
-    free(btc_addr);
-    kyk_free_utxo_chain(utxo_chain);
+
     return 0;
     
 error:
-    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
-    if(btc_addr) free(btc_addr);
+
     return -1;
 }
 

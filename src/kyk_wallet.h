@@ -88,4 +88,6 @@ int kyk_wallet_load_addr_list(const struct kyk_wallet* wallet,
 			      char** new_addr_list[],
 			      size_t* nlen);
 
+int kyk_wallet_query_total_balance(const struct kyk_wallet* wallet, uint64_t* balance);
+
 #endif
