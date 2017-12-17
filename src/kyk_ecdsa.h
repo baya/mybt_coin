@@ -6,6 +6,8 @@
 #include <openssl/obj_mac.h>
 #include <openssl/ecdsa.h>
 
+#include "kyk_defs.h"
+
 struct kyk_buff;
 
 EC_KEY *kyk_ec_new_keypair(const uint8_t *priv_bytes);

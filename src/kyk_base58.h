@@ -2,6 +2,7 @@
 #define __KYK_BASE58_H
 
 #include <openssl/bn.h>
+#include "kyk_defs.h"
 
 enum key_address {
     PUBKEY_ADDRESS       = 0,

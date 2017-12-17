@@ -6,6 +6,8 @@
 #include <openssl/err.h>
 #include <openssl/ecdsa.h>
 
+#include "kyk_defs.h"
+
 struct kyk_key {
     EC_KEY*  key;
     uint8_t* pub_key;

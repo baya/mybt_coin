@@ -1,7 +1,6 @@
 #ifndef KYK_UTXO_H__
 #define KYK_UTXO_H__
 
-
 struct kyk_utxo{
     uint8_t  txid[32];    /* Tx hash    */
     uint8_t  blkhash[32]; /* Block Hash */

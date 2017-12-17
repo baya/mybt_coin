@@ -1,6 +1,7 @@
 #ifndef __KYK_ADDRESS_H__
 #define __KYK_ADDRESS_H__
 
+#include "kyk_defs.h"
 #include "kyk_ecdsa.h"
 #include "kyk_utils.h"
 #include "kyk_sha.h"

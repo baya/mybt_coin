@@ -1,8 +1,7 @@
 #ifndef KYK_BUFF_H__
 #define KYK_BUFF_H__
 
-#include <string.h>
-#include <stdlib.h>
+#include "kyk_defs.h"
 
 struct kyk_buff {
     uint8_t   *base;

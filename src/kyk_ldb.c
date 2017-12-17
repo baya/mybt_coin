@@ -9,42 +9,42 @@
 #include "dbg.h"
 
 //! Unused.
-const uint32_t BLOCK_VALID_UNKNOWN      =    0;
+/* const uint32_t BLOCK_VALID_UNKNOWN      =    0; */
 
-//! Parsed, version ok, hash satisfies claimed PoW, 1 <= vtx count <= max, timestamp not in future
-const uint32_t    BLOCK_VALID_HEADER       =    1;
+/* //! Parsed, version ok, hash satisfies claimed PoW, 1 <= vtx count <= max, timestamp not in future */
+/* const uint32_t    BLOCK_VALID_HEADER       =    1; */
 
-//! All parent headers found, difficulty matches, timestamp >= median previous, checkpoint. Implies all parents
-//! are also at least TREE.
-const uint32_t    BLOCK_VALID_TREE         =    2;
+/* //! All parent headers found, difficulty matches, timestamp >= median previous, checkpoint. Implies all parents */
+/* //! are also at least TREE. */
+/* const uint32_t    BLOCK_VALID_TREE         =    2; */
 
-/**
- * Only first tx is coinbase, 2 <= coinbase input script length <= 100, transactions valid, no duplicate txids,
- * sigops, size, merkle root. Implies all parents are at least TREE but not necessarily TRANSACTIONS. When all
- * parent blocks also have TRANSACTIONS, CBlockIndex::nChainTx will be set.
- */
-const uint32_t    BLOCK_VALID_TRANSACTIONS =    3;
+/* /\** */
+/*  * Only first tx is coinbase, 2 <= coinbase input script length <= 100, transactions valid, no duplicate txids, */
+/*  * sigops, size, merkle root. Implies all parents are at least TREE but not necessarily TRANSACTIONS. When all */
+/*  * parent blocks also have TRANSACTIONS, CBlockIndex::nChainTx will be set. */
+/*  *\/ */
+/* const uint32_t    BLOCK_VALID_TRANSACTIONS =    3; */
 
-//! Outputs do not overspend inputs, no double spends, coinbase output ok, no immature coinbase spends, BIP30.
-//! Implies all parents are also at least CHAIN.
-const uint32_t    BLOCK_VALID_CHAIN        =    4;
+/* //! Outputs do not overspend inputs, no double spends, coinbase output ok, no immature coinbase spends, BIP30. */
+/* //! Implies all parents are also at least CHAIN. */
+/* const uint32_t    BLOCK_VALID_CHAIN        =    4; */
 
-//! Scripts & signatures ok. Implies all parents are also at least SCRIPTS.
-const uint32_t    BLOCK_VALID_SCRIPTS      =    5;
+/* //! Scripts & signatures ok. Implies all parents are also at least SCRIPTS. */
+/* const uint32_t    BLOCK_VALID_SCRIPTS      =    5; */
 
-//! All validity bits.
-const uint32_t    BLOCK_VALID_MASK         =   BLOCK_VALID_HEADER | BLOCK_VALID_TREE | BLOCK_VALID_TRANSACTIONS |
-    BLOCK_VALID_CHAIN | BLOCK_VALID_SCRIPTS;
+/* //! All validity bits. */
+/* const uint32_t    BLOCK_VALID_MASK         =   BLOCK_VALID_HEADER | BLOCK_VALID_TREE | BLOCK_VALID_TRANSACTIONS | */
+/*     BLOCK_VALID_CHAIN | BLOCK_VALID_SCRIPTS; */
 
 const uint32_t    BLOCK_HAVE_DATA          =    8; //!< full block available in blk*.dat
 const uint32_t    BLOCK_HAVE_UNDO          =   16; //!< undo data available in rev*.dat
 const uint32_t    BLOCK_HAVE_MASK          =   BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO;
 
-const uint32_t    BLOCK_FAILED_VALID       =   32; //!< stage after last reached validness failed
-const uint32_t    BLOCK_FAILED_CHILD       =   64; //!< descends from failed block
-const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD;
+/* const uint32_t    BLOCK_FAILED_VALID       =   32; //!< stage after last reached validness failed */
+/* const uint32_t    BLOCK_FAILED_CHILD       =   64; //!< descends from failed block */
+/* const uint32_t    BLOCK_FAILED_MASK        =   BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD; */
 
-const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client
+/* const uint32_t    BLOCK_OPT_WITNESS       =   128; //!< block data in blk*.data was received with a witness-enforcing client */
 
 
 int kyk_init_store_db(struct kyk_block_db *blk_db, char *path)

@@ -4,6 +4,8 @@
 #include <openssl/sha.h>
 #include <openssl/ripemd.h>
 
+#include "kyk_defs.h"
+
 struct kyk_digst{
     size_t len;
     unsigned char *body;
