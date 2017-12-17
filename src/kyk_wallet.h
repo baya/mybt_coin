@@ -90,4 +90,9 @@ int kyk_wallet_load_addr_list(const struct kyk_wallet* wallet,
 
 int kyk_wallet_query_total_balance(const struct kyk_wallet* wallet, uint64_t* balance);
 
+int kyk_wallet_make_tx(struct kyk_tx** new_tx,
+		       const struct kyk_wallet* wallet,
+		       uint64_t value,
+		       const char* btc_addr);
+
 #endif
