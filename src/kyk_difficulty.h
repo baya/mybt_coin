@@ -2,6 +2,7 @@
 #define KYK_DIFFICULTY_H__
 
 #include <gmp.h>
+#include "kyk_defs.h"
 
 #define DLT1_TARGET_HEX_STR "0x00000000FFFF0000000000000000000000000000000000000000000000000000"
 #define POW_TARGET_TIME_SPAN 60 * 60 * 24 * 14 /* tow weeks */
