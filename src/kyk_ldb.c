@@ -38,7 +38,7 @@
 
 const uint32_t    BLOCK_HAVE_DATA          =    8; //!< full block available in blk*.dat
 const uint32_t    BLOCK_HAVE_UNDO          =   16; //!< undo data available in rev*.dat
-const uint32_t    BLOCK_HAVE_MASK          =   BLOCK_HAVE_DATA | BLOCK_HAVE_UNDO;
+const uint32_t    BLOCK_HAVE_MASK          =   8 | 16;
 
 /* const uint32_t    BLOCK_FAILED_VALID       =   32; //!< stage after last reached validness failed */
 /* const uint32_t    BLOCK_FAILED_CHILD       =   64; //!< descends from failed block */

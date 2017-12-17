@@ -1,6 +1,8 @@
 #ifndef KYK_BITCOIN_VARINT_H
 #define KYK_BITCOIN_VARINT_H
 
+#include "kyk_defs.h"
+
 #define varint_t uint64_t
 
 /* Returns bytes used (up to 9) */
