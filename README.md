@@ -60,11 +60,9 @@ $ make
 
 $ make kyk_miner
 
-$ ./kyk_miner.out init
+$ ./kyk_miner.out             # 查看支持的命令
 
-$ ./kyk_miner.out             # 查看相关的命令
-
-$ ./kyk_miner.out init
+$ ./kyk_miner.out init        # 初始化矿工
 
 $ ./kyk_miner.out makeBlock   # 生产一个区块, 这个区块包含 100 BTC
 
