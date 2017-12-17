@@ -352,7 +352,7 @@ char* test_kyk_wallet_make_tx()
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_make_tx: kyk_setup_wallet failed");
 
-    res = kyk_wallet_make_tx(&new_tx, wallet, 1, btc_addr);
+    res = kyk_wallet_make_tx(&new_tx, wallet, btc_value, btc_addr);
     mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
 
     return NULL;
