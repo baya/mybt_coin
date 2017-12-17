@@ -113,6 +113,14 @@ int main(int argc, char *argv[])
 	}
     }
 
+    if(argc == 4){
+	if(match_cmd(argv[1], CMD_MK_TX)){
+	    wallet = kyk_open_wallet(wdir);
+	} else {
+	    printf("invalid command %s\n", argv[1]);
+	}
+    }
+
     if(wdir) free(wdir);
     if(wallet) kyk_destroy_wallet(wallet);
     
@@ -246,6 +254,20 @@ int cmd_show_addr_list(const struct kyk_wallet* wallet)
 
     return 0;
 
+error:
+
+    return -1;
+}
+
+int cmd_make_tx(const struct kyk_wallet* wallet,
+		int btc_num,
+		const char* btc_addr)
+{
+
+    printf("Make Tx\n");
+    
+    return 0;
+    
 error:
 
     return -1;

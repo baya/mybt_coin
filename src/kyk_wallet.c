@@ -1006,3 +1006,38 @@ error:
     if(pubkey) free(pubkey);
     return -1;
 }
+
+int kyk_wallet_make_tx(struct kyk_tx** new_tx,
+		       const struct kyk_wallet* wallet,
+		       uint64_t value,
+		       const char* btc_addr)
+{
+    struct kyk_utxo_chain* value_utxo_chain = NULL;
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    int res = -1;
+    
+    check(new_tx, "Failed to kyk_wallet_make_tx: new_tx is NULL");
+    check(wallet, "Failed to kyk_wallet_make_tx: wallet is NULL");
+    check(value > 0, "Failed to kyk_wallet_makx_tx: value should greater than zero");
+    check(value < TOTAL_BTC_VALUE, "Failed to kyk_wallet_makx_tx: value should be less than TOTAL_BTC_VALUE");
+    check(btc_addr, "Failed to kyk_wallet_make_tx: btc_addr is NULL");
+
+    res = kyk_validate_address(btc_addr, strlen(btc_addr));
+    check(res == 0, "Failed to kyk_wallet_make_tx: kyk_validate_address failed");
+
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_make_tx: kyk_load_utxo_chain failed");
+
+    res = kyk_find_available_utxo_list(&value_utxo_chain, wallet_utxo_chain, value);
+    check(res == 0, "Failed to kyk_wallet_make_tx: kyk_find_available_utxo_list failed");
+
+    kyk_free_utxo_chain(value_utxo_chain);
+    kyk_free_utxo_chain(wallet_utxo_chain);
+    
+    return 0;
+
+error:
+    if(value_utxo_chain) kyk_free_utxo_chain(value_utxo_chain);
+    if(wallet_utxo_chain) kyk_free_utxo_chain(wallet_utxo_chain);
+    return -1;
+}

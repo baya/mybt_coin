@@ -146,6 +146,28 @@ char* test_kyk_address_from_pbkhash160()
     return NULL;
 }
 
+char* test_kyk_validate_address()
+{
+    int res = -1;
+    char* addr = "1LZ2RvV5jWJ9NV4M3sxHszxd4WZ4iyXTwm";
+
+    res = kyk_validate_address(addr, strlen(addr));
+    mu_assert(res == 0, "Failed to test_kyk_validate_address");
+
+    return NULL;
+}
+
+char* test2_kyk_validate_address()
+{
+    int res = -1;
+    char* addr = "1LZ2RvV5jWJ9NV4M3sxHszxd4WZ4iyXTwH";
+
+    res = kyk_validate_address(addr, strlen(addr));
+    mu_assert(res == -1, "Failed to test_kyk_validate_address");
+
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -155,6 +177,8 @@ char *all_tests()
     mu_run_test(test2_make_address_from_pubkey);
     mu_run_test(test2_make_address);
     mu_run_test(test_kyk_address_from_pbkhash160);
+    mu_run_test(test_kyk_validate_address);
+    mu_run_test(test2_kyk_validate_address);
     
     return NULL;
 }

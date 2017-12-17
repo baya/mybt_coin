@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+
+#include "kyk_ecdsa.h"
+#include "kyk_base58.h"
 #include "kyk_address.h"
 #include "dbg.h"
 
@@ -182,3 +190,34 @@ void set_chksum_byte(uint8_t *dgst8,
     
 }
 
+
+int kyk_validate_address(const char* addr, size_t addr_len)
+{
+        
+    BIGNUM bn;
+    size_t len;
+    uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
+
+    check(addr, "Failed to kyk_validate_address: addr is NULL");
+
+    BN_init(&bn);
+    raw_decode_base58(&bn, addr, addr_len);
+
+    len = BN_num_bytes(&bn);
+    memset(buf, 0, sizeof(buf));
+    BN_bn2bin(&bn, buf + sizeof(buf) - len);
+
+    BN_free(&bn);
+
+    if(validate_base58_checksum(buf, 1 + RIPEMD160_DIGEST_LENGTH) < 0){
+	fprintf(stderr, "address base58 checksum failed\n");
+	return -1;
+    }
+
+    return 0;
+
+error:
+
+    return -1;
+
+}

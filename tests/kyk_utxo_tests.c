@@ -288,7 +288,7 @@ char* test_kyk_seri_utxo_chain()
 
     utxo_chain = calloc(1, sizeof(*utxo_chain));
     res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, NULL);
-    check(res == 0, "Failed to test_kyk_seri_utxo_chain: kyk_deseri_tuxo_chain Failed");
+    check(res == 0, "Failed to test_kyk_seri_utxo_chain: kyk_deseri_utxo_chain Failed");
 
     res = kyk_get_utxo_chain_size(utxo_chain, &chain_size);
     check(res == 0, "Failed to kyk_seri_utxo_chain: kyk_get_utxo_chain_size");
@@ -312,6 +312,57 @@ error:
 }
 
 
+char* test_kyk_find_available_utxo_list()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo_chain* ava_utxo_chain = NULL;
+    uint64_t btc_value = 10 * ONE_BTC_COIN_VALUE;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO7_CHAIN_FILE_BUF + sizeof(utxo_chain -> len), 7, NULL);
+    check(res == 0, "Failed to test_kyk_find_available_utxo_list: kyk_deseri_utxo_chain Failed");
+
+    res = kyk_find_available_utxo_list(&ava_utxo_chain, utxo_chain, btc_value);
+    mu_assert(res == 0, "Failed to test_kyk_find_available_utxo_list");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_find_available_utxo_list";
+}
+
+
+char* test2_kyk_find_available_utxo_list()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo_chain* ava_utxo_chain = NULL;
+    uint64_t btc_value = (uint64_t)400 * ONE_BTC_COIN_VALUE;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO7_CHAIN_FILE_BUF + sizeof(utxo_chain -> len), 7, NULL);
+    check(res == 0, "Failed to test_kyk_find_available_utxo_list: kyk_deseri_utxo_chain Failed");
+
+    res = kyk_find_available_utxo_list(&ava_utxo_chain, utxo_chain, btc_value);
+    mu_assert(res == 0, "Failed to test_kyk_find_available_utxo_list");
+    mu_assert(ava_utxo_chain -> len == 4, "Failed to test_kyk_find_available_utxo_list");
+
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_find_available_utxo_list";
+}
+
+char* test_kyk_copy_utxo()
+{
+    return NULL;
+}
+
+
 char *all_tests()
 {
     mu_suite_start();
@@ -328,6 +379,9 @@ char *all_tests()
     mu_run_test(test_kyk_get_utxo_chain_size);
     mu_run_test(test_kyk_seri_utxo_chain);
     mu_run_test(test2_kyk_deseri_utxo_chain);
+    mu_run_test(test_kyk_find_available_utxo_list);
+    mu_run_test(test2_kyk_find_available_utxo_list);
+    mu_run_test(test_kyk_copy_utxo);
     
     return NULL;
 }

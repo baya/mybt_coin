@@ -558,6 +558,22 @@ void kyk_print_utxo(const struct kyk_utxo* utxo)
     printf("spent:   %d\n", utxo -> spent);
 }
 
+void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain)
+{
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+
+    utxo = utxo_chain -> hd;
+
+    while(utxo){
+	i += 1;
+	printf("================================================================================UTXO#%zu\n", i);
+	kyk_print_utxo(utxo);
+	printf("================================================================================UTXO#%zu\n\n", i);
+	utxo = utxo -> next;
+    }
+}
+
 int kyk_utxo_match_addr(const struct kyk_utxo* utxo, const char* btc_addr)
 {
     int res = -1;
@@ -571,6 +587,122 @@ int kyk_utxo_match_addr(const struct kyk_utxo* utxo, const char* btc_addr)
 
     return res;
     
+error:
+
+    return -1;
+}
+
+int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo)
+{
+    struct kyk_utxo* utxo = NULL;
+    
+    check(new_utxo, "Failed to kyk_copy_utxo: new_utxo is NULL");
+    check(src_utxo, "Failed to kyk_copy_utxo: src_utxo is NULL");
+
+    utxo = calloc(1, sizeof(*utxo));
+    check(utxo, "Failed to kyk_copy_utxo: utxo calloc failed");
+
+    memcpy(utxo -> txid, src_utxo -> txid, sizeof(utxo -> txid));
+    memcpy(utxo -> blkhash, src_utxo -> blkhash, sizeof(utxo -> blkhash));
+    
+    utxo -> addr_len = src_utxo -> addr_len;
+    utxo -> btc_addr = calloc(utxo -> addr_len + 1, sizeof(*utxo -> btc_addr));
+    check(utxo -> btc_addr, "Failed to kyk_copy_utxo: utxo -> btc_addr calloc failed");
+    memcpy(utxo -> btc_addr, src_utxo -> btc_addr, utxo -> addr_len);
+
+    utxo -> outidx = src_utxo -> outidx;
+    utxo -> value = src_utxo -> value;
+    
+    utxo -> sc_size = src_utxo -> sc_size;
+    utxo -> sc = calloc(utxo -> sc_size, sizeof(*utxo -> sc));
+    check(utxo -> sc, "Failed to kyk_copy_utxo: utxo -> sc calloc failed");
+    memcpy(utxo -> sc, src_utxo -> sc, utxo -> sc_size);
+
+    utxo -> spent = src_utxo -> spent;
+
+    utxo -> next = NULL;
+
+    *new_utxo = utxo;
+
+    return 0;
+
+error:
+    if(utxo) kyk_free_utxo(utxo);
+    return -1;
+}
+
+int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
+				 const struct kyk_utxo_chain* src_utxo_chain,
+				 uint64_t value)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_utxo* utxo_cpy = NULL;
+    uint64_t total = 0;
+    int res = -1;
+    
+    check(new_utxo_chain, "Failed to kyk_find_available_utxo_list: new_utxo_chain is NULL");
+    check(src_utxo_chain, "Failed to kyk_find_available_utxo_list: src_utxo_chain is NULL");
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_find_available_utxo_list: utxo_chain calloc failed");
+
+    kyk_init_utxo_chain(utxo_chain);
+
+    utxo = src_utxo_chain -> hd;
+    while(utxo){
+	if(utxo -> value >= value){
+	    res = kyk_copy_utxo(&utxo_cpy, utxo);
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
+	    break;
+	}
+	utxo = utxo -> next;
+    }
+
+    if(utxo_chain -> len == 0){
+	utxo = src_utxo_chain -> hd;
+	while(utxo){
+	    res = kyk_copy_utxo(&utxo_cpy, utxo);
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);	    
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
+	    kyk_utxo_chain_get_total_value(utxo_chain, &total);
+	    if(total >= value){
+		break;
+	    }
+	    utxo = utxo -> next;
+	}
+    }
+
+    *new_utxo_chain = utxo_chain;
+    
+    return 0;
+    
+error:
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+}
+
+int kyk_utxo_chain_get_total_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* new_total)
+{
+    uint64_t total = 0;
+    struct kyk_utxo* utxo = NULL;
+
+    check(utxo_chain, "Failed to kyk_utxo_chain_get_total_value: utxo_chain is NULL");
+    check(new_total, "Failed to kyk_utxo_chain_get_total_value: new_total is NULL");
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	total += utxo -> value;
+	utxo = utxo -> next;
+    }
+
+    *new_total = total;
+    
+    return 0;
+
 error:
 
     return -1;

@@ -54,6 +54,8 @@ $ sudo apt-get install libgmp3-dev
 ## How to Play
 
 ```
+$ git clone https://github.com/baya/mybt_coin.git
+
 $ cd /path/to/mybt_coin
 
 $ make

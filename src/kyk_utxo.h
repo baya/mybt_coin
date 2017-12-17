@@ -74,5 +74,15 @@ void kyk_print_utxo(const struct kyk_utxo* utxo);
 
 int kyk_utxo_match_addr(const struct kyk_utxo* utxo, const char* btc_addr);
 
+int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
+				 const struct kyk_utxo_chain* src_utxo_chain,
+				 uint64_t value);
+
+
+int kyk_utxo_chain_get_total_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* new_total);
+
+void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
+
+int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
 
 #endif

@@ -10,6 +10,10 @@
 /* 1 BTC = 10 ** 8 Satoshi */
 #define ONE_BTC_COIN_VALUE 100000000
 
+/* Total BTC Value */
+
+#define TOTAL_BTC_VALUE 2000 * 10000 * ONE_BTC_COIN_VALUE
+
 struct kyk_bon_buff;
 
 /* https://bitcoin.org/en/developer-reference#raw-transaction-format */
