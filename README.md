@@ -20,6 +20,12 @@ $ brew install gmp
 
 ## Ubuntu
 
+安装 clang, 目前在 Ubuntu 上只支持 clang 编译器
+
+```
+$ sudo apt-get install clang
+```
+
 安装 leveldb:
 
 ```
