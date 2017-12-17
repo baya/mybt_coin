@@ -11,16 +11,16 @@
 #include "kyk_utils.h"
 #include "dbg.h"
 
-static const char DB_COIN = 'C';
-static const char DB_COINS = 'c';
-static const char DB_BLOCK_FILES = 'f';
-static const char DB_TXINDEX = 't';
+/* static const char DB_COIN = 'C'; */
+/* static const char DB_COINS = 'c'; */
+/* static const char DB_BLOCK_FILES = 'f'; */
+/* static const char DB_TXINDEX = 't'; */
 static const char DB_BLOCK_INDEX = 'b';
-static const char DB_BEST_BLOCK = 'B';
-static const char DB_HEAD_BLOCKS = 'H';
-static const char DB_FLAG = 'F';
-static const char DB_REINDEX_FLAG = 'R';
-static const char DB_LAST_BLOCK = 'l';
+/* static const char DB_BEST_BLOCK = 'B'; */
+/* static const char DB_HEAD_BLOCKS = 'H'; */
+/* static const char DB_FLAG = 'F'; */
+/* static const char DB_REINDEX_FLAG = 'R'; */
+/* static const char DB_LAST_BLOCK = 'l'; */
 
 void build_b_key(struct db_key *key, const char *blk_hash);
 size_t kyk_ser_bval(uint8_t *buf, struct kyk_bkey_val *bval);

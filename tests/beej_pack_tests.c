@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "kyk_defs.h"
 #include "beej_pack.h"
 #include "mu_unit.h"
 
