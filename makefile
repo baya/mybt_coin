@@ -6,6 +6,8 @@ CXXFLAGS = -g -O2 -Wall -Wextra -Isrc -I$(INC_PATHS) -DNDEBUG $(OPTFLAGS)
 LIBS = -ldl $(OPTLIBS)
 PREFIX ?= /usr/local
 
+CC = clang
+
 SOURCES = $(wildcard src/**/*.c src/*.c)
 OBJECTS = $(patsubst %.c, %.o, $(SOURCES))
 
