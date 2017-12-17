@@ -4,7 +4,8 @@
 #include <stdint.h>
 #include <leveldb/c.h>
 #include "kyk_utils.h"
-#include "basic_defs.h"
+#include "kyk_defs.h"
+
 #include "dbg.h"
 #include "beej_pack.h"
 
