@@ -4,6 +4,7 @@
 #include "varint.h"
 
 #define NORMALLY_TX_SEQ_NO 0xFFFFFFFF
+#define MORMALLY_TX_LOCK_TIME 0
 #define COINBASE_PRE_TXID "0000000000000000000000000000000000000000000000000000000000000000"
 #define COINBASE_INX 0xffffffff
 
@@ -15,6 +16,9 @@
 #define TOTAL_BTC_VALUE 2000 * 10000 * ONE_BTC_COIN_VALUE
 
 struct kyk_bon_buff;
+
+struct kyk_utxo;
+struct kyk_utxo_chain;
 
 /* https://bitcoin.org/en/developer-reference#raw-transaction-format */
 struct kyk_tx {
@@ -28,7 +32,7 @@ struct kyk_tx {
 
 struct kyk_txin{
     unsigned char pre_txid[32];
-    uint32_t pre_tx_inx;
+    uint32_t pre_tx_inx;        /* previous Txout Index */
     varint_t sc_size;
     unsigned char *sc;
     uint32_t seq_no;
@@ -101,5 +105,27 @@ int kyk_deseri_tx_list(struct kyk_tx* tx_list,
 int kyk_get_addr_from_txout(char** new_addr, const struct kyk_txout* txout);
 
 
+void kyk_free_txin_list(struct kyk_txin* txin_list, varint_t tx_count);
+
+int kyk_unlock_utxo(const struct kyk_utxo* utxo,
+		    struct kyk_txin* txin);
+
+int kyk_unlock_utxo_chain(const struct kyk_utxo_chain* utxo_chain,
+			  struct kyk_txin** new_txin_list,
+			  varint_t* txin_count);
+
+
+int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
+				uint64_t amount,         /* amount excluded miner fee        */
+				uint64_t mfee,           /* miner fee                        */
+				const char* to_addr,     /* send btc amount to this address  */
+				const char* mc_addr,     /* make change back to this address */
+				uint32_t version,
+				const struct kyk_utxo_chain* utxo_chain);
+
+int kyk_make_p2pkh_txout(struct kyk_txout* txout,
+			 const char* addr,
+			 size_t addr_len,
+			 uint64_t value);
 
 #endif

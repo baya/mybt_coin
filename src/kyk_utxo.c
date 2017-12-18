@@ -654,6 +654,7 @@ int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
 	if(utxo -> value >= value){
 	    res = kyk_copy_utxo(&utxo_cpy, utxo);
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    kyk_refer_to_utxo(utxo_cpy, utxo);
 	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
 	    break;
@@ -666,6 +667,7 @@ int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
 	while(utxo){
 	    res = kyk_copy_utxo(&utxo_cpy, utxo);
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    kyk_refer_to_utxo(utxo_cpy, utxo);
 	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);	    
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
 	    kyk_utxo_chain_get_total_value(utxo_chain, &total);
@@ -703,6 +705,21 @@ int kyk_utxo_chain_get_total_value(const struct kyk_utxo_chain* utxo_chain, uint
     
     return 0;
 
+error:
+
+    return -1;
+}
+
+int kyk_refer_to_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* ref_utxo)
+{
+    check(utxo, "Failed to kyk_refer_to_utxo: utxo is NULL");
+    check(utxo -> refer_to == NULL, "Failed to kyk_refer_to_utxo: utxo -> refer_to should be NULL");
+    check(ref_utxo, "Failed to kyk_refer_to_utxo: ref_utxo is NULL");
+
+    utxo -> refer_to = ref_utxo;
+    
+    return 0;
+    
 error:
 
     return -1;

@@ -16,7 +16,7 @@
 #define TX_BUF_SIZE 2000
 
 static size_t build_p2pkh_sc_pubk(unsigned char *buf, const unsigned char *pkh, size_t pkh_len);
-static int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char *addr);
+static int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char *addr, size_t addr_len);
 static int is_sc_na_const(uint8_t opcode);
 static void init_sc_stack(struct kyk_sc_stack *stk);
 static int is_sc_na_const(uint8_t opcode);
@@ -71,7 +71,7 @@ size_t p2pkh_sc_from_address(unsigned char *sc, const char *addr)
     uint8_t pubk_hash[RIPEMD160_DIGEST_LENGTH];
     size_t len;
     
-    if(pubk_hash_from_address(pubk_hash, sizeof(pubk_hash), addr) < 0){
+    if(pubk_hash_from_address(pubk_hash, sizeof(pubk_hash), addr, strlen(addr)) < 0){
 	return -1;
     }
     
@@ -80,14 +80,50 @@ size_t p2pkh_sc_from_address(unsigned char *sc, const char *addr)
     return len;
 }
 
-int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char *addr)
+int kyk_build_p2pkh_sc_from_address(const char* addr,
+				    size_t addr_len,
+				    unsigned char** new_sc,
+				    size_t* sc_size)
+{
+    uint8_t pubk_hash[RIPEMD160_DIGEST_LENGTH];
+    unsigned char tmp_sc[200];
+    unsigned char* sc = NULL;
+    size_t len;
+    int res = -1;
+
+    res = pubk_hash_from_address(pubk_hash, sizeof(pubk_hash), addr, addr_len);
+    check(res == 0, "Failed to kyk_build_p2pkh_sc_from_address: pubk_hash_from_address failed");
+    len = build_p2pkh_sc_pubk(tmp_sc, pubk_hash, sizeof(pubk_hash));
+    check(len > 0, "Failed to kyk_build_p2pkh_sc_from_address: build_p2pkh_sc_pubk failed");
+    check(len < sizeof(tmp_sc), "Failed to kyk_build_p2pkh_sc_from_address: overflow tmp_sc size");
+
+    sc = calloc(len, sizeof(*sc));
+    check(sc, "Failed to kyk_build_p2pkh_sc_from_address: sc calloc failed");
+
+    memcpy(sc, tmp_sc, len);
+
+    *new_sc = sc;
+    *sc_size = len;
+
+    return 0;
+    
+error:
+    if(sc) free(sc);
+    return -1;
+
+}
+
+int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char *addr, size_t addr_len)
 {
     BIGNUM bn;
     size_t len;
     uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
 
+    check(pubk_hash, "Failed to pubk_hash_from_address: pubk_hash is NULL");
+    check(addr, "Failed to pubk_hash_from_address: addr is NULL");
+
     BN_init(&bn);
-    raw_decode_base58(&bn, addr, strlen(addr));
+    raw_decode_base58(&bn, addr, addr_len);
 
     len = BN_num_bytes(&bn);
     memset(buf, 0, sizeof(buf));
@@ -102,7 +138,11 @@ int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char 
 
     memcpy(pubk_hash, buf+1, pkh_len);
 
-    return 1;
+    return 0;
+
+error:
+
+    return -1;
 
 }
 
@@ -113,6 +153,9 @@ int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char 
 size_t build_p2pkh_sc_pubk(unsigned char *sc, const unsigned char *pkh, size_t pkh_len)
 {
     size_t count = 0;
+
+    check(sc, "Failed to build_p2pkh_sc_pubk: sc is NULL");
+    check(pkh, "Failed to build_p2pkh_sc_pubk: pkh is NULL");
     
     *sc = OP_DUP;
     count += 1;
@@ -138,12 +181,16 @@ size_t build_p2pkh_sc_pubk(unsigned char *sc, const unsigned char *pkh, size_t p
     count += 1;
 
     return count;
+
+error:
+
+    return 0;
 }
 
 
-size_t kyk_combine_sc(uint8_t *sc,
-		    uint8_t *sc_sig, size_t sc_sig_len,
-		    uint8_t *sc_pubk, size_t sc_pubk_len)
+size_t kyk_combine_script(uint8_t *sc,
+			  uint8_t *sc_sig, size_t sc_sig_len,
+			  uint8_t *sc_pubk, size_t sc_pubk_len)
 {
     size_t count = 0;
     size_t i = 0;
@@ -163,7 +210,7 @@ size_t kyk_combine_sc(uint8_t *sc,
     return count;
 }
 
-int kyk_run_sc(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len)
+int kyk_run_script(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len)
 {
     struct kyk_sc_stack stk;
     uint8_t opcode;
@@ -388,7 +435,6 @@ void free_sc_stk_item(struct kyk_sc_stk_item *item)
 {
     free(item -> val);
 }
-
 
 
 

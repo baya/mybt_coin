@@ -4,6 +4,7 @@
 
 #include "kyk_tx.h"
 #include "kyk_block.h"
+#include "kyk_utxo.h"
 #include "varint.h"
 #include "beej_pack.h"
 #include "kyk_utils.h"
@@ -456,7 +457,7 @@ struct kyk_txout *create_txout(uint64_t value,
     return txout;
 }
 
-
+/* have some memory leaks, to-do refactor it */
 void kyk_free_tx(struct kyk_tx *tx)
 {
     if(tx){
@@ -928,3 +929,192 @@ error:
     return -1;
 }
 
+
+int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
+				uint64_t amount,         /* amount excluded miner fee        */
+				uint64_t mfee,           /* miner fee                        */
+				const char* to_addr,     /* send btc amount to this address  */
+				const char* mc_addr,     /* make change back to this address */
+				uint32_t version,
+				const struct kyk_utxo_chain* utxo_chain)
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_txin* txin_list = NULL;
+    struct kyk_txout* txout_list = NULL;
+    struct kyk_txout* txout = NULL;
+    size_t txout_count = 0;
+    size_t i = 0;
+    varint_t txin_count = 0;
+    uint64_t total_value = 0;
+    uint64_t back_charge = 0;
+    int res = -1;
+
+    check(new_tx, "Failed to kyk_make_tx_from_utxo_chain: new_tx is NULL");
+    check(utxo_chain, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain is NULL");
+    check(utxo_chain -> len > 0, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain -> len should be > 0");
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_make_tx_from_utxo_chain: tx calloc failed");    
+
+    utxo = utxo_chain -> hd;
+    
+    /* Unlock UTXO, in this time didn't make signature */
+    res = kyk_unlock_utxo_chain(utxo_chain, &txin_list, &txin_count);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_unlock_utxo_chain failed");
+
+    res = kyk_utxo_chain_get_total_value(utxo_chain, &total_value);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_utxo_chain_get_total_value failed");
+    check(total_value >= amount + mfee, "Failed to kyk_make_tx_from_utxo_chain: total_value is invalid");
+
+    /* txout for amount */
+    txout_count += 1;
+    
+    back_charge = total_value - (amount + mfee);
+    if(back_charge >0){
+	/* txout for charge back */
+	txout_count += 1;
+    }
+
+    txout_list = calloc(txout_count, sizeof(*txout_list));
+    check(txout_list, "Failed to kyk_make_tx_from_utxo_chain: txout_list calloc failed");
+
+    txout = txout_list;
+    res = kyk_make_p2pkh_txout(txout, to_addr, strlen(to_addr), amount);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
+    i++;
+
+    if(i < txout_count){
+	txout = txout_list + 1;
+	res = kyk_make_p2pkh_txout(txout, mc_addr, strlen(mc_addr), back_charge);
+	check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
+	i++;
+    }
+
+    /* unsigned TX */
+    tx -> version = version;
+    tx -> vin_sz = txin_count;
+    tx -> txin = txin_list;
+    tx -> vout_sz = txout_count;
+    tx -> txout = txout_list;
+    tx -> lock_time = MORMALLY_TX_LOCK_TIME;
+
+    /* TODO sign TX */
+
+    *new_tx = tx;
+
+    return 0;
+    
+error:
+    if(tx) kyk_free_tx(tx);
+    return -1;
+}
+
+/* Txout with pay-to-pubkey-hash script */
+int kyk_make_p2pkh_txout(struct kyk_txout* txout,
+			   const char* addr,
+			   size_t addr_len,
+			   uint64_t value)
+{
+    char* tmp_addr = NULL;
+    char* sc = NULL;
+    size_t sc_len = 0;
+    int res = -1;
+    
+    check(txout, "Failed to kyk_make_p2pkh_txout: txout is NULL");
+    check(addr, "Failed to kyk_make_p2pkh_txout: addr is NULL");
+    check(addr_len > 0, "Failed to kyk_make_p2pkh_txout: addr_len is invalid");
+    check(value > 0, "Failed to kyk_make_p2pkh_txout: value is invalid");
+
+    res = kyk_build_p2pkh_sc_from_address(addr, addr_len, &sc, &sc_len);
+    check(res == 0, "Failed to kyk_make_p2pkh_txout: kyk_build_p2pkh_sc_from_address failed");
+
+    txout -> value = value;
+    txout -> sc = sc;
+    txout -> sc_size = sc_len;
+
+    return 0;
+    
+error:
+    if(sc) free(sc);
+    return -1;
+}
+
+int kyk_unlock_utxo_chain(const struct kyk_utxo_chain* utxo_chain,
+			  struct kyk_txin** new_txin_list,
+			  varint_t* txin_count)
+{
+    const struct kyk_utxo* utxo = NULL;
+    struct kyk_txin* txin_list = NULL;
+    struct kyk_txin* txin = NULL;
+    size_t i = 0;
+    int res = -1;
+
+    check(utxo_chain, "Failed to kyk_unlock_utxo_chain: utxo_chain is NULL");
+    check(utxo_chain -> len > 0, "Failed to kyk_unlock_utxo_chain: utxo_chain -> len should be > 0");
+    check(txin_list, "Failed to kyk_unlock_utxo_chain: txin_list is NULL");
+
+    txin_list = calloc(utxo_chain -> len, sizeof(*txin_list));
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	txin = txin_list + i;
+	res = kyk_unlock_utxo(utxo, txin);
+	check(res == 0, "Failed to kyk_unlock_utxo_chain: kyk_unlock_utxo failed");
+	utxo = utxo -> next;
+	i++;
+    }
+
+    *txin_count = utxo_chain -> len;
+
+    return 0;
+error:
+    if(txin_list) {
+	kyk_free_txin_list(txin_list, utxo_chain -> len);
+    }
+    return -1;
+}
+
+int kyk_unlock_utxo(const struct kyk_utxo* utxo,
+		    struct kyk_txin* txin)
+{
+    check(utxo, "Failed to kyk_unlock_utxo: utxo is NULL");
+    check(utxo -> value > 0, "Failed to kyk_unlock_utxo: utxo -> value is invalid");
+    check(utxo -> sc_size > 0, "Failed to kyk_unlock_utxo: utxo -> sc_size is invalid");
+    check(utxo -> spent == 0, "Failed to kyk_unlock_utxo: utxo has been spent");
+    check(txin, "Failed to kyk_unlock_utxo: txin is NULL");
+
+    memcpy(txin -> pre_txid, utxo -> txid, sizeof(txin -> pre_txid));
+    txin -> pre_tx_inx = utxo -> outidx;
+    
+    txin -> sc_size = utxo -> sc_size;
+    txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
+    check(txin -> sc, "Failed to kyk_unlock_utxo: txin -> sc calloc failed");
+    
+    txin -> seq_no = NORMALLY_TX_SEQ_NO;
+
+    return 0;
+    
+error:
+    if(txin -> sc) free(txin -> sc);
+    return -1;
+}
+
+
+void kyk_free_txin_list(struct kyk_txin* txin_list, varint_t tx_count)
+{
+    varint_t i = 0;
+    struct kyk_txin* txin = NULL;
+    
+    if(txin_list){
+	for(i = 0; i < tx_count; i++){
+	    txin = txin_list + i;
+	    if(txin -> sc){
+		free(txin -> sc);
+		txin -> sc = NULL;
+	    }
+	}
+
+	free(txin_list);
+    }
+}

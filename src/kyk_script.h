@@ -162,14 +162,20 @@ struct kyk_sc_stack {
 
 
 size_t p2pkh_sc_from_address(unsigned char *sc, const char *addr);
-size_t kyk_combine_sc(uint8_t *sc,
-		      uint8_t *sc_sig, size_t sc_sig_len,
-		      uint8_t *sc_pubk, size_t sc_pubk_len);
+size_t kyk_combine_script(uint8_t *sc,
+			  uint8_t *sc_sig, size_t sc_sig_len,
+			  uint8_t *sc_pubk, size_t sc_pubk_len);
 
-int kyk_run_sc(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len);
+int kyk_run_script(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len);
 
 int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
 			       size_t pub_len,
 			       struct kyk_buff** sc);
+
+int kyk_build_p2pkh_sc_from_address(const char* addr,
+				    size_t addr_len,
+				    unsigned char** new_sc,
+				    size_t* sc_size);
+
 
 #endif
