@@ -462,16 +462,15 @@ void kyk_free_tx(struct kyk_tx *tx)
 {
     if(tx){
 	if(tx -> txin) {
-	    kyk_free_txin(tx -> txin);
+	    kyk_free_txin_list(tx -> txin, tx -> vin_sz);
 	    tx -> txin = NULL;
 	}
 	if(tx -> txout) {
-	    kyk_free_txout(tx -> txout);
+	    kyk_free_txout_list(tx -> txout, tx -> vout_sz);
 	    tx -> txout = NULL;
 	}
 	
 	free(tx);
-	tx = NULL;
     }
 }
 
@@ -971,7 +970,7 @@ int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
     txout_count += 1;
     
     back_charge = total_value - (amount + mfee);
-    if(back_charge >0){
+    if(back_charge > 0){
 	/* txout for charge back */
 	txout_count += 1;
     }
@@ -1000,6 +999,7 @@ int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
     tx -> lock_time = MORMALLY_TX_LOCK_TIME;
 
     /* TODO sign TX */
+    /* res = kyk_do_sign_tx(tx, utxo_chain); */
 
     *new_tx = tx;
 
@@ -1101,13 +1101,13 @@ error:
 }
 
 
-void kyk_free_txin_list(struct kyk_txin* txin_list, varint_t tx_count)
+void kyk_free_txin_list(struct kyk_txin* txin_list, varint_t len)
 {
     varint_t i = 0;
     struct kyk_txin* txin = NULL;
     
     if(txin_list){
-	for(i = 0; i < tx_count; i++){
+	for(i = 0; i < len; i++){
 	    txin = txin_list + i;
 	    if(txin -> sc){
 		free(txin -> sc);
@@ -1116,5 +1116,23 @@ void kyk_free_txin_list(struct kyk_txin* txin_list, varint_t tx_count)
 	}
 
 	free(txin_list);
+    }
+}
+
+void kyk_free_txout_list(struct kyk_txout* txout_list, varint_t len)
+{
+    varint_t i = 0;
+    struct kyk_txout* txout = NULL;
+
+    if(txout_list){
+	for(i = 0; i < len; i++){
+	    txout = txout_list + i;
+	    if(txout -> sc){
+		free(txout -> sc);
+		txout -> sc = NULL;
+	    }
+	}
+
+	free(txout_list);
     }
 }

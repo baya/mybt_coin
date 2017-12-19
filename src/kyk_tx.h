@@ -128,4 +128,6 @@ int kyk_make_p2pkh_txout(struct kyk_txout* txout,
 			 size_t addr_len,
 			 uint64_t value);
 
+void kyk_free_txout_list(struct kyk_txout* txout_list, varint_t len);
+
 #endif

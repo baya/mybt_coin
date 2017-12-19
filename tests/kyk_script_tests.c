@@ -138,6 +138,11 @@ char* test_kyk_run_script()
 
 }
 
+char* test2_kyk_run_script()
+{
+    return NULL;
+}
+
 char* test_kyk_build_p2pkh_sc_from_address()
 {
     char* addr = "1KAWPAD8KovUo53pqHUY2bLNMTYa1obFX9";
@@ -169,6 +174,7 @@ char* all_tests()
     mu_run_test(test_build_p2pkh_sc_from_pubkey);
     mu_run_test(test_kyk_run_script);
     mu_run_test(test_kyk_build_p2pkh_sc_from_address);
+    mu_run_test(test2_kyk_run_script);
     
     return NULL;
 }
