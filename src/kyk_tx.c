@@ -22,6 +22,7 @@ static size_t kyk_seri_txout_list(unsigned char *buf, struct kyk_txout *txout, s
 static int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note);
 static int get_txin_size(struct kyk_txin* txin, size_t* txin_size);
 static int get_txout_size(struct kyk_txout* txout, size_t* txout_size);
+static int placehold_txin_with_txout(struct kyk_txin* txin, const struct kyk_txout* txout);
 
 int kyk_deseri_txin_list(struct kyk_txin* txin_list,
 			 size_t txin_count,
@@ -69,6 +70,29 @@ int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx)
     
 error:
 
+    return -1;
+}
+
+int kyk_copy_new_tx(struct kyk_tx** new_tx, const struct kyk_tx* src_tx)
+{
+    struct kyk_tx* tx = NULL;
+    int res = -1;
+    
+    check(new_tx, "Failed to kyk_copy_new_tx: new_tx is NULL");
+    check(src_tx, "Failed to kyk_copy_new_tx: src_tx is NULL");
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_copy_new_tx: tx calloc failed");
+
+    res = kyk_copy_tx(tx, src_tx);
+    check(res == 0, "Failed to kyk_copy_new_tx: kyk_copy_tx failed");
+
+    *new_tx = tx;
+
+    return 0;
+    
+error:
+    if(tx) kyk_free_tx(tx);
     return -1;
 }
 
@@ -160,7 +184,7 @@ int get_txin_size(struct kyk_txin* txin, size_t* txin_size)
 {
     size_t len = 0;
     len += sizeof(txin -> pre_txid);
-    len += sizeof(txin -> pre_tx_inx);
+    len += sizeof(txin -> pre_txout_inx);
     check(txin -> sc_size >= 1, "Failed to get_txin_size: txin -> sc_size is invalid");
     len += get_varint_size(txin -> sc_size);
     len += txin -> sc_size;
@@ -221,6 +245,43 @@ int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
 
 error:
 
+    return -1;
+}
+
+int kyk_seri_tx_to_new_buf(const struct kyk_tx* tx,
+			   uint8_t** new_buf,
+			   size_t* buf_len)
+{
+    uint8_t* buf = NULL;
+    uint8_t* bufp = NULL;
+    size_t tx_size = 0;
+    size_t blen = 0;
+    int res = -1;
+
+    check(tx, "Failed to kyk_seri_tx_to_new_buf: tx is NULL");
+    check(new_buf, "Failed to kyk_seri_tx_to_new_buf: new_buf is NULL");
+
+    res = kyk_get_tx_size(tx, &tx_size);
+    check(res == 0, "Failed to kyk_seri_tx_to_new_buf: kyk_get_tx_size failed");
+
+    buf = calloc(tx_size, sizeof(*buf));
+    check(buf, "Failed to kyk_seri_tx_to_new_buf: buf calloc failed");
+
+    bufp = buf;
+
+    blen = kyk_seri_tx(bufp, tx);
+    check(blen == tx_size, "Failed to kyk_seri_tx_to_new_buf: kyk_seri_tx failed");
+
+    if(buf_len){
+	*buf_len = blen;
+    }
+
+    *new_buf = buf;
+
+    return 0;
+    
+error:
+    if(buf) free(buf);
     return -1;
 }
 
@@ -299,7 +360,7 @@ size_t kyk_seri_txin(unsigned char *buf, struct kyk_txin *txin)
     buf += size;
     total += size;
 
-    size = beej_pack(buf, "<L", txin -> pre_tx_inx);
+    size = beej_pack(buf, "<L", txin -> pre_txout_inx);
     buf += size;
     total += size;
 
@@ -353,7 +414,7 @@ int kyk_add_txin(struct kyk_tx* tx,
 
     memcpy(txin -> pre_txid, out_txin -> pre_txid, sizeof(txin -> pre_txid));
     
-    txin -> pre_tx_inx = out_txin -> pre_tx_inx;
+    txin -> pre_txout_inx = out_txin -> pre_txout_inx;
     txin -> sc_size = out_txin -> sc_size;
     
     if(txin -> sc){
@@ -406,7 +467,7 @@ error:
 
 
 struct kyk_txin *create_txin(const char *pre_txid,
-			     uint32_t pre_tx_inx,
+			     uint32_t pre_txout_inx,
 			     varint_t sc_size,
 			     const char *sc,
 			     uint32_t seq_no)
@@ -422,7 +483,7 @@ struct kyk_txin *create_txin(const char *pre_txid,
 	exit(1);
     }
 
-    txin->pre_tx_inx = pre_tx_inx;
+    txin->pre_txout_inx = pre_txout_inx;
     txin->sc_size = sc_size;
     txin->sc = malloc(sc_size * sizeof(unsigned char));
     if(hexstr_to_bytes(sc, txin->sc, sc_size) == -1){
@@ -455,6 +516,27 @@ struct kyk_txout *create_txout(uint64_t value,
     }
 
     return txout;
+}
+
+int kyk_copy_txout(struct kyk_txout* txout, const struct kyk_txout* src_txout)
+{
+    check(txout, "Failed to kyk_copy_txout: txout is NULL");
+    check(txout -> sc == NULL, "Failed to kyk_copy_txout: txout -> sc should be NULL");
+    check(src_txout, "Failed to kyk_copy_txout: src_txout is NULL");
+
+    txout -> value = src_txout -> value;
+    txout -> sc_size = src_txout -> sc_size;
+    
+    txout -> sc = calloc(txout -> sc_size, sizeof(*txout -> sc));
+    check(txout -> sc, "Failed to kyk_copy_txout: txout -> sc calloc failed");
+    
+    memcpy(txout -> sc, src_txout -> sc, txout -> sc_size);
+
+    return 0;
+    
+error:
+    if(txout -> sc) free(txout -> sc);
+    return -1;
 }
 
 /* have some memory leaks, to-do refactor it */
@@ -558,7 +640,7 @@ int kyk_make_coinbase_tx(struct kyk_tx** cb_tx,
     txout = tx -> txout;
 
     memset(txin -> pre_txid, KYK_COINBASE_PRE_TX_BYTE, sizeof(txin -> pre_txid));
-    txin -> pre_tx_inx = KYK_COINBASE_PRE_TX_INX;
+    txin -> pre_txout_inx = COINBASE_INX;
     kyk_make_coinbase_sc(txin, note);
     
     txin -> seq_no = KYK_COINBASE_SEQ_NO;
@@ -653,6 +735,31 @@ int kyk_deseri_tx_list(struct kyk_tx* tx_list,
     
 error:
 
+    return -1;
+}
+
+int kyk_deseri_new_tx(struct kyk_tx** new_tx,
+		      const uint8_t* buf,
+		      size_t* byte_num)
+{
+    struct kyk_tx* tx = NULL;
+    int res = -1;
+
+    check(new_tx, "Failed to kyk_deseri_new_tx: new_tx is NULL");
+    check(buf, "Failedt to kyk_deseri_new_tx: buf is NULL");
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_dseri_new_tx: tx calloc failed");
+
+    res = kyk_deseri_tx(tx, buf, byte_num);
+    check(res == 0, "Failed to kyk_deseri_new_tx: kyk_deseri_tx failed");
+
+    *new_tx = tx;
+
+    return 0;
+    
+error:
+    if(tx) kyk_free_tx(tx);
     return -1;
 }
 
@@ -771,8 +878,8 @@ int kyk_deseri_txin(struct kyk_txin* txin,
     kyk_reverse_pack_chars(txin -> pre_txid, bufp, sizeof(txin -> pre_txid));
     bufp += sizeof(txin -> pre_txid);
 
-    beej_unpack(bufp, "<L", &txin -> pre_tx_inx);
-    bufp += sizeof(txin -> pre_tx_inx);
+    beej_unpack(bufp, "<L", &txin -> pre_txout_inx);
+    bufp += sizeof(txin -> pre_txout_inx);
 
 
     len = kyk_unpack_varint(bufp, &txin -> sc_size);
@@ -1016,8 +1123,7 @@ int kyk_make_p2pkh_txout(struct kyk_txout* txout,
 			   size_t addr_len,
 			   uint64_t value)
 {
-    char* tmp_addr = NULL;
-    char* sc = NULL;
+    unsigned char* sc = NULL;
     size_t sc_len = 0;
     int res = -1;
     
@@ -1065,6 +1171,7 @@ int kyk_unlock_utxo_chain(const struct kyk_utxo_chain* utxo_chain,
 	i++;
     }
 
+    *new_txin_list = txin_list;
     *txin_count = utxo_chain -> len;
 
     return 0;
@@ -1085,7 +1192,7 @@ int kyk_unlock_utxo(const struct kyk_utxo* utxo,
     check(txin, "Failed to kyk_unlock_utxo: txin is NULL");
 
     memcpy(txin -> pre_txid, utxo -> txid, sizeof(txin -> pre_txid));
-    txin -> pre_tx_inx = utxo -> outidx;
+    txin -> pre_txout_inx = utxo -> outidx;
     
     txin -> sc_size = utxo -> sc_size;
     txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
@@ -1135,4 +1242,123 @@ void kyk_free_txout_list(struct kyk_txout* txout_list, varint_t len)
 
 	free(txout_list);
     }
+}
+
+
+int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
+			const struct kyk_txout* txout_list,
+			varint_t txout_count,
+			uint8_t** new_buf,
+			size_t* buf_len)
+{
+    struct kyk_tx* new_tx = NULL;
+    const struct kyk_txout* txout = NULL;
+    struct kyk_txin* txin = NULL;
+    size_t new_tx_size = 0;
+    uint8_t* buf = NULL;
+    uint8_t* bufp = NULL;
+    size_t buf_size = 0;
+    varint_t i = 0;
+    int res = -1;
+
+    check(tx, "Failed to kyk_seri_tx_for_sig: tx is NULL");
+    check(txout_list, "Failed to kyk_seri_tx_for_sig: txout_list is NULL");
+    check(txout_count == tx -> vin_sz, "Failed to kyk_seri_tx_for_sig: txout_count is invalid");
+    check(new_buf, "Failed to kyk_seri_tx_for_sig: new_buf is NULL");
+    
+    res = kyk_copy_new_tx(&new_tx, tx);
+    check(res == 0, "Failed to kyk_seri_tx_for_sig: kyk_copy_new_tx failed");
+
+    for(i = 0; i < txout_count; i++){
+	txout = txout_list + i;
+	txin = tx -> txin + i;
+	res = placehold_txin_with_txout(txin, txout);
+	check(res == 0, "Failed to kyk_seri_tx_for_sig: placehold_txin_with_txout failed");
+    }
+
+    res = kyk_get_tx_size(new_tx, &new_tx_size);
+    check(res == 0, "Failed to kyk_seri_tx_for_sig: kyk_get_tx_size failed");
+    buf = calloc(new_tx_size, sizeof(*buf));
+    check(buf, "Failed to kyk_seri_tx_for_sig: buf calloc failed");
+
+    bufp = buf;
+
+    buf_size = kyk_seri_tx(bufp, new_tx);
+    check(buf_size == new_tx_size, "Failed to kyk_seri_tx_for_sig: kyk_seri_tx failed");
+
+    *new_buf = buf;
+    if(buf_len){
+	*buf_len = buf_size;
+    }
+    
+    return 0;
+    
+error:
+    if(new_tx) kyk_free_tx(new_tx);
+    if(buf) free(buf);
+    return -1;
+	
+}
+
+int placehold_txin_with_txout(struct kyk_txin* txin, const struct kyk_txout* txout)
+{
+    check(txin, "Failed to placehold_txin_with_txout: txin is NULL");
+    check(txout, "Failed to placehold_txin_with_txout: txout is NULL");
+    check(txout -> sc_size > 0, "Failed to placehold_txin_with_txout: txout -> sc_size is invalid");
+
+    if(txin -> sc){
+	free(txin -> sc);
+	txin -> sc = NULL;
+    }
+
+    txin -> sc_size = txout -> sc_size;
+    txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
+    check(txin -> sc, "Failed to placehold_txin_with_txout: txin -> sc calloc failed");
+
+    memcpy(txin -> sc, txout -> sc, txin -> sc_size);
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+
+int kyk_combine_txin_txout_for_script(uint8_t** sc_buf,
+				      size_t* sc_buf_len,
+				      const struct kyk_txin* txin,
+				      const struct kyk_txout* txout)
+{
+    uint8_t* buf = NULL;
+    uint8_t* bufp = NULL;
+    size_t buf_len = 0;
+    
+    check(sc_buf, "Failed to kyk_combine_txin_txout_for_script: sc_buf is NULL");
+    check(txin, "Failed to kyk_combine_txin_txout_for_script: txin is NULL");
+    check(txin -> sc, "Failed to kyk_combine_txin_txout_for_script: txin -> sc is NULL");
+    check(txout -> sc, "Failed to kyk_combine_txin_txout_for_script: txout -> sc is NULL");
+
+    buf_len = txin -> sc_size + txout -> sc_size;
+    buf = calloc(buf_len, sizeof(*buf));
+    check(buf, "Failed to kyk_combine_txin_txout_for_script: buf calloc failed");
+
+    bufp = buf;
+
+    memcpy(bufp, txin -> sc, txin -> sc_size);
+    bufp += txin -> sc_size;
+    
+    memcpy(bufp, txout -> sc, txout -> sc_size);
+
+    if(sc_buf_len){
+	*sc_buf_len = buf_len;
+    }
+
+    *sc_buf = buf;
+    
+    return 0;
+    
+error:
+    if(buf) free(buf);
+    return -1;
 }

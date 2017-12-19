@@ -10,6 +10,7 @@
 #include "kyk_tx.h"
 #include "kyk_difficulty.h"
 #include "kyk_mkl_tree.h"
+#include "kyk_script.h"
 #include "dbg.h"
 
 static int validate_hd_bts(const struct kyk_blk_header* hd);
@@ -131,6 +132,46 @@ int validate_hd_mkl_root(const struct kyk_blk_header* hd,
     
 error:
     if(mkl_root) kyk_free_mkl_tree(mkl_root);
+    return -1;
+}
+
+
+int kyk_validate_txin_script_sig(const struct kyk_txin* txin,
+				 const uint8_t* unsig_buf,
+				 size_t unsig_buf_len,
+				 const struct kyk_tx* prev_tx)
+{
+    struct kyk_txout* txout = NULL;
+    uint8_t prev_txid[32];
+    uint8_t* sc_buf = NULL;
+    size_t sc_buf_len = 0;
+    int res = -1;
+    int verified = 0;
+    
+    check(txin, "Failed to kyk_validate_txin_script_sig: txin is NULL");
+    check(unsig_buf, "Failed to kyk_validate_txin_script_sig: unsig_buf is NULL");
+    check(prev_tx, "Failed to kyk_validate_txin_script_sig: prev_tx is NULL");
+    check(prev_tx -> txout, "Failed to kyk_validate_txin_script_sig: prve_tx -> txout is NULL");
+
+    res = kyk_tx_hash256(prev_txid, prev_tx);
+    check(res == 0, "Failed to kyk_validate_txin_script_sig: kyk_tx_hash256 failed");
+    
+    res = kyk_digest_eq(txin -> pre_txid, prev_txid, sizeof(prev_txid));
+    check(res == 1, "Failed to kyk_validate_txin_script_sig: txin -> pre_txid is invalid");
+
+    txout = prev_tx -> txout;
+    txout += txin -> pre_txout_inx;
+
+    res = kyk_combine_txin_txout_for_script(&sc_buf, &sc_buf_len, txin, txout);
+    check(res == 0, "Failed to kyk_validate_txin_script_sig: kyk_combine_txin_txout_for_script failed");
+
+    verified = kyk_run_script(sc_buf, sc_buf_len, unsig_buf, unsig_buf_len);
+    check(verified == 1, "Failed to kyk_validate_txin_script_sig: kyk_run_script failed");
+
+    return 0;
+
+error:
+
     return -1;
 }
 

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "test_data.h"
+#include "kyk_tx.h"
 #include "kyk_utils.h"
 #include "kyk_script.h"
 #include "kyk_utils.h"
@@ -138,10 +140,6 @@ char* test_kyk_run_script()
 
 }
 
-char* test2_kyk_run_script()
-{
-    return NULL;
-}
 
 char* test_kyk_build_p2pkh_sc_from_address()
 {
@@ -174,7 +172,6 @@ char* all_tests()
     mu_run_test(test_build_p2pkh_sc_from_pubkey);
     mu_run_test(test_kyk_run_script);
     mu_run_test(test_kyk_build_p2pkh_sc_from_address);
-    mu_run_test(test2_kyk_run_script);
     
     return NULL;
 }

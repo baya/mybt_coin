@@ -125,7 +125,7 @@ void create_gens_tx(struct kyk_tx *gens_tx)
     txout = gens_tx -> txout;
 
     memset(txin -> pre_txid, 0x00, sizeof(txin -> pre_txid));
-    txin -> pre_tx_inx = 0xffffffff;
+    txin -> pre_txout_inx = 0xffffffff;
     make_coinbase(txin, GENS_COINBASE);
     
     txin -> seq_no = 0xFFFFFFFF;

@@ -87,6 +87,11 @@ error:
     return "Failed to test_kyk_validate_block";
 }
 
+char* test_kyk_validate_txin_script_sig()
+{
+    return NULL;
+}
+
 
 char *all_tests()
 {
@@ -94,6 +99,7 @@ char *all_tests()
     
     mu_run_test(test_kyk_validate_blk_header);
     mu_run_test(test2_kyk_validate_blk_header);
+    mu_run_test(test_kyk_validate_txin_script_sig);
     
     return NULL;
 }

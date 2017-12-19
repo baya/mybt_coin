@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "gens_block.h"
+#include "kyk_tx.h"
 #include "kyk_buff.h"
 #include "dbg.h"
 
@@ -98,7 +99,7 @@ void create_gens_tx(struct kyk_tx *gens_tx)
     txout = gens_tx -> txout;
 
     memset(txin -> pre_txid, 0x00, sizeof(txin -> pre_txid));
-    txin -> pre_tx_inx = 0xffffffff;
+    txin -> pre_txout_inx = COINBASE_INX;
     make_coinbase(txin, GENS_COINBASE);
     
     txin -> seq_no = 0xFFFFFFFF;

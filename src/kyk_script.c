@@ -27,7 +27,7 @@ static void free_sc_stk_item(struct kyk_sc_stk_item *item);
 static void kyk_sc_stack_push(struct kyk_sc_stack *stk, uint8_t *sc, size_t len);
 static int kyk_sc_op_eq_verify(struct kyk_sc_stack *stk);
 static int kyk_sc_op_eq(struct kyk_sc_stack *stk);
-static int kyk_sc_op_checksig(struct kyk_sc_stack *stk, uint8_t *tx, size_t tx_len);
+static int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_len);
 static int kyk_sc_cmpitem(const struct kyk_sc_stk_item *item1,
 			  const struct kyk_sc_stk_item *item2);
 static void free_sc_stack(struct kyk_sc_stack *stk);
@@ -210,7 +210,7 @@ size_t kyk_combine_script(uint8_t *sc,
     return count;
 }
 
-int kyk_run_script(uint8_t *sc, size_t sc_len, uint8_t *tx, size_t tx_len)
+int kyk_run_script(uint8_t *sc, size_t sc_len, const uint8_t *tx, size_t tx_len)
 {
     struct kyk_sc_stack stk;
     uint8_t opcode;
@@ -285,7 +285,7 @@ void init_sc_stack(struct kyk_sc_stack *stk)
  * The secp256k1 elliptic curve is used for the verification with the given public key.
  *
  */
-int kyk_sc_op_checksig(struct kyk_sc_stack *stk, uint8_t *tx, size_t tx_len)
+int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_len)
 {
     int ret_code = 0;
     struct kyk_sc_stk_item *top_cpy = stk -> top;

@@ -60,7 +60,7 @@ char *test_make_gens_tx()
     txout = tx0.txout;
 
     memset(txin -> pre_txid, 0x00, sizeof(txin -> pre_txid));
-    txin -> pre_tx_inx = 0xffffffff;
+    txin -> pre_txout_inx = 0xffffffff;
     make_coinbase(txin, cb);
     
     txin -> seq_no = 0xFFFFFFFF;

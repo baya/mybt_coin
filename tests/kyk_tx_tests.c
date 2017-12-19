@@ -106,6 +106,26 @@ error:
     return "Failed to test_deseri_tx";
 }
 
+char* test_deseri_new_tx()
+{
+    struct kyk_tx* tx = NULL;
+    uint8_t expect_txid[] = {
+	0x0c, 0x50, 0x1c, 0x58, 0xc0, 0xa2, 0xce, 0x4f, 0x3a, 0x88, 0xf3, 0x2a, 0x28, 0xab, 0x2c, 0xad,
+	0xea, 0x88, 0x43, 0xc2, 0xca, 0x90, 0x59, 0x70, 0xf6, 0x47, 0x16, 0x9b, 0x88, 0xbc, 0x51, 0xcf	
+    };
+    uint8_t txid[32];
+    int res = -1;
+ 
+    res = kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
+    mu_assert(res == 0, "Failed to test_deseri_new_tx");
+
+    res = kyk_tx_hash256(txid, tx);
+    mu_assert(kyk_digest_eq(txid, expect_txid, sizeof(txid)), "Failed to test_deseri_new_tx");
+
+    return NULL;
+    
+}
+
 char* test_deseri_tx_list()
 {
     uint8_t target_txid[] = {
@@ -275,6 +295,56 @@ error:
     return "Failed to test_kyk_get_addr_from_txout";
 }
 
+char* test_kyk_copy_txout()
+{
+    return NULL;
+}
+
+char* test_kyk_seri_tx_for_sig()
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_tx* tx1 = NULL;
+    struct kyk_tx* tx2 = NULL;
+    struct kyk_tx* tx3 = NULL;
+    struct kyk_tx* tx4 = NULL;
+    struct kyk_txout* txout_list = NULL;
+    struct kyk_txout* txout;
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    int res = -1;
+
+    res = kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
+    res = kyk_deseri_new_tx(&tx1, PRE_VIN4_TX1, NULL);
+    res = kyk_deseri_new_tx(&tx2, PRE_VIN4_TX2, NULL);
+    res = kyk_deseri_new_tx(&tx3, PRE_VIN4_TX3, NULL);
+    res = kyk_deseri_new_tx(&tx4, PRE_VIN4_TX4, NULL);
+
+    txout_list = calloc(4, sizeof(*txout_list));
+    txout = txout_list;
+    printf("before copy txout tx1\n");
+    res = kyk_copy_txout(txout, tx1 -> txout);
+    printf("after copy txout tx1\n");
+    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
+    
+    res =kyk_copy_txout(txout + 1, tx2 -> txout);
+    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
+    
+    res = kyk_copy_txout(txout + 2, tx3 -> txout);
+    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
+    
+    res = kyk_copy_txout(txout + 3, tx4 -> txout);
+    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
+
+    res = kyk_seri_tx_for_sig(tx, txout_list, 4, &buf, &buf_len);
+    mu_assert(res == 0, "Failed to test_kyk_seri_tx_for_sig");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_seri_tx_for_sig";
+}
+
 
 char *all_tests()
 {
@@ -290,6 +360,9 @@ char *all_tests()
     mu_run_test(test_make_coinbase_tx);
     mu_run_test(test_kyk_get_addr_from_txout);
     mu_run_test(test2_kyk_get_addr_from_txout);
+    mu_run_test(test_kyk_copy_txout);
+    mu_run_test(test_deseri_new_tx);
+    mu_run_test(test_kyk_seri_tx_for_sig);
     
     return NULL;
 }

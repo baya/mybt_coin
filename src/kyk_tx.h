@@ -32,7 +32,7 @@ struct kyk_tx {
 
 struct kyk_txin{
     unsigned char pre_txid[32];
-    uint32_t pre_tx_inx;        /* previous Txout Index */
+    uint32_t pre_txout_inx;        /* previous Txout Index */
     varint_t sc_size;
     unsigned char *sc;
     uint32_t seq_no;
@@ -54,7 +54,7 @@ int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
 size_t kyk_seri_tx(unsigned char *buf, const struct kyk_tx *tx);
 
 struct kyk_txin *create_txin(const char *pre_txid,
-			     uint32_t pre_tx_inx,
+			     uint32_t pre_txout_inx,
 			     varint_t sc_size,
 			     const char *sc,
 			     uint32_t seq_no);
@@ -80,6 +80,7 @@ struct kyk_tx* kyk_create_tx(uint32_t version,
 			     uint32_t lock_time);
 
 int kyk_get_tx_size(const struct kyk_tx* tx, size_t* tx_size);
+
 int kyk_add_txin(struct kyk_tx* tx,
 		 size_t inx,
 		 const struct kyk_txin* out_txin);
@@ -89,6 +90,8 @@ int kyk_add_txout(struct kyk_tx* tx,
 		  const struct kyk_txout* out_txout);
 
 int kyk_copy_tx(struct kyk_tx* dest_tx, const struct kyk_tx* src_tx);
+
+int kyk_copy_txout(struct kyk_txout* txout, const struct kyk_txout* src_txout);
 
 
 int kyk_deseri_tx(struct kyk_tx* tx,
@@ -129,5 +132,26 @@ int kyk_make_p2pkh_txout(struct kyk_txout* txout,
 			 uint64_t value);
 
 void kyk_free_txout_list(struct kyk_txout* txout_list, varint_t len);
+
+int kyk_deseri_new_tx(struct kyk_tx** new_tx,
+		      const uint8_t* buf,
+		      size_t* byte_num);
+
+int kyk_copy_new_tx(struct kyk_tx** new_tx, const struct kyk_tx* src_tx);
+
+int kyk_seri_tx_to_new_buf(const struct kyk_tx* tx,
+			   uint8_t** new_buf,
+			   size_t* buf_len);
+
+int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
+			const struct kyk_txout* txout_list,
+			varint_t txout_count,
+			uint8_t** new_buf,
+			size_t* buf_len);
+
+int kyk_combine_txin_txout_for_script(uint8_t** sc_buf,
+				      size_t* sc_buf_len,
+				      const struct kyk_txin* txin,
+				      const struct kyk_txout* txout);
 
 #endif
