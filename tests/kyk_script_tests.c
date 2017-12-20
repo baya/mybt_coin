@@ -91,6 +91,7 @@ char* test_kyk_run_script()
     int verified = 0;
 
     /* https://blockexplorer.com/api/rawtx/1e4f607d33175aa3b0a854c7d494ee0eb0ac3f0fc0a759ad1ddf88efbe8cd37d */
+    /* https://blockexplorer.com/api/tx/1e4f607d33175aa3b0a854c7d494ee0eb0ac3f0fc0a759ad1ddf88efbe8cd37d */
     /* unsig_tx -> 0200000001b636c0cd9a296f29d1b4760c291c3044422f12eab2d7c363ff5f0b90b68aa9ea010000001976a914c73e88dfa45a940bbec4f5654b910254e8b5d7be88acfeffffff015cc10000000000001976a9140b5b85548100b98164f7748f931b66eb1b1b0ec888ac080b0700 */
     uint8_t unsig_tx[1000];
     uint8_t *utx_cpy = unsig_tx;

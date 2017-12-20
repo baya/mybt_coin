@@ -291,10 +291,11 @@ int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_le
     struct kyk_sc_stk_item *top_cpy = stk -> top;
     uint8_t *sig, *pubkey;
     size_t sig_len, pubkey_len;
-    uint8_t htype;
-    uint8_t tx_buf[TX_BUF_SIZE];
-    size_t size, buf_len;
-    uint8_t der_sig[100];
+    uint32_t htype;
+    uint8_t *tx_cpy = NULL;
+    size_t tx_cpy_len = 0;
+    uint8_t der_sig[200];
+    size_t der_sig_len = 0;
 
     pubkey = top_cpy -> val;
     pubkey_len = top_cpy -> len;
@@ -302,21 +303,31 @@ int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_le
     sig = top_cpy -> val;
     sig_len = top_cpy -> len;
 
-    htype = *(sig + sig_len - 1); /* sig 的末尾一个字节是 hash type */
-    memcpy(tx_buf, tx, tx_len);
-    size = beej_pack(tx_buf + tx_len, "<L", (uint32_t) htype);
-    buf_len = tx_len + size;
+    htype = (uint32_t) *(sig + sig_len - 1); /* sig 的末尾一个字节是 hash type */
+    tx_cpy_len = tx_len + sizeof(htype);
+    tx_cpy = calloc(tx_cpy_len, sizeof(*tx_cpy));
+    check(tx_cpy, "Failed to kyk_sc_op_checksig: tx_cpy calloc failed");
 
-    memcpy(der_sig, sig, sig_len - 1);
-    ret_code = kyk_ec_sig_hash256_verify(tx_buf, buf_len,
-					 der_sig, sig_len-1,
+    memcpy(tx_cpy, tx, tx_len);
+    beej_pack(tx_cpy + tx_len, "<L", htype);
+
+    /* remove hash-type in der_sig */
+    der_sig_len = sig_len - 1;
+    memcpy(der_sig, sig, der_sig_len);
+    ret_code = kyk_ec_sig_hash256_verify(tx_cpy, tx_cpy_len,
+					 der_sig, der_sig_len,
 					 pubkey, pubkey_len);
     stk -> top--;
     stk -> top--;
     stk -> hgt -= 2;
 
+    free(tx_cpy);
     
     return ret_code;
+
+error:
+    if(tx_cpy) free(tx_cpy);
+    return -1;
 }
 
 /* The data is hashed twice: first with SHA-256 and then with RIPEMD-160. */

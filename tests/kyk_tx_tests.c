@@ -295,6 +295,31 @@ error:
     return "Failed to test_kyk_get_addr_from_txout";
 }
 
+char* test_kyk_copy_new_tx()
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_tx* tx_cpy = NULL;
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    int res = -1;
+
+    res = kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
+    check(res == 0, "Failed to test_kyk_copy_new_tx: kyk_deseri_new_tx failed");
+
+    res = kyk_copy_new_tx(&tx_cpy, tx);
+    mu_assert(res == 0, "Failed to test_kyk_copy_new_tx");
+
+    res = kyk_seri_tx_to_new_buf(tx, &buf, &buf_len);
+    res = kyk_digest_eq(buf, VIN4_TX, buf_len);
+    mu_assert(res == 1, "Failed to test_kyk_copy_new_tx");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_copy_new_tx";
+}
+
 char* test_kyk_copy_txout()
 {
     return NULL;
@@ -304,45 +329,17 @@ char* test_kyk_seri_tx_for_sig()
 {
     struct kyk_tx* tx = NULL;
     struct kyk_tx* tx1 = NULL;
-    struct kyk_tx* tx2 = NULL;
-    struct kyk_tx* tx3 = NULL;
-    struct kyk_tx* tx4 = NULL;
-    struct kyk_txout* txout_list = NULL;
-    struct kyk_txout* txout;
     uint8_t* buf = NULL;
     size_t buf_len = 0;
     int res = -1;
 
-    res = kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
-    res = kyk_deseri_new_tx(&tx1, PRE_VIN4_TX1, NULL);
-    res = kyk_deseri_new_tx(&tx2, PRE_VIN4_TX2, NULL);
-    res = kyk_deseri_new_tx(&tx3, PRE_VIN4_TX3, NULL);
-    res = kyk_deseri_new_tx(&tx4, PRE_VIN4_TX4, NULL);
+    kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
+    kyk_deseri_new_tx(&tx1, PRE_VIN4_TX1, NULL);
 
-    txout_list = calloc(4, sizeof(*txout_list));
-    txout = txout_list;
-    printf("before copy txout tx1\n");
-    res = kyk_copy_txout(txout, tx1 -> txout);
-    printf("after copy txout tx1\n");
-    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
-    
-    res =kyk_copy_txout(txout + 1, tx2 -> txout);
-    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
-    
-    res = kyk_copy_txout(txout + 2, tx3 -> txout);
-    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
-    
-    res = kyk_copy_txout(txout + 3, tx4 -> txout);
-    check(res == 0, "Failed to test_kyk_seri_tx_for_sig: kyk_copy_txout failed");
-
-    res = kyk_seri_tx_for_sig(tx, txout_list, 4, &buf, &buf_len);
+    res = kyk_seri_tx_for_sig(tx, 0, tx1 -> txout, &buf, &buf_len);
     mu_assert(res == 0, "Failed to test_kyk_seri_tx_for_sig");
     
     return NULL;
-
-error:
-
-    return "Failed to test_kyk_seri_tx_for_sig";
 }
 
 
@@ -363,6 +360,7 @@ char *all_tests()
     mu_run_test(test_kyk_copy_txout);
     mu_run_test(test_deseri_new_tx);
     mu_run_test(test_kyk_seri_tx_for_sig);
+    mu_run_test(test_kyk_copy_new_tx);
     
     return NULL;
 }

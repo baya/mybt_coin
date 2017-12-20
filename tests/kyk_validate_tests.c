@@ -89,7 +89,78 @@ error:
 
 char* test_kyk_validate_txin_script_sig()
 {
+    struct kyk_tx* tx = NULL;
+    struct kyk_tx* tx1 = NULL;
+    struct kyk_tx* tx2 = NULL;
+    struct kyk_tx* tx3 = NULL;
+    struct kyk_tx* tx4 = NULL;
+    struct kyk_txin* txin = NULL;
+
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    int res = -1;
+
+    kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
+
+    res = build_testing_vin4_tx_unsig_buf(0, &buf, &buf_len);
+    check(res == 0, "Failed to test_kyk_validate_txin_script_sig: build_testing_vin4_tx_unsig_buf failed");
+    kyk_deseri_new_tx(&tx1, PRE_VIN4_TX1, NULL);
+    txin = tx -> txin + 0;
+    res = kyk_validate_txin_script_sig(txin, buf, buf_len, tx1);
+    mu_assert(res == 0, "Failed to test_kyk_validate_txin_script_sig");
+
+    res = build_testing_vin4_tx_unsig_buf(1, &buf, &buf_len);
+    check(res == 0, "Failed to test_kyk_validate_txin_script_sig: build_testing_vin4_tx_unsig_buf failed");
+    kyk_deseri_new_tx(&tx2, PRE_VIN4_TX2, NULL);
+    txin = tx -> txin + 1;
+    res = kyk_validate_txin_script_sig(txin, buf, buf_len, tx2);
+    mu_assert(res == 0, "Failed to test_kyk_validate_txin_script_sig");
+
+    res = build_testing_vin4_tx_unsig_buf(2, &buf, &buf_len);
+    check(res == 0, "Failed to test_kyk_validate_txin_script_sig: build_testing_vin4_tx_unsig_buf failed");
+    kyk_deseri_new_tx(&tx3, PRE_VIN4_TX3, NULL);
+    txin = tx -> txin + 2;
+    res = kyk_validate_txin_script_sig(txin, buf, buf_len, tx3);    
+    mu_assert(res == 0, "Failed to test_kyk_validate_txin_script_sig");
+
+    res = build_testing_vin4_tx_unsig_buf(3, &buf, &buf_len);
+    check(res == 0, "Failed to test_kyk_validate_txin_script_sig: build_testing_vin4_tx_unsig_buf failed");
+    kyk_deseri_new_tx(&tx4, PRE_VIN4_TX4, NULL);
+    txin = tx -> txin + 3;
+    res = kyk_validate_txin_script_sig(txin, buf, buf_len, tx4);
+    mu_assert(res == 0, "Failed to test_kyk_validate_txin_script_sig");
+    
+
     return NULL;
+
+error:
+
+    return "Failed to test_kyk_validate_txin_script_sig";
+}
+
+char* test2_kyk_validate_txin_script_sig()
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_tx* tx1 = NULL;
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    int res = -1;
+
+    res = build_testing_vin1_tx_unsig_buf(0, &buf, &buf_len);
+    check(res == 0, "Failed to test2_kyk_validate_txin_script_sig: build_testing_vin1_tx_unsig_buf failed");
+
+    kyk_deseri_new_tx(&tx, VIN1_TX, NULL);
+    kyk_deseri_new_tx(&tx1, PRE_VIN1_TX1, NULL);
+
+    res = kyk_validate_txin_script_sig(tx -> txin, buf, buf_len, tx1);
+    mu_assert(res == 0, "Failed to test_kyk_validate_txin_script_sig");
+
+    return NULL;
+
+error:
+
+    return "Failed to test2_kyk_validate_txin_script_sig";
+
 }
 
 
@@ -99,6 +170,7 @@ char *all_tests()
     
     mu_run_test(test_kyk_validate_blk_header);
     mu_run_test(test2_kyk_validate_blk_header);
+    mu_run_test(test2_kyk_validate_txin_script_sig);
     mu_run_test(test_kyk_validate_txin_script_sig);
     
     return NULL;

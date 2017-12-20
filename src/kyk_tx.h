@@ -45,6 +45,8 @@ struct kyk_txout{
 };
 
 
+void kyk_print_txout(const struct kyk_txout* txout);
+
 int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx);
 
 int kyk_seri_tx_list(struct kyk_bon_buff* buf_list,
@@ -143,15 +145,20 @@ int kyk_seri_tx_to_new_buf(const struct kyk_tx* tx,
 			   uint8_t** new_buf,
 			   size_t* buf_len);
 
+
 int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
-			const struct kyk_txout* txout_list,
-			varint_t txout_count,
+			varint_t txin_index,
+			const struct kyk_txout* txout,
 			uint8_t** new_buf,
 			size_t* buf_len);
+
 
 int kyk_combine_txin_txout_for_script(uint8_t** sc_buf,
 				      size_t* sc_buf_len,
 				      const struct kyk_txin* txin,
 				      const struct kyk_txout* txout);
+
+
+int kyk_copy_txin(struct kyk_txin* txin, const struct kyk_txin* src_txin);
 
 #endif

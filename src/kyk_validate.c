@@ -160,7 +160,7 @@ int kyk_validate_txin_script_sig(const struct kyk_txin* txin,
     check(res == 1, "Failed to kyk_validate_txin_script_sig: txin -> pre_txid is invalid");
 
     txout = prev_tx -> txout;
-    txout += txin -> pre_txout_inx;
+    txout = txout + txin -> pre_txout_inx;
 
     res = kyk_combine_txin_txout_for_script(&sc_buf, &sc_buf_len, txin, txout);
     check(res == 0, "Failed to kyk_validate_txin_script_sig: kyk_combine_txin_txout_for_script failed");
@@ -173,5 +173,13 @@ int kyk_validate_txin_script_sig(const struct kyk_txin* txin,
 error:
 
     return -1;
+}
+
+int kyk_validate_txin_script_sig_with_txout(const struct kyk_txin* txin,
+					    const uint8_t* unsig_buf,
+					    size_t unsig_buf_len,
+					    const struct kyk_txout* txout)
+{
+    return 0;
 }
 
