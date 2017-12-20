@@ -1,6 +1,8 @@
 #ifndef KYK_VALIDATE_H__
 #define KYK_VALIDATE_H__
 
+#include "kyk_defs.h"
+
 struct kyk_blk_hd_chain;
 struct kyk_blk_header;
 struct kyk_block;
