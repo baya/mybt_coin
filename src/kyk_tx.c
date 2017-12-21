@@ -1144,7 +1144,7 @@ int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
     tx -> txout = txout_list;
     tx -> lock_time = MORMALLY_TX_LOCK_TIME;
 
-    /* TODO sign TX */
+    /* make signature to TX */
     res = kyk_do_sign_tx(tx, utxo_chain);
 
     *new_tx = tx;
@@ -1159,20 +1159,21 @@ error:
 
 int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_chain)
 {
-    struct kyk_tx* tx_cpy = NULL;
     struct kyk_txin* txin = NULL;
     struct kyk_utxo* utxo = NULL;
     struct kyk_txout* txout = NULL;
     uint8_t* buf = NULL;
     size_t buf_len = 0;
+    uint8_t* privkey = NULL;
+    uint8_t* pubkey = NULL;
+    size_t publen = 0;
+    uint8_t* der_buf = NULL;
+    size_t der_buf_len = 0;
     varint_t i = 0;
     int res = -1;
     
     check(tx, "Failed to kyk_do_sign_tx: tx is NULL");
     check(utxo_chain, "Failed to kyk_do_sign_tx: utxo_chain is NULL");
-
-    res = kyk_copy_new_tx(&tx_cpy, tx);
-    check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_tx failed");
 
     for(i = 0; i < tx -> vin_sz; i++){
 	
@@ -1186,6 +1187,14 @@ int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_ch
 	
 	res = kyk_seri_tx_for_sig(tx, i, txout, &buf, &buf_len);
 	check(res == 0, "Failed to kyk_do_sign_tx: kyk_seri_tx_for_sig failed");
+
+	res = kyk_ec_sign_hash256(privkey, buf, buf_len, &der_buf, &der_buf_len);
+
+	res = kyk_set_txin_script_sig(txin, der_buf, der_buf_len, pubkey, publen);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_set_txin_script_sig failed");
+
+	kyk_free_txout(txout);
+	free(buf);
     }
 
 
@@ -1194,6 +1203,39 @@ int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_ch
 error:
     if(txout) kyk_free_txout(txout);
     if(buf) free(buf);
+    return -1;
+}
+
+int kyk_set_txin_script_sig(struct kyk_txin* txin,
+			    uint8_t* der_buf,
+			    size_t der_buf_len,
+			    uint8_t* pubkey,
+			    size_t publen)
+{
+    uint8_t hashtype = 0;
+    uint8_t op_sep1 = 0;
+    uint8_t op_sep2 = 0;
+
+    check(txin, "Failed to kyk_set_txin_script_sig: txin is NULL");
+    
+    hashtype = 1;
+    op_sep1 = der_buf_len + sizeof(hashtype);
+    op_sep2 = publen;
+
+    txin -> sc_size = sizeof(op_sep1) + der_buf_len + sizeof(hashtype) + sizeof(op_sep2) + publen;
+
+    if(txin -> sc){
+	free(txin -> sc);
+	txin -> sc = NULL;
+    }
+
+    txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
+    check(txin -> sc, "Failed to kyk_set_txin_script_sig: txin -> sc failed");
+    
+    return 0;
+
+error:
+
     return -1;
 }
 

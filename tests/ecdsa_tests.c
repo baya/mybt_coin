@@ -199,9 +199,9 @@ char *all_tests()
 {
     mu_suite_start();
     
-    /* mu_run_test(test_ec_get_pubkey_from_priv); */
-    /* mu_run_test(test_kyk_ec_sign); */
-    /* mu_run_test(test_kyk_ec_sig_verify); */
+    mu_run_test(test_ec_get_pubkey_from_priv);
+    mu_run_test(test_kyk_ec_sign);
+    mu_run_test(test_kyk_ec_sig_verify);
     mu_run_test(test_kyk_ec_sign_hash256);
     
     return NULL;

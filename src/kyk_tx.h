@@ -166,4 +166,12 @@ struct kyk_utxo* kyk_find_utxo_with_txin(const struct kyk_utxo_chain* utxo_chain
 
 int kyk_copy_new_txout_from_utxo(struct kyk_txout** new_txout, const struct kyk_utxo* utxo);
 
+int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_chain);
+
+int kyk_set_txin_script_sig(struct kyk_txin* txin,
+			    uint8_t* der_buf,
+			    size_t der_buf_len,
+			    uint8_t* pubkey,
+			    size_t publen);
+
 #endif
