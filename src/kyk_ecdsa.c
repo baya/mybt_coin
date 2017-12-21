@@ -191,6 +191,37 @@ int kyk_ec_sig_hash256_verify(uint8_t *buf, size_t buf_len,
 {
     uint8_t digest[32];
     kyk_dgst_hash256(digest, buf, buf_len);
-    
+
     return kyk_ec_sig_verify(digest, sizeof(digest), der_sig, der_sig_len, pubkey, pub_len);
 }
+
+
+int kyk_ec_sign_hash256(uint8_t* priv,
+			const uint8_t* src,
+			size_t src_len,
+			uint8_t** signed_buf,
+			size_t* signed_len)
+{
+    uint8_t digest[32];
+    struct kyk_buff* der = NULL;
+    int res = -1;
+
+    check(src, "Failed to kyk_es_sign_hash256: src is NULL");
+    check(signed_buf, "Failed to kyk_ec_sign_hash256: signed_buf is NULL");
+    
+    kyk_dgst_hash256(digest, src, src_len);
+    res = kyk_ec_sign(priv, digest, sizeof(digest), &der);
+    check(res == 0, "Failed to kyk_ec_sign_hash256: kyk_ec_sign failed");
+    
+    *signed_buf = der -> base;
+    *signed_len = der -> len;
+
+    return 0;
+
+error:
+
+    return -1;
+    
+}
+
+

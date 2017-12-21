@@ -94,6 +94,49 @@ error:
     return errmsg;
 }
 
+char* test_kyk_ec_sign_hash256()
+{
+
+    uint8_t priv_bytes[32] = {
+	0x18,0xE1,0x4A,0x7B,0x6A,0x30,0x7F,0x42,
+	0x6A,0x94,0xF8,0x11,0x47,0x01,0xE7,0xC8,
+	0xE7,0x74,0xE7,0xF9,0xA4,0x7E,0x2C,0x20,
+	0x35,0xDB,0x29,0xA2,0x06,0x32,0x17,0x25
+    };
+    
+    /* compressed pubkey */
+    uint8_t pubkey[33] = {
+	0x02, 0x50, 0x86, 0x3a, 0xd6, 0x4a, 0x87, 0xae,
+	0x8a, 0x2f, 0xe8, 0x3c, 0x1a, 0xf1, 0xa8, 0x40,
+	0x3c, 0xb5, 0x3f, 0x53, 0xe4, 0x86, 0xd8, 0x51,
+	0x1d, 0xad, 0x8a, 0x04, 0x88, 0x7e, 0x5b, 0x23,
+	0x52
+    };
+
+    uint8_t* sig_buf = NULL;
+    size_t sig_buf_len = 0;
+
+    int res = -1;
+
+    const char message[] = "Hello Hello Bitcoin";
+
+    res = kyk_ec_sign_hash256(priv_bytes, (uint8_t*)message, strlen(message), &sig_buf, &sig_buf_len);
+    mu_assert(res == 0, "Failed to test_kyk_ec_sign_hash256");
+
+    res = kyk_ec_sig_hash256_verify((uint8_t*)message, strlen(message),
+				    sig_buf, sig_buf_len,
+				    pubkey, sizeof(pubkey));
+    
+    check(res == 1, "Failed to test_kyk_ec_sign_hash256: kyk_ec_sig_hash256_verify failed");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_es_sign_hash256";
+
+}
+
 char* test_kyk_ec_sig_verify()
 {
     /* uint8_t priv_bytes[32] = { */
@@ -156,9 +199,10 @@ char *all_tests()
 {
     mu_suite_start();
     
-    mu_run_test(test_ec_get_pubkey_from_priv);
-    mu_run_test(test_kyk_ec_sign);
-    mu_run_test(test_kyk_ec_sig_verify);
+    /* mu_run_test(test_ec_get_pubkey_from_priv); */
+    /* mu_run_test(test_kyk_ec_sign); */
+    /* mu_run_test(test_kyk_ec_sig_verify); */
+    mu_run_test(test_kyk_ec_sign_hash256);
     
     return NULL;
 }

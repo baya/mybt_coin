@@ -34,4 +34,12 @@ int kyk_ec_sig_hash256_verify(uint8_t *buf, size_t buf_len,
 			      uint8_t *pubkey, size_t pub_len);
 
 
+int kyk_ec_sign_hash256(uint8_t* priv,
+			const uint8_t* src,
+			size_t src_len,
+			uint8_t** signed_buf,
+			size_t* signed_len);
+
+
+
 #endif

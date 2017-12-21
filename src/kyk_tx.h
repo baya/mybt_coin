@@ -161,4 +161,9 @@ int kyk_combine_txin_txout_for_script(uint8_t** sc_buf,
 
 int kyk_copy_txin(struct kyk_txin* txin, const struct kyk_txin* src_txin);
 
+struct kyk_utxo* kyk_find_utxo_with_txin(const struct kyk_utxo_chain* utxo_chain,
+					 const struct kyk_txin* txin);
+
+int kyk_copy_new_txout_from_utxo(struct kyk_txout** new_txout, const struct kyk_utxo* utxo);
+
 #endif

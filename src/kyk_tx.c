@@ -23,6 +23,7 @@ static int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note);
 static int get_txin_size(struct kyk_txin* txin, size_t* txin_size);
 static int get_txout_size(struct kyk_txout* txout, size_t* txout_size);
 static int placehold_txin_with_txout(struct kyk_txin* txin, const struct kyk_txout* txout);
+static int set_all_txins_sc_to_blank(struct kyk_tx* tx);
 
 int kyk_deseri_txin_list(struct kyk_txin* txin_list,
 			 size_t txin_count,
@@ -1144,7 +1145,7 @@ int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
     tx -> lock_time = MORMALLY_TX_LOCK_TIME;
 
     /* TODO sign TX */
-    /* res = kyk_do_sign_tx(tx, utxo_chain); */
+    res = kyk_do_sign_tx(tx, utxo_chain);
 
     *new_tx = tx;
 
@@ -1154,6 +1155,117 @@ error:
     if(tx) kyk_free_tx(tx);
     return -1;
 }
+
+
+int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_chain)
+{
+    struct kyk_tx* tx_cpy = NULL;
+    struct kyk_txin* txin = NULL;
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_txout* txout = NULL;
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    varint_t i = 0;
+    int res = -1;
+    
+    check(tx, "Failed to kyk_do_sign_tx: tx is NULL");
+    check(utxo_chain, "Failed to kyk_do_sign_tx: utxo_chain is NULL");
+
+    res = kyk_copy_new_tx(&tx_cpy, tx);
+    check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_tx failed");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	
+	txin = tx -> txin + i;
+	
+	utxo = kyk_find_utxo_with_txin(utxo_chain, txin);
+	check(utxo, "Failed to kyk_do_sign_tx: kyk_find_utxo_with_txin failed");
+	
+	res = kyk_copy_new_txout_from_utxo(&txout, utxo);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_txout_from_utxo failed");
+	
+	res = kyk_seri_tx_for_sig(tx, i, txout, &buf, &buf_len);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_seri_tx_for_sig failed");
+    }
+
+
+    return 0;
+    
+error:
+    if(txout) kyk_free_txout(txout);
+    if(buf) free(buf);
+    return -1;
+}
+
+int kyk_copy_new_txout_from_utxo(struct kyk_txout** new_txout, const struct kyk_utxo* utxo)
+{
+    struct kyk_txout* txout = NULL;
+    
+    check(new_txout, "Failed to kyk_copy_new_txout_from_utxo: new_txout is NULL");
+    check(utxo, "Failed to kyk_copy_new_txout_from_utxo: utxo is NULL");
+    check(utxo -> sc_size > 0, "Failed to kyk_copy_new_txout_from_utxo: utxo -> sc_size is invalid");
+
+    txout = calloc(1, sizeof(*txout));
+    check(txout, "Failed to kyk_copy_new_txout_from_utxo: txout calloc failed");
+
+    txout -> value = utxo -> value;
+    txout -> sc_size = utxo -> sc_size;
+    txout -> sc = calloc(txout -> sc_size, sizeof(*txout -> sc));
+
+    memcpy(txout -> sc, utxo -> sc, txout -> sc_size);
+
+    *new_txout = txout;
+
+    return 0;
+    
+error:
+    if(txout) kyk_free_txout(txout);
+    return -1;
+}
+
+struct kyk_utxo* kyk_find_utxo_with_txin(const struct kyk_utxo_chain* utxo_chain,
+					 const struct kyk_txin* txin)
+{
+    struct kyk_utxo* utxo = NULL;
+    int txid_match = 0;
+    int outidx_match = 0;
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	txid_match = kyk_digest_eq(utxo -> txid, txin -> pre_txid, sizeof(utxo -> txid));
+	outidx_match = (txin -> pre_txout_inx == utxo -> outidx);
+	if(txid_match && outidx_match){
+	    return utxo;
+	}
+
+	utxo = utxo -> next;
+    }
+
+    return NULL;
+}
+
+
+int set_all_txins_sc_to_blank(struct kyk_tx* tx)
+{
+    struct kyk_txin* txin = NULL;
+    varint_t i = 0;
+    
+    check(tx, "Failed to set_all_txins_sc_to_blank: tx is NULL");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	txin = tx -> txin + i;
+	txin -> sc_size = 0;
+	if(txin -> sc) free(txin -> sc);
+	txin -> sc = NULL;
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
 
 /* Txout with pay-to-pubkey-hash script */
 int kyk_make_p2pkh_txout(struct kyk_txout* txout,
@@ -1231,17 +1343,15 @@ int kyk_unlock_utxo(const struct kyk_utxo* utxo,
 
     memcpy(txin -> pre_txid, utxo -> txid, sizeof(txin -> pre_txid));
     txin -> pre_txout_inx = utxo -> outidx;
-    
-    txin -> sc_size = utxo -> sc_size;
-    txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
-    check(txin -> sc, "Failed to kyk_unlock_utxo: txin -> sc calloc failed");
-    
+    txin -> sc_size = 0;
+    if(txin -> sc) free(txin -> sc);
+    txin -> sc = NULL;
     txin -> seq_no = NORMALLY_TX_SEQ_NO;
 
     return 0;
     
 error:
-    if(txin -> sc) free(txin -> sc);
+    
     return -1;
 }
 
@@ -1295,7 +1405,6 @@ int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
     uint8_t* buf = NULL;
     uint8_t* bufp = NULL;
     size_t buf_size = 0;
-    varint_t i = 0;
     int res = -1;
 
     check(tx, "Failed to kyk_seri_tx_for_sig: tx is NULL");
@@ -1306,12 +1415,7 @@ int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
     check(res == 0, "Failed to kyk_seri_tx_for_sig: kyk_copy_new_tx failed");
 
     /* make all txin to blank */
-    for(i = 0; i < tx_cpy -> vin_sz; i++){
-	txin = tx_cpy -> txin + i;
-	txin -> sc_size = 0;
-	if(txin -> sc ) free(txin -> sc);
-	txin -> sc = NULL;
-    }
+    set_all_txins_sc_to_blank(tx_cpy);
 
     /* set txin -> sc with txout's scriptPubkey */
     txin = tx_cpy -> txin + txin_index;

@@ -143,10 +143,7 @@ int kyk_validate_txin_script_sig(const struct kyk_txin* txin,
 {
     struct kyk_txout* txout = NULL;
     uint8_t prev_txid[32];
-    uint8_t* sc_buf = NULL;
-    size_t sc_buf_len = 0;
     int res = -1;
-    int verified = 0;
     
     check(txin, "Failed to kyk_validate_txin_script_sig: txin is NULL");
     check(unsig_buf, "Failed to kyk_validate_txin_script_sig: unsig_buf is NULL");
@@ -162,16 +159,12 @@ int kyk_validate_txin_script_sig(const struct kyk_txin* txin,
     txout = prev_tx -> txout;
     txout = txout + txin -> pre_txout_inx;
 
-    res = kyk_combine_txin_txout_for_script(&sc_buf, &sc_buf_len, txin, txout);
-    check(res == 0, "Failed to kyk_validate_txin_script_sig: kyk_combine_txin_txout_for_script failed");
-
-    verified = kyk_run_script(sc_buf, sc_buf_len, unsig_buf, unsig_buf_len);
-    check(verified == 1, "Failed to kyk_validate_txin_script_sig: kyk_run_script failed");
+    res = kyk_validate_txin_script_sig_with_txout(txin, unsig_buf, unsig_buf_len, txout);
+    check(res == 0, "Failed to kyk_validate_txin_script_sig: kyk_validate_txin_script_sig_with_txout failed");
 
     return 0;
 
 error:
-
     return -1;
 }
 
@@ -180,6 +173,25 @@ int kyk_validate_txin_script_sig_with_txout(const struct kyk_txin* txin,
 					    size_t unsig_buf_len,
 					    const struct kyk_txout* txout)
 {
+    uint8_t* sc_buf = NULL;
+    size_t sc_buf_len = 0;
+    int res = -1;
+
+    check(txin, "Failed to kyk_validate_txin_script_sig_with_txout: txin is NULL");
+    check(txout, "Failed to kyk_validate_txin_script_sig_with_txout: txout is NULL");
+
+    res = kyk_combine_txin_txout_for_script(&sc_buf, &sc_buf_len, txin, txout);
+    check(res == 0, "Failed to kyk_validate_txin_script_sig_with_txout: kyk_combine_txin_txout_for_script failed");
+
+    res = kyk_run_script(sc_buf, sc_buf_len, unsig_buf, unsig_buf_len);
+    check(res == 1, "Failed to kyk_validate_txin_script_sig_with_txout");
+
+    if(sc_buf) free(sc_buf);
+    
     return 0;
+
+error:
+    if(sc_buf) free(sc_buf);
+    return -1;
 }
 
