@@ -1215,6 +1215,7 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
     uint8_t hashtype = 0;
     uint8_t op_sep1 = 0;
     uint8_t op_sep2 = 0;
+    uint8_t* sc_ptr = NULL;
 
     check(txin, "Failed to kyk_set_txin_script_sig: txin is NULL");
     
@@ -1231,6 +1232,22 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
 
     txin -> sc = calloc(txin -> sc_size, sizeof(*txin -> sc));
     check(txin -> sc, "Failed to kyk_set_txin_script_sig: txin -> sc failed");
+
+    sc_ptr = txin -> sc;
+
+    *sc_ptr = op_sep1;
+    sc_ptr += 1;
+
+    memcpy(sc_ptr, der_buf, der_buf_len);
+    sc_ptr += der_buf_len;
+
+    *sc_ptr = hashtype;
+    sc_ptr += 1;
+
+    *sc_ptr = op_sep2;
+    sc_ptr += 1;
+    
+    memcpy(sc_ptr, pubkey, publen);
     
     return 0;
 
