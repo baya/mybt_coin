@@ -120,13 +120,6 @@ int kyk_unlock_utxo_chain(const struct kyk_utxo_chain* utxo_chain,
 			  varint_t* txin_count);
 
 
-int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
-				uint64_t amount,         /* amount excluded miner fee        */
-				uint64_t mfee,           /* miner fee                        */
-				const char* to_addr,     /* send btc amount to this address  */
-				const char* mc_addr,     /* make change back to this address */
-				uint32_t version,
-				const struct kyk_utxo_chain* utxo_chain);
 
 int kyk_make_p2pkh_txout(struct kyk_txout* txout,
 			 const char* addr,
@@ -166,12 +159,16 @@ struct kyk_utxo* kyk_find_utxo_with_txin(const struct kyk_utxo_chain* utxo_chain
 
 int kyk_copy_new_txout_from_utxo(struct kyk_txout** new_txout, const struct kyk_utxo* utxo);
 
-int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_chain);
 
 int kyk_set_txin_script_sig(struct kyk_txin* txin,
 			    uint8_t* der_buf,
 			    size_t der_buf_len,
 			    uint8_t* pubkey,
 			    size_t publen);
+
+
+void kyk_print_tx(const struct kyk_tx* tx);
+void kyk_print_txin(const struct kyk_txin* txin);
+
 
 #endif

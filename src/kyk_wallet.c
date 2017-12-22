@@ -62,6 +62,9 @@ int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
     res = kyk_setup_main_address(wallet);
     check(res == 0, "Failed to kyk_setup_wallet: kyk_setup_main_address failed");
 
+    res = kyk_load_wallet_cfg(wallet);
+    check(res == 0, "Failed to kyk_setup_wallet: kyk_load_wallet_cfg failed");
+
     *outWallet = wallet;
 
     return 0;
@@ -527,7 +530,12 @@ int kyk_load_wallet_cfg(struct kyk_wallet* wallet)
 
     check(wallet, "wallet can not be NULL");
     check(wallet -> wallet_cfg_path, "wallet cfg path can not be NULL");
-    check(wallet -> wallet_cfg == NULL, "wallet cfg has already been loaded");
+    /* check(wallet -> wallet_cfg == NULL, "wallet cfg has already been loaded"); */
+
+    if(wallet -> wallet_cfg){
+	kyk_config_free(wallet -> wallet_cfg);
+	wallet -> wallet_cfg = NULL;
+    }
 
     res = kyk_config_load(wallet -> wallet_cfg_path, &cfg);    
     check(res == 0, "failed to kyk_config_load");
@@ -1008,12 +1016,18 @@ error:
 }
 
 int kyk_wallet_make_tx(struct kyk_tx** new_tx,
+		       uint32_t version,
 		       const struct kyk_wallet* wallet,
 		       uint64_t value,
 		       const char* btc_addr)
 {
+    struct kyk_tx* tx = NULL;
     struct kyk_utxo_chain* value_utxo_chain = NULL;
     struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_wkey_chain* wkey_chain = NULL;
+    const char* mc_addr = NULL;
+    uint64_t amount = 0;
+    uint64_t mfee = 0;
     int res = -1;
     
     check(new_tx, "Failed to kyk_wallet_make_tx: new_tx is NULL");
@@ -1025,19 +1039,405 @@ int kyk_wallet_make_tx(struct kyk_tx** new_tx,
     res = kyk_validate_address(btc_addr, strlen(btc_addr));
     check(res == 0, "Failed to kyk_wallet_make_tx: kyk_validate_address failed");
 
+
     res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
     check(res == 0, "Failed to kyk_wallet_make_tx: kyk_load_utxo_chain failed");
 
+
     res = kyk_find_available_utxo_list(&value_utxo_chain, wallet_utxo_chain, value);
     check(res == 0, "Failed to kyk_wallet_make_tx: kyk_find_available_utxo_list failed");
+    check(value_utxo_chain -> hd, "Failed to kyk_wallet_make_tx: kyk_find_available_utxo_list failed");
+
+
+    res = kyk_wallet_load_key_list(wallet, &wkey_chain);
+    check(res == 0, "Failed to kyk_wallet_make_tx: kyk_wallet_load_key_list failed");
+    check(wkey_chain -> hd, "Failed to kyk_wallet_make_tx: kyk_wallet_load_key_list failed");
+
+    amount = value;
+    mfee = KYK_MINER_FEE;
+    mc_addr = wkey_chain -> hd -> addr;
+    res = kyk_wallet_make_tx_from_utxo_chain(&tx, amount, mfee, btc_addr, mc_addr, version, value_utxo_chain, wkey_chain);
+    check(res == 0, "Failed to kyk_wallet_make_tx: kyk_wallet_make_tx_from_utxo_chain failed");
+
+    *new_tx = tx;
 
     kyk_free_utxo_chain(value_utxo_chain);
     kyk_free_utxo_chain(wallet_utxo_chain);
+    kyk_wkey_chain_free(wkey_chain);
     
     return 0;
 
 error:
     if(value_utxo_chain) kyk_free_utxo_chain(value_utxo_chain);
     if(wallet_utxo_chain) kyk_free_utxo_chain(wallet_utxo_chain);
+    if(wkey_chain) kyk_wkey_chain_free(wkey_chain);
     return -1;
+}
+
+
+int kyk_wallet_load_key_list(struct kyk_wallet* wallet, struct kyk_wkey_chain** new_wkey_chain)
+{
+    struct config* cfg = NULL;
+    struct kyk_wkey_chain* wkey_chain = NULL;
+    struct kyk_wkey* wkey = NULL;
+    int cfg_idx = 0;
+    int i = 0;
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_wallet_load_key_list: wallet is NULL");
+    
+    if(wallet -> wallet_cfg == NULL || wallet -> wallet_cfg -> list == NULL){
+	res = kyk_load_wallet_cfg(wallet);
+	check(res == 0, "failed to kyk_load_wallet_cfg");	
+    }
+
+    res = kyk_wallet_get_cfg_idx(wallet, &cfg_idx);
+    check(res == 0, "Failed to kyk_wallet_load_key_list: kyk_wallet_get_cfg_idx failed");
+
+    wkey_chain = calloc(1, sizeof(*wkey_chain));
+    check(wkey_chain, "Failed to kyk_wallet_load_key_list: wkey_chain calloc failed");    
+
+    cfg = wallet -> wallet_cfg;
+    
+    for(i = 0; i < cfg_idx; i++){
+	char* priv_str = NULL;
+	char* pub_str = NULL;
+	
+	wkey = calloc(1, sizeof(*wkey));
+	check(wkey, "Failed to kyk_wallet_load_key_list: wkey calloc failed");
+	
+	wkey -> addr = kyk_config_getstring(cfg, NULL, "key%u.address", i);
+	if(wkey -> addr == NULL){
+	    continue;
+	}
+
+	priv_str = kyk_config_getstring(cfg, NULL, "key%u.privkey", i);
+	check(priv_str, "Failed to kyk_wallet_load_key_list: priv_str kyk_config_getstring failed");
+
+	res = kyk_base58_decode_check(priv_str, strlen(priv_str), &wkey -> priv, &wkey -> priv_len);
+	check(res == 0, "Failed to kyk_wallet_load_key_list: kyk_base58_decode_check failed");
+
+	pub_str = kyk_config_getstring(cfg, NULL, "key%u.pubkey", i);
+	check(pub_str, "Failed to kyk_wallet_load_key_list: pub_str kyk_config_getstring failed");
+
+	wkey -> pub = kyk_alloc_hex(pub_str, &wkey -> pub_len);
+
+	res = kyk_wkey_chain_append_wkey(wkey_chain, wkey);
+	check(res == 0, "Failed to kyk_wallet_load_key_list: kyk_wkey_chain_append_wkey failed");
+
+    }
+
+    *new_wkey_chain = wkey_chain;
+
+    return 0;
+
+error:
+    if(wkey_chain) kyk_wkey_chain_free(wkey_chain);
+    return -1;
+
+}
+
+void kyk_print_wkey_chain(const struct kyk_wkey_chain* wkey_chain)
+{
+    struct kyk_wkey* wkey = NULL;
+
+    wkey = wkey_chain -> hd;
+    while(wkey){
+	kyk_print_wkey(wkey);
+	printf("\n\n");
+	wkey = wkey -> next;
+    }
+}
+
+void kyk_print_wkey(const struct kyk_wkey* wkey)
+{
+    printf("wkey -> addr: %s\n", wkey -> addr);
+    kyk_print_hex("wkey -> priv ", wkey -> priv, wkey -> priv_len);
+    kyk_print_hex("wkey -> pub ", wkey -> pub, wkey -> pub_len);
+}
+
+void kyk_wkey_chain_free(struct kyk_wkey_chain* wkey_chain)
+{
+    struct kyk_wkey* wkey = NULL;
+    struct kyk_wkey* wkey_next = NULL;
+    
+    if(wkey_chain){
+	wkey = wkey_chain -> hd;
+	while(wkey){
+	    wkey_next = wkey -> next;
+	    kyk_wkey_free(wkey);
+	    wkey = wkey_next;
+	}
+
+	free(wkey_chain);
+    }
+}
+
+void kyk_wkey_free(struct kyk_wkey* wkey)
+{
+    if(wkey){
+	
+	if(wkey -> addr){
+	    free(wkey -> addr);
+	    wkey -> addr = NULL;
+	}
+	
+	if(wkey -> priv){
+	    free(wkey -> priv);
+	    wkey -> priv = NULL;
+	}
+
+	if(wkey -> pub){
+	    free(wkey -> pub);
+	    wkey -> pub = NULL;
+	}
+
+	free(wkey);
+    }
+}
+
+int kyk_wkey_chain_append_wkey(struct kyk_wkey_chain* wkey_chain,
+			       struct kyk_wkey* wkey)
+{
+    check(wkey_chain, "Failed to kyk_wkey_chain_append_wkey: wkey_chain is failed");
+    check(wkey, "Failed to kyk_wkey_chain_append_wkey: wkey is NULL");
+    check(wkey -> next == NULL, "Failed to kyk_wkey_chain_append_wkey: wkey -> next should be NULL");
+
+    if(wkey_chain -> hd == NULL){
+	wkey_chain -> hd = wkey;
+	wkey_chain -> tail = wkey;
+	wkey_chain -> len = 1;
+    } else {
+	wkey_chain -> tail -> next = wkey;
+	wkey_chain -> tail = wkey;
+	wkey_chain -> len += 1;
+    }
+
+    return 0;
+
+error:
+    return -1;
+}
+
+
+
+int kyk_wallet_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
+				       uint64_t amount,         /* amount excluded miner fee        */
+				       uint64_t mfee,           /* miner fee                        */
+				       const char* to_addr,     /* send btc amount to this address  */
+				       const char* mc_addr,     /* make change back to this address */
+				       uint32_t version,
+				       const struct kyk_utxo_chain* utxo_chain,
+				       const struct kyk_wkey_chain* wkey_chain)
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_txin* txin_list = NULL;
+    struct kyk_txout* txout_list = NULL;
+    struct kyk_txout* txout = NULL;
+    size_t txout_count = 0;
+    size_t i = 0;
+    varint_t txin_count = 0;
+    uint64_t total_value = 0;
+    uint64_t back_charge = 0;
+    int res = -1;
+
+    check(new_tx, "Failed to kyk_make_tx_from_utxo_chain: new_tx is NULL");
+    check(utxo_chain, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain is NULL");
+    check(utxo_chain -> len > 0, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain -> len should be > 0");
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_make_tx_from_utxo_chain: tx calloc failed");    
+
+    utxo = utxo_chain -> hd;
+    
+    /* Unlock UTXO, in this time didn't make signature */
+    res = kyk_unlock_utxo_chain(utxo_chain, &txin_list, &txin_count);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_unlock_utxo_chain failed");
+
+    res = kyk_utxo_chain_get_total_value(utxo_chain, &total_value);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_utxo_chain_get_total_value failed");
+    check(total_value >= amount + mfee, "Failed to kyk_make_tx_from_utxo_chain: total_value is invalid");
+
+    /* txout for amount */
+    txout_count += 1;
+    
+    back_charge = total_value - (amount + mfee);
+    if(back_charge > 0){
+	/* txout for charge back */
+	txout_count += 1;
+    }
+
+    txout_list = calloc(txout_count, sizeof(*txout_list));
+    check(txout_list, "Failed to kyk_make_tx_from_utxo_chain: txout_list calloc failed");
+
+    txout = txout_list;
+    res = kyk_make_p2pkh_txout(txout, to_addr, strlen(to_addr), amount);
+    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
+    i++;
+
+    if(i < txout_count){
+	txout = txout_list + 1;
+	res = kyk_make_p2pkh_txout(txout, mc_addr, strlen(mc_addr), back_charge);
+	check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
+	i++;
+    }
+
+    /* unsigned TX */
+    tx -> version = version;
+    tx -> vin_sz = txin_count;
+    tx -> txin = txin_list;
+    tx -> vout_sz = txout_count;
+    tx -> txout = txout_list;
+    tx -> lock_time = MORMALLY_TX_LOCK_TIME;
+
+    /* make signature to TX */
+    res = kyk_wallet_do_sign_tx(tx, utxo_chain, wkey_chain);
+
+    *new_tx = tx;
+
+    return 0;
+    
+error:
+    if(tx) kyk_free_tx(tx);
+    return -1;
+}
+
+
+int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
+			  const struct kyk_utxo_chain* utxo_chain,
+			  const struct kyk_wkey_chain* wkey_chain)
+{
+    struct kyk_txin* txin = NULL;
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_txout* txout = NULL;
+    struct kyk_wkey* wkey = NULL;
+    uint8_t* buf = NULL;
+    size_t buf_len = 0;
+    uint8_t* der_buf = NULL;
+    size_t der_buf_len = 0;
+    varint_t i = 0;
+    int res = -1;
+    
+    check(tx, "Failed to kyk_do_sign_tx: tx is NULL");
+    check(utxo_chain, "Failed to kyk_do_sign_tx: utxo_chain is NULL");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	
+	txin = tx -> txin + i;
+	
+	utxo = kyk_find_utxo_with_txin(utxo_chain, txin);
+	check(utxo, "Failed to kyk_do_sign_tx: kyk_find_utxo_with_txin failed");
+	
+	res = kyk_copy_new_txout_from_utxo(&txout, utxo);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_txout_from_utxo failed");
+	
+	res = kyk_seri_tx_for_sig(tx, i, txout, &buf, &buf_len);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_seri_tx_for_sig failed");
+
+	wkey = kyk_find_wkey_by_addr(wkey_chain, utxo -> btc_addr);
+	check(wkey, "Failed to kyk_do_sign_tx: kyk_find_wkey_by_addr failed");
+
+	res = kyk_ec_sign_hash256(wkey -> priv, buf, buf_len, &der_buf, &der_buf_len);
+
+	res = kyk_set_txin_script_sig(txin, der_buf, der_buf_len, wkey -> pub, wkey -> pub_len);
+	check(res == 0, "Failed to kyk_do_sign_tx: kyk_set_txin_script_sig failed");
+
+	kyk_free_txout(txout);
+	free(buf);
+    }
+
+
+    return 0;
+    
+error:
+    if(txout) kyk_free_txout(txout);
+    if(buf) free(buf);
+    return -1;
+}
+
+struct kyk_wkey* kyk_find_wkey_by_addr(const struct kyk_wkey_chain* wkey_chain, const char* addr)
+{
+    struct kyk_wkey* wkey = NULL;
+
+    check(wkey_chain, "Failed to kyk_find_wkey_by_addr: wkey_chain is NULL");
+    check(addr, "Failed to kyk_find_wkey_by_addr: addr is NULL");
+
+    wkey = wkey_chain -> hd;
+    while(wkey){
+	if(strcmp(addr, wkey -> addr) == 0){
+	    return wkey;
+	}
+	wkey = wkey -> next;
+    }
+
+    return NULL;
+
+error:
+
+    return NULL;
+}
+
+
+int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_wallet* wallet)
+{
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    const char* note = "void coin";
+    uint8_t* pubkey = NULL;
+    size_t pbk_len = 0;
+    struct kyk_block* blk = NULL;
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    int res = -1;
+    uint8_t digest[32];
+
+    res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
+    check(res == 0, "Failed to cmd_make_init_blocks: kyk_wallet_get_pubkey failed");
+
+    res = kyk_load_blk_header_chain(&hd_chain, wallet);
+    check(res == 0, "Failed to cmd_make_block: kyk_load_blk_header_chain failed");
+
+    res = kyk_make_coinbase_block(&blk, hd_chain, note, pubkey, pbk_len);
+    check(res == 0, "Failed to cmd_make_block: kyk_make_conibase_block failed");
+
+    res = kyk_validate_block(hd_chain, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_validate_block failed");
+
+    res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
+    check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
+
+    res = kyk_load_utxo_chain(&utxo_chain, wallet);
+    check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
+
+    res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_append_utxo_chain_from_block failed");
+
+    res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
+    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_utxo_chain failed");
+
+    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    check(res == 0, "Failed to cmd_make_block: kyk_save_blk_header_chain failed");
+
+    res = kyk_wallet_save_block(wallet, blk);
+    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
+
+    kyk_blk_hash256(digest, blk -> hd);
+    kyk_print_hex("maked a new block", digest, sizeof(digest));
+
+    if(new_blk){
+	*new_blk = blk;
+    } else {
+	kyk_free_block(blk);
+    }
+
+    free(pubkey);
+    kyk_free_utxo_chain(utxo_chain);
+    
+    return 0;
+
+error:
+    if(pubkey) free(pubkey);
+    if(blk) kyk_free_block(blk);
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+
 }

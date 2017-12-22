@@ -51,6 +51,31 @@ void kyk_print_txout(const struct kyk_txout* txout)
     kyk_print_hex("txout -> sc", txout -> sc, txout -> sc_size);
 }
 
+void kyk_print_tx(const struct kyk_tx* tx)
+{
+    varint_t i = 0;
+    printf("tx -> version: %u\n", tx -> version);
+    printf("tx -> vin_sz: %llu\n", tx -> vin_sz);
+    for(i = 0; i < tx -> vin_sz; i++){
+	kyk_print_txin(tx -> txin + i);
+    }
+    printf("tx -> vout_sz: %llu\n", tx -> vout_sz);
+    for(i = 0; i < tx -> vout_sz; i++){
+	kyk_print_txout(tx -> txout + i);
+    }
+
+    printf("tx -> lock_time: %u\n", tx -> lock_time);
+}
+
+void kyk_print_txin(const struct kyk_txin* txin)
+{
+    kyk_print_hex("txin -> pre_txid", txin -> pre_txid, sizeof(txin -> pre_txid));
+    printf("txin -> pre_txout_inx: %u\n", txin -> pre_txout_inx);
+    printf("txin -> sc_size: %llu\n", txin -> sc_size);
+    kyk_print_hex("txin -> sc", txin -> sc, txin -> sc_size);
+    printf("txin -> seq_no: %0x\n", txin -> seq_no);
+}
+
 int kyk_tx_hash256(uint8_t* digest, const struct kyk_tx* tx)
 {
     uint8_t *buf = NULL;
@@ -1075,137 +1100,6 @@ error:
 }
 
 
-int kyk_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
-				uint64_t amount,         /* amount excluded miner fee        */
-				uint64_t mfee,           /* miner fee                        */
-				const char* to_addr,     /* send btc amount to this address  */
-				const char* mc_addr,     /* make change back to this address */
-				uint32_t version,
-				const struct kyk_utxo_chain* utxo_chain)
-{
-    struct kyk_tx* tx = NULL;
-    struct kyk_utxo* utxo = NULL;
-    struct kyk_txin* txin_list = NULL;
-    struct kyk_txout* txout_list = NULL;
-    struct kyk_txout* txout = NULL;
-    size_t txout_count = 0;
-    size_t i = 0;
-    varint_t txin_count = 0;
-    uint64_t total_value = 0;
-    uint64_t back_charge = 0;
-    int res = -1;
-
-    check(new_tx, "Failed to kyk_make_tx_from_utxo_chain: new_tx is NULL");
-    check(utxo_chain, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain is NULL");
-    check(utxo_chain -> len > 0, "Failed to kyk_make_tx_from_utxo_chain: utxo_chain -> len should be > 0");
-
-    tx = calloc(1, sizeof(*tx));
-    check(tx, "Failed to kyk_make_tx_from_utxo_chain: tx calloc failed");    
-
-    utxo = utxo_chain -> hd;
-    
-    /* Unlock UTXO, in this time didn't make signature */
-    res = kyk_unlock_utxo_chain(utxo_chain, &txin_list, &txin_count);
-    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_unlock_utxo_chain failed");
-
-    res = kyk_utxo_chain_get_total_value(utxo_chain, &total_value);
-    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_utxo_chain_get_total_value failed");
-    check(total_value >= amount + mfee, "Failed to kyk_make_tx_from_utxo_chain: total_value is invalid");
-
-    /* txout for amount */
-    txout_count += 1;
-    
-    back_charge = total_value - (amount + mfee);
-    if(back_charge > 0){
-	/* txout for charge back */
-	txout_count += 1;
-    }
-
-    txout_list = calloc(txout_count, sizeof(*txout_list));
-    check(txout_list, "Failed to kyk_make_tx_from_utxo_chain: txout_list calloc failed");
-
-    txout = txout_list;
-    res = kyk_make_p2pkh_txout(txout, to_addr, strlen(to_addr), amount);
-    check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
-    i++;
-
-    if(i < txout_count){
-	txout = txout_list + 1;
-	res = kyk_make_p2pkh_txout(txout, mc_addr, strlen(mc_addr), back_charge);
-	check(res == 0, "Failed to kyk_make_tx_from_utxo_chain: kyk_make_p2pkh_txout failed");
-	i++;
-    }
-
-    /* unsigned TX */
-    tx -> version = version;
-    tx -> vin_sz = txin_count;
-    tx -> txin = txin_list;
-    tx -> vout_sz = txout_count;
-    tx -> txout = txout_list;
-    tx -> lock_time = MORMALLY_TX_LOCK_TIME;
-
-    /* make signature to TX */
-    res = kyk_do_sign_tx(tx, utxo_chain);
-
-    *new_tx = tx;
-
-    return 0;
-    
-error:
-    if(tx) kyk_free_tx(tx);
-    return -1;
-}
-
-
-int kyk_do_sign_tx(const struct kyk_tx* tx, const struct kyk_utxo_chain* utxo_chain)
-{
-    struct kyk_txin* txin = NULL;
-    struct kyk_utxo* utxo = NULL;
-    struct kyk_txout* txout = NULL;
-    uint8_t* buf = NULL;
-    size_t buf_len = 0;
-    uint8_t* privkey = NULL;
-    uint8_t* pubkey = NULL;
-    size_t publen = 0;
-    uint8_t* der_buf = NULL;
-    size_t der_buf_len = 0;
-    varint_t i = 0;
-    int res = -1;
-    
-    check(tx, "Failed to kyk_do_sign_tx: tx is NULL");
-    check(utxo_chain, "Failed to kyk_do_sign_tx: utxo_chain is NULL");
-
-    for(i = 0; i < tx -> vin_sz; i++){
-	
-	txin = tx -> txin + i;
-	
-	utxo = kyk_find_utxo_with_txin(utxo_chain, txin);
-	check(utxo, "Failed to kyk_do_sign_tx: kyk_find_utxo_with_txin failed");
-	
-	res = kyk_copy_new_txout_from_utxo(&txout, utxo);
-	check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_txout_from_utxo failed");
-	
-	res = kyk_seri_tx_for_sig(tx, i, txout, &buf, &buf_len);
-	check(res == 0, "Failed to kyk_do_sign_tx: kyk_seri_tx_for_sig failed");
-
-	res = kyk_ec_sign_hash256(privkey, buf, buf_len, &der_buf, &der_buf_len);
-
-	res = kyk_set_txin_script_sig(txin, der_buf, der_buf_len, pubkey, publen);
-	check(res == 0, "Failed to kyk_do_sign_tx: kyk_set_txin_script_sig failed");
-
-	kyk_free_txout(txout);
-	free(buf);
-    }
-
-
-    return 0;
-    
-error:
-    if(txout) kyk_free_txout(txout);
-    if(buf) free(buf);
-    return -1;
-}
-
 int kyk_set_txin_script_sig(struct kyk_txin* txin,
 			    uint8_t* der_buf,
 			    size_t der_buf_len,
@@ -1367,7 +1261,7 @@ int kyk_unlock_utxo_chain(const struct kyk_utxo_chain* utxo_chain,
 
     check(utxo_chain, "Failed to kyk_unlock_utxo_chain: utxo_chain is NULL");
     check(utxo_chain -> len > 0, "Failed to kyk_unlock_utxo_chain: utxo_chain -> len should be > 0");
-    check(txin_list, "Failed to kyk_unlock_utxo_chain: txin_list is NULL");
+    check(new_txin_list, "Failed to kyk_unlock_utxo_chain: new_txin_list is NULL");
 
     txin_list = calloc(utxo_chain -> len, sizeof(*txin_list));
 

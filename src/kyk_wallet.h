@@ -5,6 +5,8 @@
 #include "kyk_defs.h"
 #include "kyk_ldb.h"
 
+#define KYK_MINER_FEE 10000
+
 struct kyk_blk_hd_chain;
 
 struct kyk_utxo_chain;
@@ -19,6 +21,20 @@ struct kyk_wallet_key {
     uint32_t     cfg_idx;
 };
 
+struct kyk_wkey {
+    char*    addr;
+    uint8_t* priv;
+    size_t   priv_len;
+    uint8_t* pub;
+    size_t   pub_len;
+    struct kyk_wkey* next;
+};
+
+struct kyk_wkey_chain {
+    struct kyk_wkey* hd;
+    struct kyk_wkey* tail;
+    size_t len;
+};
 
 struct kyk_wallet {
     char* wdir;
@@ -91,8 +107,43 @@ int kyk_wallet_load_addr_list(const struct kyk_wallet* wallet,
 int kyk_wallet_query_total_balance(const struct kyk_wallet* wallet, uint64_t* balance);
 
 int kyk_wallet_make_tx(struct kyk_tx** new_tx,
+		       uint32_t version,
 		       const struct kyk_wallet* wallet,
 		       uint64_t value,
 		       const char* btc_addr);
+
+int kyk_wallet_load_key_list(struct kyk_wallet* wallet, struct kyk_wkey_chain** new_wkey_chain);
+
+void kyk_wkey_chain_free(struct kyk_wkey_chain* wkey_chain);
+
+void kyk_print_wkey_chain(const struct kyk_wkey_chain* wkey_chain);
+
+void kyk_print_wkey(const struct kyk_wkey* wkey);
+
+void kyk_wkey_free(struct kyk_wkey* wkey);
+
+int kyk_wkey_chain_append_wkey(struct kyk_wkey_chain* wkey_chain,
+			       struct kyk_wkey* wkey);
+
+
+int kyk_wallet_make_tx_from_utxo_chain(struct kyk_tx** new_tx,
+				       uint64_t amount,         /* amount excluded miner fee        */
+				       uint64_t mfee,           /* miner fee                        */
+				       const char* to_addr,     /* send btc amount to this address  */
+				       const char* mc_addr,     /* make change back to this address */
+				       uint32_t version,
+				       const struct kyk_utxo_chain* utxo_chain,
+				       const struct kyk_wkey_chain* wkey_chain);
+
+
+int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
+			  const struct kyk_utxo_chain* utxo_chain,
+			  const struct kyk_wkey_chain* wkey_chain);
+
+
+struct kyk_wkey* kyk_find_wkey_by_addr(const struct kyk_wkey_chain* wkey_chain, const char* addr);
+
+int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_wallet* wallet);
+
 
 #endif

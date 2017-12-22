@@ -42,7 +42,6 @@ char* test_kyk_key_get_privkey()
     k = kyk_key_generate_new();
     res = kyk_key_get_privkey(k, &priv, &len);
     mu_assert(res == 0, "Failed to test kyk_key_get_privkey");
-    mu_assert(len == PRIVATE_KEY_LEN, "Failed to get the correct private key len");
     mu_assert(priv != NULL, "Failed to get the correct private key");
 
     return NULL;
