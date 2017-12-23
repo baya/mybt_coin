@@ -157,9 +157,9 @@ EC_KEY *kyk_ec_new_pubkey(const uint8_t *pub_bytes, size_t pub_len)
     return key;
 }
 
-int kyk_ec_sig_verify(uint8_t *buf, size_t buf_len,
-		       uint8_t *der_sig, size_t der_sig_len,
-		       uint8_t *pubkey, size_t pub_len)
+int kyk_ec_sig_verify(const uint8_t *buf, size_t buf_len,
+		      uint8_t *der_sig, size_t der_sig_len,
+		      uint8_t *pubkey, size_t pub_len)
 {
     EC_KEY *key;
     ECDSA_SIG *signature;
@@ -185,7 +185,7 @@ int kyk_ec_sig_verify(uint8_t *buf, size_t buf_len,
 }
 
 
-int kyk_ec_sig_hash256_verify(uint8_t *buf, size_t buf_len,
+int kyk_ec_sig_hash256_verify(const uint8_t *buf, size_t buf_len,
 			      uint8_t *der_sig, size_t der_sig_len,
 			      uint8_t *pubkey, size_t pub_len)
 {

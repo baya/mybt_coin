@@ -1093,7 +1093,7 @@ int build_testing_vin4_tx_unsig_buf(int txin_idx, uint8_t** new_buf, size_t* buf
 	txout = tx4 -> txout + 1;
     }
 
-    res = kyk_seri_tx_for_sig(tx, txin_idx, txout, new_buf, buf_len);
+    res = kyk_seri_tx_for_sig(tx, HTYPE_SIGHASH_ALL, txin_idx, txout, new_buf, buf_len);
     check(res == 0, "Failed to build_testing_vin4_tx_unsig_buf: kyk_seri_tx_for_sig failed");
 
     return 0;
@@ -1118,7 +1118,7 @@ int build_testing_vin1_tx_unsig_buf(int txin_idx, uint8_t** new_buf, size_t* buf
     check(res == 0, "Failed build_testing_vin4_tx_unsig_buf: kyk_deseri_new_tx failed");
     
 
-    res = kyk_seri_tx_for_sig(tx, txin_idx, tx1 -> txout + 1, new_buf, buf_len);
+    res = kyk_seri_tx_for_sig(tx, HTYPE_SIGHASH_ALL, txin_idx, tx1 -> txout + 1, new_buf, buf_len);
     check(res == 0, "Failed to build_testing_vin4_tx_unsig_buf: kyk_seri_tx_for_sig failed");
 
     return 0;

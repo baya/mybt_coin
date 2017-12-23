@@ -139,11 +139,14 @@ int kyk_seri_tx_to_new_buf(const struct kyk_tx* tx,
 			   size_t* buf_len);
 
 
+
 int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
+			uint32_t htype,
 			varint_t txin_index,
 			const struct kyk_txout* txout,
 			uint8_t** new_buf,
 			size_t* buf_len);
+
 
 
 int kyk_combine_txin_txout_for_script(uint8_t** sc_buf,
@@ -164,7 +167,8 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
 			    uint8_t* der_buf,
 			    size_t der_buf_len,
 			    uint8_t* pubkey,
-			    size_t publen);
+			    size_t publen,
+			    uint32_t hashtype);
 
 
 void kyk_print_tx(const struct kyk_tx* tx);

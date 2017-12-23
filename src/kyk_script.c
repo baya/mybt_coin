@@ -32,6 +32,8 @@ static int kyk_sc_cmpitem(const struct kyk_sc_stk_item *item1,
 			  const struct kyk_sc_stk_item *item2);
 static void free_sc_stack(struct kyk_sc_stack *stk);
 
+static int get_sig_buf_htype(uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype);
+
 int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
 			       size_t pub_len,
 			       struct kyk_buff** sc
@@ -285,17 +287,18 @@ void init_sc_stack(struct kyk_sc_stack *stk)
  * The secp256k1 elliptic curve is used for the verification with the given public key.
  *
  */
-int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_len)
+int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *sig_buf, size_t sig_buf_len)
 {
     int ret_code = 0;
     struct kyk_sc_stk_item *top_cpy = stk -> top;
     uint8_t *sig, *pubkey;
     size_t sig_len, pubkey_len;
     uint32_t htype;
-    uint8_t *tx_cpy = NULL;
-    size_t tx_cpy_len = 0;
+    uint8_t *sig_buf_cpy = NULL;
+    size_t sig_buf_cpy_len = 0;
     uint8_t der_sig[200];
     size_t der_sig_len = 0;
+    uint32_t sig_buf_htype;
 
     pubkey = top_cpy -> val;
     pubkey_len = top_cpy -> len;
@@ -304,30 +307,33 @@ int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *tx, size_t tx_le
     sig_len = top_cpy -> len;
 
     htype = (uint32_t) *(sig + sig_len - 1); /* sig 的末尾一个字节是 hash type */
-    tx_cpy_len = tx_len + sizeof(htype);
-    tx_cpy = calloc(tx_cpy_len, sizeof(*tx_cpy));
-    check(tx_cpy, "Failed to kyk_sc_op_checksig: tx_cpy calloc failed");
-
-    memcpy(tx_cpy, tx, tx_len);
-    beej_pack(tx_cpy + tx_len, "<L", htype);
+    get_sig_buf_htype(sig_buf, sig_buf_len, &sig_buf_htype);
+    check(sig_buf_htype == htype, "Failed to kyk_sc_op_checksig: invalid hash type");
 
     /* remove hash-type in der_sig */
     der_sig_len = sig_len - 1;
     memcpy(der_sig, sig, der_sig_len);
-    ret_code = kyk_ec_sig_hash256_verify(tx_cpy, tx_cpy_len,
+    ret_code = kyk_ec_sig_hash256_verify(sig_buf, sig_buf_len,
 					 der_sig, der_sig_len,
 					 pubkey, pubkey_len);
     stk -> top--;
     stk -> top--;
     stk -> hgt -= 2;
 
-    free(tx_cpy);
+    free(sig_buf_cpy);
     
     return ret_code;
 
 error:
-    if(tx_cpy) free(tx_cpy);
+    if(sig_buf_cpy) free(sig_buf_cpy);
     return -1;
+}
+
+int get_sig_buf_htype(uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype)
+{
+    beej_unpack(sig_buf + sig_buf_len - sizeof(*htype), "<L", htype);
+
+    return 0;
 }
 
 /* The data is hashed twice: first with SHA-256 and then with RIPEMD-160. */

@@ -1318,6 +1318,7 @@ int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
     size_t der_buf_len = 0;
     varint_t i = 0;
     int res = -1;
+    uint32_t htype = HTYPE_SIGHASH_ALL;
     
     check(tx, "Failed to kyk_do_sign_tx: tx is NULL");
     check(utxo_chain, "Failed to kyk_do_sign_tx: utxo_chain is NULL");
@@ -1332,7 +1333,7 @@ int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
 	res = kyk_copy_new_txout_from_utxo(&txout, utxo);
 	check(res == 0, "Failed to kyk_do_sign_tx: kyk_copy_new_txout_from_utxo failed");
 	
-	res = kyk_seri_tx_for_sig(tx, i, txout, &buf, &buf_len);
+	res = kyk_seri_tx_for_sig(tx, htype, i, txout, &buf, &buf_len); 
 	check(res == 0, "Failed to kyk_do_sign_tx: kyk_seri_tx_for_sig failed");
 
 	wkey = kyk_find_wkey_by_addr(wkey_chain, utxo -> btc_addr);
@@ -1340,7 +1341,7 @@ int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
 
 	res = kyk_ec_sign_hash256(wkey -> priv, buf, buf_len, &der_buf, &der_buf_len);
 
-	res = kyk_set_txin_script_sig(txin, der_buf, der_buf_len, wkey -> pub, wkey -> pub_len);
+	res = kyk_set_txin_script_sig(txin, der_buf, der_buf_len, wkey -> pub, wkey -> pub_len, htype);
 	check(res == 0, "Failed to kyk_do_sign_tx: kyk_set_txin_script_sig failed");
 
 	kyk_free_txout(txout);

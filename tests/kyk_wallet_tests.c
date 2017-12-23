@@ -6,6 +6,7 @@
 #include "kyk_utxo.h"
 #include "kyk_wallet.h"
 #include "kyk_utils.h"
+#include "kyk_validate.h"
 #include "mu_unit.h"
 
 char* test_kyk_new_wallet()
@@ -348,16 +349,22 @@ char* test_kyk_wallet_make_tx()
     const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
     uint64_t btc_value = 1 * ONE_BTC_COIN_VALUE;
     uint32_t version = 1;
+    struct kyk_block* blk = NULL;
+    struct kyk_txout* txout = NULL;
     int res = -1;
 
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_make_tx: kyk_setup_wallet failed");
 
-    res = kyk_wallet_make_coinbase_block(NULL, wallet);
+    res = kyk_wallet_make_coinbase_block(&blk, wallet);
 
     res = kyk_wallet_make_tx(&new_tx, version, wallet, btc_value, btc_addr);
     mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
-    kyk_print_tx(new_tx);
+    /* kyk_print_tx(new_tx); */
+
+    txout = blk -> tx -> txout;
+    res = kyk_validate_tx_txin_script_sig(new_tx, 0, txout);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
 
     return NULL;
 

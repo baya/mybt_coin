@@ -1104,20 +1104,21 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
 			    uint8_t* der_buf,
 			    size_t der_buf_len,
 			    uint8_t* pubkey,
-			    size_t publen)
+			    size_t publen,
+			    uint32_t hashtype)
 {
-    uint8_t hashtype = 0;
     uint8_t op_sep1 = 0;
     uint8_t op_sep2 = 0;
     uint8_t* sc_ptr = NULL;
+    uint8_t sig_htype;
 
     check(txin, "Failed to kyk_set_txin_script_sig: txin is NULL");
-    
-    hashtype = 1;
-    op_sep1 = der_buf_len + sizeof(hashtype);
+
+    sig_htype = (uint8_t) hashtype;
+    op_sep1 = der_buf_len + sizeof(sig_htype);
     op_sep2 = publen;
 
-    txin -> sc_size = sizeof(op_sep1) + der_buf_len + sizeof(hashtype) + sizeof(op_sep2) + publen;
+    txin -> sc_size = sizeof(op_sep1) + der_buf_len + sizeof(sig_htype) + sizeof(op_sep2) + publen;
 
     if(txin -> sc){
 	free(txin -> sc);
@@ -1135,7 +1136,7 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
     memcpy(sc_ptr, der_buf, der_buf_len);
     sc_ptr += der_buf_len;
 
-    *sc_ptr = hashtype;
+    *sc_ptr = sig_htype;
     sc_ptr += 1;
 
     *sc_ptr = op_sep2;
@@ -1347,6 +1348,7 @@ void kyk_free_txout_list(struct kyk_txout* txout_list, varint_t len)
 
 
 int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
+			uint32_t htype,
 			varint_t txin_index,
 			const struct kyk_txout* txout,
 			uint8_t** new_buf,
@@ -1377,17 +1379,20 @@ int kyk_seri_tx_for_sig(const struct kyk_tx* tx,
 
     res = kyk_get_tx_size(tx_cpy, &tx_cpy_size);
     check(res == 0, "Failed to kyk_seri_tx_for_sig: kyk_get_tx_size failed");
-    buf = calloc(tx_cpy_size, sizeof(*buf));
+    buf = calloc(tx_cpy_size + sizeof(htype), sizeof(*buf));
     check(buf, "Failed to kyk_seri_tx_for_sig: buf calloc failed");
 
     bufp = buf;
 
     buf_size = kyk_seri_tx(bufp, tx_cpy);
     check(buf_size == tx_cpy_size, "Failed to kyk_seri_tx_for_sig: kyk_seri_tx failed");
+    bufp += buf_size;
+
+    beej_pack(bufp, "<L", htype);
 
     *new_buf = buf;
     if(buf_len){
-	*buf_len = buf_size;
+	*buf_len = buf_size + sizeof(htype);
     }
     
     return 0;

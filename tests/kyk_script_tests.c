@@ -8,6 +8,7 @@
 #include "kyk_script.h"
 #include "kyk_utils.h"
 #include "kyk_ser.h"
+#include "beej_pack.h"
 #include "mu_unit.h"
 
 #define SC_PUBK_MAX_LEN 1000
@@ -95,6 +96,7 @@ char* test_kyk_run_script()
     /* unsig_tx -> 0200000001b636c0cd9a296f29d1b4760c291c3044422f12eab2d7c363ff5f0b90b68aa9ea010000001976a914c73e88dfa45a940bbec4f5654b910254e8b5d7be88acfeffffff015cc10000000000001976a9140b5b85548100b98164f7748f931b66eb1b1b0ec888ac080b0700 */
     uint8_t unsig_tx[1000];
     uint8_t *utx_cpy = unsig_tx;
+    uint32_t htype = HTYPE_SIGHASH_ALL;
 
     kyk_tx_inc_ser(&utx_cpy, "version-no", 2);
     
@@ -120,6 +122,8 @@ char* test_kyk_run_script()
 
     kyk_tx_inc_ser(&utx_cpy, "lock-time", 461576);
 
+    beej_pack(utx_cpy, "<L", htype);
+    utx_cpy += sizeof(htype);
 
 
     /* 从 hex 字符串直接拷贝 scriptSig 到内存 */

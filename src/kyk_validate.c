@@ -11,6 +11,7 @@
 #include "kyk_difficulty.h"
 #include "kyk_mkl_tree.h"
 #include "kyk_script.h"
+#include "varint.h"
 #include "dbg.h"
 
 static int validate_hd_bts(const struct kyk_blk_header* hd);
@@ -182,7 +183,7 @@ int kyk_validate_txin_script_sig_with_txout(const struct kyk_txin* txin,
 
     res = kyk_combine_txin_txout_for_script(&sc_buf, &sc_buf_len, txin, txout);
     check(res == 0, "Failed to kyk_validate_txin_script_sig_with_txout: kyk_combine_txin_txout_for_script failed");
-
+    
     res = kyk_run_script(sc_buf, sc_buf_len, unsig_buf, unsig_buf_len);
     check(res == 1, "Failed to kyk_validate_txin_script_sig_with_txout");
 
@@ -192,6 +193,34 @@ int kyk_validate_txin_script_sig_with_txout(const struct kyk_txin* txin,
 
 error:
     if(sc_buf) free(sc_buf);
+    return -1;
+}
+
+
+int kyk_validate_tx_txin_script_sig(const struct kyk_tx* tx,
+				    varint_t txin_index,
+				    const struct kyk_txout* txout)
+{
+    struct kyk_txin* txin = NULL;
+    uint8_t* unsig_buf = NULL;
+    size_t unsig_buf_len = 0;
+    int res = -1;
+
+    check(tx, "Failed to kyk_validate_tx_txin_script_sig: tx is NULL");
+    check(txout, "Failed to kyk_validate_tx_txin_script_sig: txout is NULL");
+
+    res = kyk_seri_tx_for_sig(tx, HTYPE_SIGHASH_ALL, txin_index, txout, &unsig_buf, &unsig_buf_len);
+
+    check(res == 0, "Failed to kyk_validate_tx_txin_script_sig");
+
+    txin = tx -> txin + txin_index;
+    res = kyk_validate_txin_script_sig_with_txout(txin, unsig_buf, unsig_buf_len, txout);
+    check(res == 0, "Failed to kyk_validate_tx_txin_script_sig: kyk_validate_txin_script_sig_with_txout failed");
+
+    return 0;
+    
+error:
+
     return -1;
 }
 

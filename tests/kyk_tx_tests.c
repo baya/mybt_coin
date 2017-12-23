@@ -336,7 +336,7 @@ char* test_kyk_seri_tx_for_sig()
     kyk_deseri_new_tx(&tx, VIN4_TX, NULL);
     kyk_deseri_new_tx(&tx1, PRE_VIN4_TX1, NULL);
 
-    res = kyk_seri_tx_for_sig(tx, 0, tx1 -> txout, &buf, &buf_len);
+    res = kyk_seri_tx_for_sig(tx, HTYPE_SIGHASH_ALL, 0, tx1 -> txout, &buf, &buf_len);
     mu_assert(res == 0, "Failed to test_kyk_seri_tx_for_sig");
     
     return NULL;
