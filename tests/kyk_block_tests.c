@@ -478,6 +478,7 @@ error:
 
 }
 
+
 char *all_tests()
 {
     mu_suite_start();

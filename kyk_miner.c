@@ -220,9 +220,11 @@ int cmd_make_tx(const struct kyk_wallet* wallet,
 		int btc_num,
 		const char* btc_addr)
 {
+    int res = -1;
 
-    printf("Make Tx\n");
-    
+    res = kyk_wallet_cmd_make_tx(wallet, btc_num, btc_addr);
+    check(res == 0, "Failed to cmd_make_tx");
+
     return 0;
     
 error:

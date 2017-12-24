@@ -12,7 +12,7 @@ struct kyk_utxo{
     unsigned char* sc;    /* Txout Pubkey script */
     uint8_t  spent;
     struct kyk_utxo* next;
-    struct ky_utxo* refer_to;
+    struct kyk_utxo* refer_to;
 };
 
 
@@ -86,6 +86,6 @@ void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 
 int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
 
-int kyk_refer_to_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* ref_utxo);
+int kyk_refer_to_utxo(struct kyk_utxo* utxo, struct kyk_utxo* ref_utxo);
 
 #endif

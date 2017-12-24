@@ -108,7 +108,7 @@ int kyk_wallet_query_total_balance(const struct kyk_wallet* wallet, uint64_t* ba
 
 int kyk_wallet_make_tx(struct kyk_tx** new_tx,
 		       uint32_t version,
-		       const struct kyk_wallet* wallet,
+		       struct kyk_wallet* wallet,
 		       uint64_t value,
 		       const char* btc_addr);
 
@@ -144,6 +144,11 @@ int kyk_wallet_do_sign_tx(const struct kyk_tx* tx,
 struct kyk_wkey* kyk_find_wkey_by_addr(const struct kyk_wkey_chain* wkey_chain, const char* addr);
 
 int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_wallet* wallet);
+
+int kyk_wallet_cmd_make_tx(struct kyk_block** new_blk,
+			   struct kyk_wallet* wallet,
+			   int btc_num,
+			   const char* btc_addr);
 
 
 #endif

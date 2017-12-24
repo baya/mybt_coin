@@ -396,6 +396,34 @@ error:
 }
 
 
+char* test_kyk_wallet_cmd_make_tx()
+{
+    const char* wdir = "/tmp/test_kyk_cmd_wallet_make_tx";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_block* new_blk = NULL;
+    const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
+    uint64_t btc_num = 1;
+    struct kyk_block* blk = NULL;
+    struct kyk_txout* txout = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_wallet_make_tx: kyk_setup_wallet failed");
+
+    res = kyk_wallet_make_coinbase_block(&blk, wallet);
+
+    res = kyk_wallet_cmd_make_tx(&new_blk, wallet, btc_num, btc_addr);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_wallet_cmd_make_tx";
+}
+
+
+
 char* all_tests()
 {
     mu_suite_start();
@@ -416,7 +444,7 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_query_value_by_addr);
     mu_run_test(test_kyk_wallet_load_addr_list);
     mu_run_test(test_kyk_wallet_load_key_list);
-    mu_run_test(test_kyk_wallet_make_tx);
+    mu_run_test(test_kyk_wallet_cmd_make_tx);
 
     return NULL;
 }

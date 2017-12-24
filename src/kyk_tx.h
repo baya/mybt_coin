@@ -174,5 +174,7 @@ int kyk_set_txin_script_sig(struct kyk_txin* txin,
 void kyk_print_tx(const struct kyk_tx* tx);
 void kyk_print_txin(const struct kyk_txin* txin);
 
+void kyk_free_tx_list(struct kyk_tx* tx_list, size_t tx_count);
+
 
 #endif

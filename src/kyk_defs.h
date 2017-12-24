@@ -28,6 +28,12 @@ enum kyk_hashtype{
 #define DIGEST_SHA256_LEN       32
 #define DIGEST_RIPEMD160_LEN    20
 
+#define KYK_BASE_BTC_COUNAT 100
+#define KYK_BASE_DIFFT_BITS 0x1f00ffff
+#define KYK_BASE_BLK_VERSION 1
+#define KYK_DEFAULT_PUBKEY_NAME "key0.pubkey"
+#define KYK_DEFAULT_NOTE "voidcoin"
+
 typedef struct {
     uint8_t data[DIGEST_SHA256_LEN];
 } uint256;

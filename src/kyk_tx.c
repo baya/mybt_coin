@@ -646,6 +646,17 @@ void kyk_free_txout(struct kyk_txout *txout)
     }
 }
 
+void kyk_free_tx_list(struct kyk_tx* tx_list, size_t tx_count)
+{
+    size_t i = 0;
+    if(tx_list){
+	for(i = 1; i < tx_count; i++){
+	    kyk_free_tx(tx_list + i);
+	}
+	kyk_free_tx(tx_list);
+    }
+}
+
 int kyk_make_coinbase_sc(struct kyk_txin *txin, const char *cb_note)
 {
     unsigned char cb_tmp[1000] = {0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04};

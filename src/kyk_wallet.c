@@ -19,6 +19,7 @@
 #include "beej_pack.h"
 #include "kyk_utxo.h"
 #include "kyk_wallet.h"
+#include "kyk_validate.h"
 #include "dbg.h"
 
 #define WCFG_NUM_KEYS "numKeys"
@@ -1017,7 +1018,7 @@ error:
 
 int kyk_wallet_make_tx(struct kyk_tx** new_tx,
 		       uint32_t version,
-		       const struct kyk_wallet* wallet,
+		       struct kyk_wallet* wallet,
 		       uint64_t value,
 		       const char* btc_addr)
 {
@@ -1392,34 +1393,34 @@ int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_
     uint8_t digest[32];
 
     res = kyk_wallet_get_pubkey(&pubkey, &pbk_len, wallet, "key0.pubkey");
-    check(res == 0, "Failed to cmd_make_init_blocks: kyk_wallet_get_pubkey failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_wallet_get_pubkey failed");
 
     res = kyk_load_blk_header_chain(&hd_chain, wallet);
-    check(res == 0, "Failed to cmd_make_block: kyk_load_blk_header_chain failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_load_blk_header_chain failed");
 
     res = kyk_make_coinbase_block(&blk, hd_chain, note, pubkey, pbk_len);
-    check(res == 0, "Failed to cmd_make_block: kyk_make_conibase_block failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_make_conibase_block failed");
 
     res = kyk_validate_block(hd_chain, blk);
-    check(res == 0, "Failed to cmd_make_block: kyk_validate_block failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_validate_block failed");
 
     res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
-    check(res == 0, "Failed to cmd_make_block: kyk_append_blk_hd_chain failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_append_blk_hd_chain failed");
 
     res = kyk_load_utxo_chain(&utxo_chain, wallet);
-    check(res == 0, "Failed to cmd_make_block: kyk_load_utxo_chain failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_load_utxo_chain failed");
 
     res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
-    check(res == 0, "Failed to cmd_make_block: kyk_append_utxo_chain_from_block failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_append_utxo_chain_from_block failed");
 
     res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
-    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_utxo_chain failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_wallet_save_utxo_chain failed");
 
     res = kyk_save_blk_header_chain(wallet, hd_chain);
-    check(res == 0, "Failed to cmd_make_block: kyk_save_blk_header_chain failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_save_blk_header_chain failed");
 
     res = kyk_wallet_save_block(wallet, blk);
-    check(res == 0, "Failed to cmd_make_block: kyk_wallet_save_block failed");
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_wallet_save_block failed");
 
     kyk_blk_hash256(digest, blk -> hd);
     kyk_print_hex("maked a new block", digest, sizeof(digest));
@@ -1439,6 +1440,72 @@ error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
     if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+
+}
+
+
+int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
+			    struct kyk_wallet* wallet,
+			    int btc_num,
+			    const char* btc_addr)
+{
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    struct kyk_block* blk = NULL;
+    struct kyk_tx* tx = NULL;
+    uint8_t* pubkey = NULL;
+    size_t pub_len = 0;
+    uint32_t version = 1;
+    uint64_t value = 0;
+    uint64_t total_value = 0;
+    int res = -1;
+
+    check(wallet, "Failed to cmd_make_tx: wallet is NULL");
+    check(btc_num > 0, "Failed to cmd_make_tx: btc_num is NULL");
+    check(btc_addr, "Failed to cmd_make_tx: btc_addr is NULL");
+
+    value = btc_num * ONE_BTC_COIN_VALUE;
+
+    res = kyk_wallet_query_total_balance(wallet, &total_value);
+    check(res == 0, "Fialed to kyk_wallet_cmd_make_tx: kyk_wallet_query_total_balance failed");
+    check(total_value >= value, "Failed to kyk_wallet_cmd_make_tx: not sufficient funds");
+
+    res = kyk_wallet_get_pubkey(&pubkey, &pub_len, wallet, KYK_DEFAULT_PUBKEY_NAME);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_get_pubkey failed");
+
+    res = kyk_load_blk_header_chain(&hd_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_blk_header_chain failed");
+
+    res = kyk_wallet_make_tx(&tx, version, wallet, value, btc_addr);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_make_tx failed");
+
+    res = kyk_make_tx_block(&blk, hd_chain, tx, 1, KYK_DEFAULT_NOTE, pubkey, pub_len);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_make_tx_block failed");
+
+    res = kyk_validate_block(hd_chain, blk);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_validate_block failed");
+
+    res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
+    check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_append_blk_hd_chain failed");
+
+    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_save_blk_header_chain failed");
+
+    res = kyk_wallet_save_block(wallet, blk);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_save_block failed");
+
+    if(new_blk){
+	*new_blk = blk;
+    } else {
+	kyk_free_block(blk);
+    }
+
+    return 0;
+
+error:
+    if(pubkey) free(pubkey);
+    if(blk) kyk_free_block(blk);
+
     return -1;
 
 }
