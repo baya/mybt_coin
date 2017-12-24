@@ -121,7 +121,7 @@ $ ./kyk_miner.out makeTx 9 13dqX7yNia35V2dZkM5dMyTExocyPTAbAT  # 矿工给自己
 
 ```
 
-如果遇到陷入了困境，可以删除矿工，重新开始:
+如果陷入了困境，可以删除矿工，重新开始:
 
 ```
 $ ./kyk_miner.out delete
