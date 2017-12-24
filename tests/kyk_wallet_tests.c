@@ -351,14 +351,18 @@ char* test_kyk_wallet_make_tx()
     uint32_t version = 1;
     struct kyk_block* blk = NULL;
     struct kyk_txout* txout = NULL;
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_utxo_chain* tx_utxo_chain = NULL;
     int res = -1;
 
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_make_tx: kyk_setup_wallet failed");
 
     res = kyk_wallet_make_coinbase_block(&blk, wallet);
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");
 
-    res = kyk_wallet_make_tx(&new_tx, version, wallet, btc_value, btc_addr);
+    res = kyk_wallet_make_tx(&new_tx, &tx_utxo_chain, version, wallet, wallet_utxo_chain, btc_value, btc_addr);
     mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
     /* kyk_print_tx(new_tx); */
 
@@ -404,7 +408,6 @@ char* test_kyk_wallet_cmd_make_tx()
     const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
     uint64_t btc_num = 1;
     struct kyk_block* blk = NULL;
-    struct kyk_txout* txout = NULL;
     int res = -1;
 
     res = kyk_setup_wallet(&wallet, wdir);

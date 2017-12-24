@@ -298,11 +298,16 @@ int kyk_seri_utxo_chain(uint8_t* buf,
     utxo_cpy = utxo_chain -> hd;
 
     while(utxo_cpy){
-	res = kyk_seri_utxo(bufp, utxo_cpy, &utxo_size);
-	check(res == 0, "Failed to kyk_seri_utxo_chain: kyk_seri_utxo failed");
-	bufp += utxo_size;
-	utxo_cpy = utxo_cpy -> next;
-	total_size += utxo_size;
+	if(utxo_cpy -> spent == 1){
+	    /* passing spent utxo */
+	    utxo_cpy = utxo_cpy -> next;
+	} else {
+	    res = kyk_seri_utxo(bufp, utxo_cpy, &utxo_size);
+	    check(res == 0, "Failed to kyk_seri_utxo_chain: kyk_seri_utxo failed");
+	    bufp += utxo_size;
+	    utxo_cpy = utxo_cpy -> next;
+	    total_size += utxo_size;
+	}
     }
 
     if(check_num){
@@ -681,7 +686,7 @@ int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
 	}
     }
 
-    check(found_flag, "Failed to kyk_find_available_utxo_list");
+    check(found_flag == 1, "Failed to kyk_find_available_utxo_list");
 
     *new_utxo_chain = utxo_chain;
     
