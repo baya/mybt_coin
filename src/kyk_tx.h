@@ -3,20 +3,7 @@
 
 #include "varint.h"
 
-#define NORMALLY_TX_SEQ_NO 0xFFFFFFFF
-#define MORMALLY_TX_LOCK_TIME 0
-#define COINBASE_PRE_TXID "0000000000000000000000000000000000000000000000000000000000000000"
-#define COINBASE_INX 0xffffffff
-
-/* 1 BTC = 10 ** 8 Satoshi */
-#define ONE_BTC_COIN_VALUE 100000000
-
-/* Total BTC Value */
-
-#define TOTAL_BTC_VALUE 2000 * 10000 * ONE_BTC_COIN_VALUE
-
 struct kyk_bon_buff;
-
 struct kyk_utxo;
 struct kyk_utxo_chain;
 

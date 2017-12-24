@@ -1453,11 +1453,12 @@ error:
 
 int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
 			    struct kyk_wallet* wallet,
-			    int btc_num,
+			    long double btc_num,
 			    const char* btc_addr)
 {
     struct kyk_blk_hd_chain* hd_chain = NULL;
     struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_utxo_chain* updated_utxo_chain = NULL;
     struct kyk_utxo_chain* tx_utxo_chain = NULL;
     struct kyk_block* blk = NULL;
     struct kyk_tx* tx = NULL;
@@ -1469,7 +1470,7 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
     int res = -1;
 
     check(wallet, "Failed to cmd_make_tx: wallet is NULL");
-    check(btc_num > 0, "Failed to cmd_make_tx: btc_num is NULL");
+    check(btc_num > 0, "Failed to cmd_make_tx: btc_num is invalid");
     check(btc_addr, "Failed to cmd_make_tx: btc_addr is NULL");
 
     value = btc_num * ONE_BTC_COIN_VALUE;
@@ -1503,10 +1504,13 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
 
     res = kyk_append_utxo_chain_from_block(wallet_utxo_chain, blk);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_append_utxo_chain_from_block failed");
-    
+
     kyk_wallet_set_utxo_chain_spent(tx_utxo_chain);
-    
-    res = kyk_wallet_save_utxo_chain(wallet, wallet_utxo_chain);
+
+    res = kyk_remove_spent_utxo(&updated_utxo_chain, wallet_utxo_chain);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_remove_spent_utxo failed");
+
+    res = kyk_wallet_save_utxo_chain(wallet, updated_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_save_utxo_chain failed");
 
     res = kyk_save_blk_header_chain(wallet, hd_chain);
@@ -1521,15 +1525,25 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
 	kyk_free_block(blk);
     }
 
+    kyk_free_utxo_chain(tx_utxo_chain);
+    kyk_free_utxo_chain(wallet_utxo_chain);
+    free(updated_utxo_chain);
+
     return 0;
 
 error:
     if(pubkey) free(pubkey);
     if(blk) kyk_free_block(blk);
 
+    if(tx_utxo_chain) kyk_free_utxo_chain(tx_utxo_chain);
+    if(wallet_utxo_chain) kyk_free_utxo_chain(wallet_utxo_chain);
+    if(updated_utxo_chain) free(updated_utxo_chain);
+    
+
     return -1;
 
 }
+
 
 int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain)
 {
@@ -1538,8 +1552,8 @@ int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain)
     check(utxo_chain, "Failed to kyk_wallet_set_utxo_chain_spent: utxo_chain is NULL");
 
     utxo = utxo_chain -> hd;
-    printf("?????????????? utxo_chain -> len: %d\n", utxo_chain -> len);
     while(utxo && i < utxo_chain -> len){
+	utxo -> spent = 1;
 	if(utxo -> refer_to){
 	    utxo -> refer_to -> spent = 1;
 	}

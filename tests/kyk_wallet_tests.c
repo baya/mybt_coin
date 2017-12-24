@@ -406,7 +406,7 @@ char* test_kyk_wallet_cmd_make_tx()
     struct kyk_wallet* wallet = NULL;
     struct kyk_block* new_blk = NULL;
     const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
-    uint64_t btc_num = 1;
+    long double btc_num = 1.0;
     struct kyk_block* blk = NULL;
     int res = -1;
 

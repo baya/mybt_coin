@@ -5,8 +5,6 @@
 #include "kyk_defs.h"
 #include "kyk_ldb.h"
 
-#define KYK_MINER_FEE 10000
-
 struct kyk_blk_hd_chain;
 
 struct kyk_utxo_chain;
@@ -150,7 +148,7 @@ int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_
 
 int kyk_wallet_cmd_make_tx(struct kyk_block** new_blk,
 			   struct kyk_wallet* wallet,
-			   int btc_num,
+			   long double btc_num,
 			   const char* btc_addr);
 
 int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain);

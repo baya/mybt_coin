@@ -32,7 +32,7 @@ static int kyk_sc_cmpitem(const struct kyk_sc_stk_item *item1,
 			  const struct kyk_sc_stk_item *item2);
 static void free_sc_stack(struct kyk_sc_stack *stk);
 
-static int get_sig_buf_htype(uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype);
+static int get_sig_buf_htype(const uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype);
 
 int build_p2pkh_sc_from_pubkey(const uint8_t* pubkey,
 			       size_t pub_len,
@@ -295,7 +295,6 @@ int kyk_sc_op_checksig(struct kyk_sc_stack *stk, const uint8_t *sig_buf, size_t 
     size_t sig_len, pubkey_len;
     uint32_t htype;
     uint8_t *sig_buf_cpy = NULL;
-    size_t sig_buf_cpy_len = 0;
     uint8_t der_sig[200];
     size_t der_sig_len = 0;
     uint32_t sig_buf_htype;
@@ -329,7 +328,7 @@ error:
     return -1;
 }
 
-int get_sig_buf_htype(uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype)
+int get_sig_buf_htype(const uint8_t* sig_buf, size_t sig_buf_len, uint32_t* htype)
 {
     beej_unpack(sig_buf + sig_buf_len - sizeof(*htype), "<L", htype);
 

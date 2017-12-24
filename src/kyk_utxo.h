@@ -19,7 +19,6 @@ struct kyk_utxo{
 struct kyk_utxo_chain {
     struct kyk_utxo* hd;
     struct kyk_utxo* tail;
-    struct kyk_utxo* curr;
     uint32_t len;
 };
 
@@ -87,5 +86,11 @@ void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
 
 int kyk_refer_to_utxo(struct kyk_utxo* utxo, struct kyk_utxo* ref_utxo);
+
+int kyk_remove_spent_utxo(struct kyk_utxo_chain** new_utxo_chain,
+			  const struct kyk_utxo_chain* src_utxo_chain);
+
+int kyk_utxo_chain_append_force(struct kyk_utxo_chain* utxo_chain,
+				struct kyk_utxo* utxo);
 
 #endif

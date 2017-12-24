@@ -197,11 +197,13 @@ int kyk_validate_address(const char* addr, size_t addr_len)
     BIGNUM bn;
     size_t len;
     uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
+    int res = -1;
 
     check(addr, "Failed to kyk_validate_address: addr is NULL");
 
     BN_init(&bn);
-    raw_decode_base58(&bn, addr, addr_len);
+    res = raw_decode_base58(&bn, addr, addr_len);
+    check(res > 0, "Failed to kyk_validate_address: raw_decode_base58 failed");
 
     len = BN_num_bytes(&bn);
     memset(buf, 0, sizeof(buf));

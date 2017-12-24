@@ -36,6 +36,12 @@ int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
 int cmd_make_block(const struct kyk_wallet* wallet);
 int cmd_query_balance(const struct kyk_wallet* wallet);
 int cmd_show_addr_list(const struct kyk_wallet* wallet);
+int cmd_make_tx(struct kyk_wallet* wallet,
+		long double btc_num,
+		const char* btc_addr);
+
+void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
+
 
 int main(int argc, char *argv[])
 {
@@ -54,7 +60,7 @@ int main(int argc, char *argv[])
 	printf("usage: %s command [args]\n", argv[0]);
 	printf("init a wallet:     %s %s\n", argv[0], CMD_INIT);
 	printf("make init blocks:  %s %s\n", argv[0], CMD_MK_BLOCK);
-	printf("make tx:           %s %s\n", argv[0], CMD_MK_TX);
+	printf("make tx:           %s %s [amount] [address]\n", argv[0], CMD_MK_TX);
 	printf("query blance:      %s %s\n", argv[0], CMD_QUERY_BALANCE);
 	printf("show address list: %s %s\n", argv[0], CMD_SHOW_ADDR_LIST);
 	printf("start server:      %s %s\n", argv[0], CMD_SERVE);
@@ -115,7 +121,14 @@ int main(int argc, char *argv[])
 
     if(argc == 4){
 	if(match_cmd(argv[1], CMD_MK_TX)){
+	    long double btc_num = 0;
+	    char* btc_addr = NULL;
+
+	    btc_num = strtold(argv[2], NULL);
+	    btc_addr = argv[3];
+	    
 	    wallet = kyk_open_wallet(wdir);
+	    res = cmd_make_tx(wallet, btc_num, btc_addr);
 	} else {
 	    printf("invalid command %s\n", argv[1]);
 	}
@@ -175,15 +188,15 @@ error:
 int cmd_query_balance(const struct kyk_wallet* wallet)
 {
     uint64_t value = 0;
-    double balance = 0.0;
+    long double balance = 0.0;
     int res = -1;
 
     res = kyk_wallet_query_total_balance(wallet, &value);
     check(res == 0, "Failed to cmd_query_balance: kyk_wallet_query_total_balance failed");
 
-    balance = value / ONE_BTC_COIN_VALUE;
+    balance = value / (double)ONE_BTC_COIN_VALUE;
 
-    printf("%f BTC\n", balance);
+    printf("%Lf BTC\n", balance);
 
 
     return 0;
@@ -216,19 +229,40 @@ error:
     return -1;
 }
 
-int cmd_make_tx(const struct kyk_wallet* wallet,
-		int btc_num,
+int cmd_make_tx(struct kyk_wallet* wallet,
+		long double btc_num,
 		const char* btc_addr)
 {
+    struct kyk_block* blk = NULL;
     int res = -1;
 
-    res = kyk_wallet_cmd_make_tx(wallet, btc_num, btc_addr);
+    res = kyk_validate_address(btc_addr, strlen(btc_addr));
+    if(res == -1){
+	printf("invalid address\n");
+	return -1;
+    }
+
+    res = kyk_wallet_cmd_make_tx(&blk, wallet, btc_num, btc_addr);
     check(res == 0, "Failed to cmd_make_tx");
+
+    dump_block_to_file(blk, "tmp/cmd_make_tx_blk_dump.dat");
 
     return 0;
     
 error:
 
     return -1;
+}
+
+void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
+{
+    uint8_t buf[2000];
+    size_t check_size = 0;
+
+    kyk_seri_blk(buf, blk, &check_size);
+    FILE* fp = fopen(filepath, "wb");
+    fwrite(buf, sizeof(*buf), check_size, fp);
+
+    fclose(fp);
 }
 
