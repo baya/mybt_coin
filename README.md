@@ -94,10 +94,29 @@ $ ./kyk_miner.out makeTx 8 invalidaddress                     # 向非法地址�
 
 $ ./kyk_miner.out makeTx 8 1KAWPAD8KovUo53pqHUY2bLNMTYa1obFX9 # 向正常的地址转账成功
 
-$ ./kyk_miner.out queryBalance                                # 查询余额, 因为每次生成一笔交易，矿工都会创建一个新的 block, 增加 100 BTC, 无矿工费用
+$ ./kyk_miner.out queryBalance                                # 查询余额, 因为每次生成一笔交易，矿工都会创建一个新的 block, 增加 100 BTC, 无矿工费用, 矿工费用可以在 src/kyk_defs.h 文件中设置
 
 输出:
 192.000000 BTC
+
+$ ./kyk_miner.out addAddress "a2"                            # 增加一个 label 为 "a2" 的地址
+
+输出:
+Added a new address: 13dqX7yNia35V2dZkM5dMyTExocyPTAbAT
+
+$ ./kyk_miner.out showAddrList                                # 显示矿工当前拥有的地址
+
+输出:
+1GkfyvQod8Bj4nFTrTejdr64kMprqTFSgb
+13dqX7yNia35V2dZkM5dMyTExocyPTAbAT
+
+$ ./kyk_miner.out makeTx 9 13dqX7yNia35V2dZkM5dMyTExocyPTAbAT  # 矿工给自己控制的地址发送 9 个比特币, 结果是增加 100 个比特币
+
+./kyk_miner.out queryBalance                          
+
+输出:
+292.000000 BTC
+
 
 ```
 

@@ -6,3 +6,4 @@ TAGS
 *.log
 *.dSYM
 my_wallet2
+tmp/cmd_make_tx_blk_dump.dat
