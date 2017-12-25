@@ -119,6 +119,8 @@ $ ./kyk_miner.out makeTx 9 13dqX7yNia35V2dZkM5dMyTExocyPTAbAT  # 矿工给自己
 292.000000 BTC
 
 
+$ ./kyk_miner.out serve 8333                                  # 启动服务
+
 ```
 
 如果陷入了困境，可以删除矿工，重新开始:

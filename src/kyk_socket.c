@@ -8,6 +8,7 @@
 
 #include "beej_pack.h"
 #include "btc_message.h"
+#include "dbg.h"
 
 
 #define MAX_BUF_SIZE 1024
@@ -114,13 +115,15 @@ void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_b
 
 }
 
-ssize_t kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len)
+int kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len, size_t* checksize)
 {
     unsigned char *bptr = msg_buf -> body;
     size_t recv_size = 0;
     size_t pld_size = 0;
     size_t msg_size = 24;
     int pld_flag = 1;
+
+    check(msg_buf, "Failed to kyk_recv_btc_msg: msg_buf is NULL");
     
     while(1){
 	ssize_t i = recv(sockfd, bptr, buf_len, 0);
@@ -145,8 +148,16 @@ ssize_t kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len)
     } else {
 	msg_buf -> len = recv_size;
 	msg_buf -> pld_len = pld_size;
-	return recv_size;
+	if(checksize){
+	    *checksize = recv_size;
+	}
+	
+	return 0;
     }
+
+error:
+
+    return -1;
 
 }
 

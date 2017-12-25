@@ -58,7 +58,11 @@ typedef struct {
     uint8_t data[DIGEST_RIPEMD160_LEN];
 } uint160;
 
+/* serve defines */
 
+#define KYK_SERVE_PORT     "8333"  /* the port users will be connecting to */
+#define KYK_SERVE_BACKLOG  10      /* how many pending connections queue will hold */
+#define KYK_SERVE_MSG_SIZE 6000
 
 
 #endif

@@ -12,17 +12,17 @@
 #define NODE_BLOOM 4
 
 #define LOCAL_IP_SRC "::ffff:127.0.0.1"
-#define PL_BUF_SIZE 1024
+#define KYK_PL_BUF_SIZE 1024
 
 
-typedef struct varint {
-    uint8_t  va1;
-    uint16_t va2;
-    uint32_t va4;
-    uint64_t va8;
-    uint64_t value;
-    uint8_t len;
-} varint;
+/* typedef struct varint { */
+/*     uint8_t  va1; */
+/*     uint16_t va2; */
+/*     uint32_t va4; */
+/*     uint64_t va8; */
+/*     uint64_t value; */
+/*     uint8_t len; */
+/* } varint; */
 
 typedef struct var_length_string{
     int len;
@@ -31,13 +31,13 @@ typedef struct var_length_string{
 
 typedef struct protocol_message_payload {
     uint32_t len;
-    unsigned char buf[PL_BUF_SIZE];
+    unsigned char buf[KYK_PL_BUF_SIZE];
 } ptl_payload;
 
 typedef struct protocol_btc_message_buf {
     uint32_t len;
     size_t pld_len;
-    unsigned char body[PL_BUF_SIZE];
+    unsigned char body[KYK_PL_BUF_SIZE];
 } ptl_msg_buf;
 
 typedef struct protocol_btc_message{
@@ -71,7 +71,7 @@ typedef struct protocol_btc_version{
 typedef struct protocol_resp_buf{
     size_t len;
     char cmdname[12];
-    unsigned char body[PL_BUF_SIZE];
+    unsigned char body[KYK_PL_BUF_SIZE];
 } ptl_resp_buf;
 
 ptl_msg * unpack_resp_buf(ptl_resp_buf *resp_buf);
