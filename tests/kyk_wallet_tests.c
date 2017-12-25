@@ -36,12 +36,24 @@ char* test_kyk_setup_wallet()
 char* test_kyk_open_wallet()
 {
     const char* wdir = "/tmp/test_kyk_open_wallet";
+    struct kyk_wallet* tmp_wallet = NULL;
     struct kyk_wallet* wallet = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&tmp_wallet, wdir);
+    check(res == 0, "Failed to test_kyk_open_wallet: kyk_setup_wallet failed");
+    kyk_destroy_wallet(tmp_wallet);
 
     wallet = kyk_open_wallet(wdir);
     mu_assert(wallet, "Failed to test_kyk_open_wallet");
     
+    kyk_destroy_wallet(wallet);
+    
     return NULL;
+
+error:
+
+    return "Failed to test_kyk_open_wallet";
 }
 
 char* test_kyk_create_wallet_key()

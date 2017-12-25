@@ -98,6 +98,7 @@ struct kyk_wallet* kyk_open_wallet(const char *wdir)
     int res = -1;
 
     check(wdir, "Failed to kyk_open_wallet: wdir is NULL");
+    check(kyk_file_exists(wdir), "Failed to kyk_open_wallet: wallet is not existed, please setup wallet firstly");
 
     wallet = kyk_new_wallet(wdir);
     check(wallet, "Failed to kyk_open_wallet: kyk_new_wallet failed");

@@ -162,7 +162,7 @@ int cmd_add_address(struct kyk_wallet* wallet, const char* desc)
     check(desc, "address desc can not be NULL");
     
     res = kyk_wallet_add_address(wallet, desc);
-    check(res == 0, "failed to kyk_wallet_add_address");
+    check(res == 0, "Failed to kyk_wallet_add_address");
 
     return 0;
 
@@ -175,6 +175,7 @@ int cmd_make_block(const struct kyk_wallet* wallet)
 {
 
     int res = -1;
+    check(wallet, "cmd_make_block failed: wallet is NULL");
     
     res = kyk_wallet_make_coinbase_block(NULL, wallet);
     check(res == 0, "Failed to cmd_make_block: kyk_wallet_make_coinbase_block failed");
@@ -190,6 +191,8 @@ int cmd_query_balance(const struct kyk_wallet* wallet)
     uint64_t value = 0;
     long double balance = 0.0;
     int res = -1;
+
+    check(wallet, "Failed to cmd_query_balance: wallet is NULL");
 
     res = kyk_wallet_query_total_balance(wallet, &value);
     check(res == 0, "Failed to cmd_query_balance: kyk_wallet_query_total_balance failed");
@@ -235,6 +238,8 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 {
     struct kyk_block* blk = NULL;
     int res = -1;
+
+    check(wallet, "Failed to cmd_make_tx: wallet is NULL");
 
     res = kyk_validate_address(btc_addr, strlen(btc_addr));
     if(res == -1){
