@@ -95,9 +95,11 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
 			    const uint8_t* pubkey,
 			    size_t pub_len);
 
+
 int kyk_make_tx_block(struct kyk_block** new_blk,
-		      const struct kyk_blk_hd_chain* hd,
+		      const struct kyk_blk_hd_chain* hd_chain,
 		      const struct kyk_tx* tx,
+		      uint64_t mfee,
 		      size_t tx_count,
 		      const char* note,
 		      const uint8_t* pubkey,

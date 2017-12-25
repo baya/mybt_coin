@@ -152,4 +152,9 @@ int kyk_wallet_cmd_make_tx(struct kyk_block** new_blk,
 			   const char* btc_addr);
 
 int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain);
+
+int kyk_wallet_get_mfee(const struct kyk_tx* tx,
+			const struct kyk_utxo_chain* utxo_chain,
+			uint64_t* mfee);
+
 #endif

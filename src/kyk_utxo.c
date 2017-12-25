@@ -788,3 +788,28 @@ error:
     if(utxo_chain) free(utxo_chain);
     return -1;
 }
+
+int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value)
+{
+    struct kyk_utxo* utxo = NULL;
+    uint64_t total_value = 0;
+    
+    check(utxo_chain, "Failed to kyk_get_total_output_value: utxo_chain is NULL");
+    check(value, "Failed to kyk_get_total_output_value: value is NULL");
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	if(utxo -> spent == 0){
+	    total_value += utxo -> value;
+	}
+	utxo = utxo -> next;
+    }
+
+    *value = total_value;
+
+    return 0;
+    
+error:
+
+    return -1;
+}

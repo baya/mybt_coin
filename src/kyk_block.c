@@ -609,6 +609,7 @@ error:
 int kyk_make_tx_block(struct kyk_block** new_blk,
 		      const struct kyk_blk_hd_chain* hd_chain,
 		      const struct kyk_tx* tx,
+		      uint64_t mfee,
 		      size_t tx_count,
 		      const char* note,
 		      const uint8_t* pubkey,
@@ -624,7 +625,7 @@ int kyk_make_tx_block(struct kyk_block** new_blk,
 
     /* TODO: coinbase Tx out value shoud be adjusted according to the block chain height */
     uint64_t btc_count = KYK_BASE_BTC_COUNAT;
-    uint64_t outValue = ONE_BTC_COIN_VALUE * btc_count;
+    uint64_t outValue = 0;
 
     uint8_t pre_blk_hash[32];
 
@@ -647,6 +648,9 @@ int kyk_make_tx_block(struct kyk_block** new_blk,
     check(hd_chain, "Failed to kyk_make_tx_block: hd_chain is NULL");
     check(tx, "Failed to kyk_make_tx_block: tx is NULL");
     check(note, "Failed to kyk_make_tx_block: note is NULL");
+
+    outValue = ONE_BTC_COIN_VALUE * btc_count;
+    outValue += mfee;
 
     res = kyk_make_coinbase_tx(&cb_tx, note, outValue, pubkey, pub_len);
     check(res == 0, "Failed to kyk_make_tx_block: kyk_make_coinbase_tx failed");

@@ -1477,3 +1477,26 @@ error:
     if(buf) free(buf);
     return -1;
 }
+
+
+int kyk_get_total_txout_value(const struct kyk_tx* tx, uint64_t* value)
+{
+    const struct kyk_txout* txout = NULL;
+    uint64_t total_value = 0;
+    varint_t i = 0;
+    
+    check(tx, "Failed to kyk_get_total_txout_value: tx is NULL");
+
+    for(i = 0; i < tx -> vout_sz; i++){
+	txout = tx -> txout + i;
+	total_value += txout -> value;
+    }
+
+    *value = total_value;
+    
+    return 0;
+
+error:
+
+    return -1;
+}

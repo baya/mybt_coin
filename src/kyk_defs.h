@@ -47,7 +47,7 @@ enum kyk_hashtype{
 #define TOTAL_BTC_VALUE  2000 * 10000 * ONE_BTC_COIN_VALUE
 
 /* miner fee */
-#define KYK_MINER_FEE 0
+#define KYK_MINER_FEE 100000
 
 typedef struct {
     uint8_t data[DIGEST_SHA256_LEN];

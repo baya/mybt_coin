@@ -311,6 +311,28 @@ error:
     return "Failed to test_kyk_seri_utxo_chain";
 }
 
+char* test_kyk_get_total_utxo_value()
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    uint64_t value = 0;
+    uint64_t expect_value = 10000000000llu;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    res = kyk_deseri_utxo_chain(utxo_chain, UTXO_BUF, 1, NULL);
+    check(res == 0, "Failed to test_kyk_get_total_output_value: kyk_deseri_utxo_chain Failed");
+
+    res = kyk_get_total_utxo_value(utxo_chain, &value);
+    mu_assert(res == 0, "Failed to Failed to test_kyk_get_total_utxo_value");
+    mu_assert(value == expect_value, "Failed to Failed to test_kyk_get_total_utxo_value");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_get_total_utxo_value";
+}
+
 
 char* test_kyk_find_available_utxo_list()
 {

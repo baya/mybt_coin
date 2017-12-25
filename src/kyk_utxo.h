@@ -93,4 +93,6 @@ int kyk_remove_spent_utxo(struct kyk_utxo_chain** new_utxo_chain,
 int kyk_utxo_chain_append_force(struct kyk_utxo_chain* utxo_chain,
 				struct kyk_utxo* utxo);
 
+int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value);
+
 #endif

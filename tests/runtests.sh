@@ -1,6 +1,6 @@
 echo "Running unit tests:"
 
-for i in tests/*_wallet_tests.out
+for i in tests/*_tests.out
 do
     if test -f $i
     then
