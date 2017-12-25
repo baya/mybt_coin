@@ -389,6 +389,75 @@ error:
     return "Failed to test_kyk_wallet_make_tx";
 }
 
+
+char* test2_kyk_wallet_make_tx()
+{
+    const char* wdir = "/tmp/test2_kyk_wallet_make_tx";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_tx* new_tx = NULL;
+    const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
+    uint64_t btc_value = 90 * ONE_BTC_COIN_VALUE;
+    uint32_t version = 1;
+    struct kyk_block* blk = NULL;
+    struct kyk_txout* txout = NULL;
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_utxo_chain* tx_utxo_chain = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test2_kyk_wallet_make_tx: kyk_setup_wallet failed");
+
+    res = kyk_wallet_make_coinbase_block(&blk, wallet);
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");
+
+    res = kyk_wallet_make_tx(&new_tx, &tx_utxo_chain, version, wallet, wallet_utxo_chain, btc_value, btc_addr);
+    mu_assert(res == 0, "Failed to test2_kyk_wallet_make_tx");
+    /* kyk_print_tx(new_tx); */
+
+    txout = blk -> tx -> txout;
+    res = kyk_validate_tx_txin_script_sig(new_tx, 0, txout);
+    mu_assert(res == 0, "Failed to test_kyk_wallet_make_tx");
+
+    return NULL;
+
+error:
+
+    return "Failed to test2_kyk_wallet_make_tx";
+}
+
+/* sending btc num more than owned will cause failed */
+char* test3_kyk_wallet_make_tx()
+{
+    const char* wdir = "/tmp/test3_kyk_wallet_make_tx";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_tx* new_tx = NULL;
+    const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
+    uint64_t btc_value = 110 * ONE_BTC_COIN_VALUE;
+    uint32_t version = 1;
+    struct kyk_block* blk = NULL;
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_utxo_chain* tx_utxo_chain = NULL;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test3_kyk_wallet_make_tx: kyk_setup_wallet failed");
+
+    res = kyk_wallet_make_coinbase_block(&blk, wallet);
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");
+
+    res = kyk_wallet_make_tx(&new_tx, &tx_utxo_chain, version, wallet, wallet_utxo_chain, btc_value, btc_addr);
+    mu_assert(res == -1, "Failed to test3_kyk_wallet_make_tx");
+    /* kyk_print_tx(new_tx); */
+
+    return NULL;
+
+error:
+
+    return "Failed to test3_kyk_wallet_make_tx";
+}
+
 char* test_kyk_wallet_load_key_list()
 {
     const char* wdir = "/tmp/test_kyk_wallet_load_key_list";
@@ -460,6 +529,8 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_load_addr_list);
     mu_run_test(test_kyk_wallet_load_key_list);
     mu_run_test(test_kyk_wallet_cmd_make_tx);
+    mu_run_test(test2_kyk_wallet_make_tx);
+    mu_run_test(test3_kyk_wallet_make_tx);
 
     return NULL;
 }
