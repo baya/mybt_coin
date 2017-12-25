@@ -41,10 +41,10 @@ enum kyk_hashtype{
 #define COINBASE_INX            0xffffffff
 
 /* 1 BTC = 10 ** 8 Satoshi */
-#define ONE_BTC_COIN_VALUE (uint64_t)100000000
+#define ONE_BTC_COIN_VALUE 100000000llu
 
 /* Total BTC Value */
-#define TOTAL_BTC_VALUE  (uint64_t)(2000 * 10000 * ONE_BTC_COIN_VALUE)
+#define TOTAL_BTC_VALUE  2000 * 10000 * ONE_BTC_COIN_VALUE
 
 /* miner fee */
 #define KYK_MINER_FEE 0

@@ -742,6 +742,7 @@ int kyk_load_utxo_chain_from_chainfile_buf(struct kyk_utxo_chain* utxo_chain,
 {
     const uint8_t* bufp = NULL;
     uint32_t chain_len = 0;
+    size_t check_num = 0;
     int res = -1;
     
     check(utxo_chain, "Failed to kyk_load_utxo_chain_from_buf: utxo_chain is NULL");
@@ -753,8 +754,12 @@ int kyk_load_utxo_chain_from_chainfile_buf(struct kyk_utxo_chain* utxo_chain,
     beej_unpack(bufp, "<L", &chain_len);
     bufp += sizeof(chain_len);
 
-    res = kyk_deseri_utxo_chain(utxo_chain, bufp, chain_len, NULL);
+    res = kyk_deseri_utxo_chain(utxo_chain, bufp, chain_len, &check_num);
     check(res == 0, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+    if(buf_len > 0){
+	check(check_num <= buf_len, "Failed to kyk_load_utxo_chain: kyk_deseri_utxo_chain failed");
+    }
+    
 
     return 0;
 
