@@ -77,6 +77,11 @@ kyk_miner: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
 kyk_miner: kyk_miner.c
 	$(CC) $(CFLAGS) $< -o $@.out
 
+bob_wallet: $(TARGET) $(SO_TARGET)
+bob_wallet: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
+bob_wallet: bob_wallet.c
+	$(CC) $(CFLAGS) $< -o $@.out
+
 dev_tool: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
 dev_tool: dev_tool.c
 	$(CC) $(CFLAGS) $< -o $@.out

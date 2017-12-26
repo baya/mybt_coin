@@ -57,6 +57,23 @@ char* test_kyk_dgst_hash256()
     return NULL;
 }
 
+char* test_kyk_hash256()
+{
+    uint256 digest;
+    uint8_t expect_data[32] = {
+	0x90, 0x98, 0x6e, 0xa4, 0xe2, 0x8b, 0x84, 0x7c,
+	0xc7, 0xf9, 0xbe, 0xba, 0x87, 0xea, 0x81, 0xb2,
+	0x21, 0xca, 0x6e, 0xaf, 0x98, 0x28, 0xa8, 0xb0,
+	0x4c, 0x29, 0x0c, 0x21, 0xd8, 0x91, 0xbc, 0xda	
+    };
+
+    kyk_hash256(&digest, (uint8_t*)message, strlen(message));
+    mu_assert(kyk_digest_eq(digest.data, expect_data, sizeof(digest)), "failed to test_kyk_dgst_hash256");
+
+    return NULL;
+    
+}
+
 char* test_kyk_dgst_hash160()
 {
     uint8_t digest[20];
@@ -92,6 +109,7 @@ char *all_tests()
     mu_run_test(test_kyk_dgst_sha256);
     mu_run_test(test_kyk_dgst_hash256);
     mu_run_test(test_kyk_dgst_hash160);
+    mu_run_test(test_kyk_hash256);
     
     return NULL;
 }

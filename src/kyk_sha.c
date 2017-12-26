@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "kyk_defs.h"
 #include "kyk_sha.h"
+#include "dbg.h"
 
 unsigned char * kyk_sha256(const char *str, size_t len)
 {
@@ -29,6 +31,20 @@ unsigned char * kyk_dble_sha256(const char *str, size_t len)
     free(dg1);
 
     return dg2;
+}
+
+int kyk_hash256(uint256* digest, const uint8_t* buf, size_t len)
+{
+    check(digest, "Failed to kyk_hash256: digest is NULL");
+    check(buf, "Failed to kyk_hash256: buf is NULL");
+    
+    kyk_dgst_hash256(digest -> data, buf, len);
+
+    return 0;
+
+error:
+
+    return -1;
 }
 
 void kyk_dgst_rmd160(uint8_t *digest, const uint8_t *message, size_t len)

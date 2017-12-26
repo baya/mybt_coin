@@ -2,10 +2,10 @@
 #define BTC_MESSAGE_H__
 
 
-#define NT_MAGIC_MAIN  0xD9B4BEF9
-#define NT_MAGIC_TEST  0xDAB5BFFA
-#define NT_MAGIC_TEST3 0x0709110B
-#define NT_MAGIC_NC    0xFEB4BEF9
+#define NT_MAGIC_MAIN  (uint32_t)0xD9B4BEF9
+#define NT_MAGIC_TEST  (uint32_t)0xDAB5BFFA
+#define NT_MAGIC_TEST3 (uint32_t)0x0709110B
+#define NT_MAGIC_NC    (uint32_t)0xFEB4BEF9
 
 #define NODE_NETWORK 1
 #define NODE_GETUTXO 2
@@ -14,15 +14,9 @@
 #define LOCAL_IP_SRC "::ffff:127.0.0.1"
 #define KYK_PL_BUF_SIZE 1024
 
-
-/* typedef struct varint { */
-/*     uint8_t  va1; */
-/*     uint16_t va2; */
-/*     uint32_t va4; */
-/*     uint64_t va8; */
-/*     uint64_t value; */
-/*     uint8_t len; */
-/* } varint; */
+#define KYK_MSG_TYPE_LEN 12
+#define KYK_MSG_CK_LEN 4
+#define KYK_MSG_TYPE_PING "ping"
 
 typedef struct var_length_string{
     int len;
@@ -31,21 +25,20 @@ typedef struct var_length_string{
 
 typedef struct protocol_message_payload {
     uint32_t len;
-    unsigned char buf[KYK_PL_BUF_SIZE];
+    uint8_t* data;
 } ptl_payload;
 
 typedef struct protocol_btc_message_buf {
-    uint32_t len;
-    size_t pld_len;
-    unsigned char body[KYK_PL_BUF_SIZE];
+    uint32_t len;    
+    uint8_t* data;
 } ptl_msg_buf;
 
 typedef struct protocol_btc_message{
     uint32_t magic;
-    char cmd[12];
-    uint32_t len;
-    char checksum[4];
-    ptl_payload *pld_ptr;
+    char cmd[KYK_MSG_TYPE_LEN];
+    uint32_t pld_len;
+    uint8_t checksum[KYK_MSG_CK_LEN];
+    ptl_payload *pld;
 } ptl_msg;
 
 typedef struct protocol_btc_net_addr{
@@ -74,15 +67,45 @@ typedef struct protocol_resp_buf{
     unsigned char body[KYK_PL_BUF_SIZE];
 } ptl_resp_buf;
 
+struct ptl_ping_entity{
+    uint64_t nonce;
+};
+
+int kyk_build_btc_new_message(ptl_msg** new_msg,
+			      const char* cmd,
+			      uint32_t nt_magic,
+			      const ptl_payload* pld);
+
+int kyk_build_btc_message(ptl_msg* msg, const char* cmd, uint32_t nt_magic, const ptl_payload* pld);
+int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld);
+int kyk_new_ptl_payload(ptl_payload** new_pld);
+
 ptl_msg * unpack_resp_buf(ptl_resp_buf *resp_buf);
-void print_msg_buf(const ptl_msg_buf *msg_buf);
-void build_btc_message(ptl_msg * msg, const char *cmd, ptl_payload *pld);
-void pack_btc_message(ptl_msg_buf *msg_buf, ptl_msg *msg);
+void kyk_print_msg_buf(const ptl_msg_buf *msg_buf);
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf);
 void encode_varstr(var_str *, const char *);
-void pack_version(ptl_ver *, ptl_payload *);
+void kyk_pack_version(ptl_ver *, ptl_payload *);
 unsigned int pack_ptl_net_addr(unsigned char *, ptl_net_addr *);
-unsigned int pack_varstr(unsigned char *, var_str);
+unsigned int kyk_pack_varstr(unsigned char *, var_str);
 
+/* calloc methods */
+int kyk_new_msg_buf(ptl_msg_buf** new_msg_buf, uint32_t len);
+
+
+/* free methods */
+void kyk_free_ptl_msg(ptl_msg* msg);
+void kyk_free_ptl_payload(ptl_payload* pld);
+void kyk_free_ptl_msg_buf(ptl_msg_buf* msg_buf);
+
+/* serialize message to buffer */
+int kyk_seri_ptl_message(ptl_msg_buf *msg_buf, const ptl_msg *msg);
+int kyk_new_seri_ptl_message(ptl_msg_buf** new_msg_buf, const ptl_msg* msg);
+
+/* build payload */
+int kyk_build_new_ping_payload(ptl_payload** new_pld, const struct ptl_ping_entity* et);
+int kyk_new_ping_entity(struct ptl_ping_entity** new_et);
+
+/* util function */
+int kyk_get_ptl_msg_size(const ptl_msg* msg, size_t* msg_size);
 
 #endif
