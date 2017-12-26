@@ -16,7 +16,8 @@
 #include "kyk_validate.h"
 #include "kyk_utxo.h"
 #include "kyk_address.h"
-#include "kyk_serve.h"
+#include "kyk_message.h"
+#include "kyk_socket.h"
 #include "dbg.h"
 
 #define WALLET_NAME ".kyk_miner"
@@ -245,9 +246,22 @@ error:
 
 int cmd_ping(const char *node, const char* service)
 {
-    printf("ping %s:%s\n", node, service);
-    
+    ptl_payload* pld = NULL;
+    ptl_msg* msg = NULL;
+    ptl_msg_buf* msg_buf = NULL;
+    int res = -1;
+
+    res = kyk_new_ptl_payload(&pld);
+    check(res == 0, "Failed to cmd_ping");
+
+    res = kyk_build_btc_new_message(&msg, KYK_MSG_TYPE_PING, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to cmd_ping");
+        
     return 0;
+
+error:
+
+    return -1;
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)

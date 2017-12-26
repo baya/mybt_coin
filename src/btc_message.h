@@ -64,7 +64,7 @@ typedef struct protocol_btc_version{
 typedef struct protocol_resp_buf{
     size_t len;
     char cmdname[12];
-    unsigned char body[KYK_PL_BUF_SIZE];
+    uint8_t* data;
 } ptl_resp_buf;
 
 struct ptl_ping_entity{

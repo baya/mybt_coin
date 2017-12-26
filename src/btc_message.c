@@ -148,11 +148,14 @@ void kyk_free_ptl_payload(ptl_payload* pld)
 
 ptl_msg * unpack_resp_buf(ptl_resp_buf *resp_buf)
 {
-    unsigned char *bptr;
-    ptl_msg *msg = malloc(sizeof(ptl_msg));
-    ptl_payload *pld = malloc(sizeof(ptl_payload));
+    unsigned char *bptr = NULL;
+    ptl_msg *msg = NULL;
+    ptl_payload *pld = NULL;
 
-    bptr = resp_buf -> body;
+    msg = calloc(1, sizeof(*msg));
+    pld = calloc(1, sizeof(*pld));
+
+    bptr = resp_buf -> data;
     beej_unpack(bptr, "<L", &(msg -> magic));
     bptr += 4;
 

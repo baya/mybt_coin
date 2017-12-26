@@ -11,7 +11,7 @@
 #include "dbg.h"
 
 
-#define MAX_BUF_SIZE 1024
+static uint32_t MAX_BUF_SIZE = 1000 * 1024;
 
 static size_t read_pld_len(const unsigned char *buf, size_t inx);
 
@@ -26,13 +26,17 @@ static size_t read_pld_len(const unsigned char *buf, size_t inx);
 /*     struct addrinfo *ai_next; */
 /* }; */
 
-void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_buf *msg_buf, ptl_resp_buf *resp_buf)
+int kyk_send_btc_msg_buf(const char *node,
+			 const char *service,
+			 const ptl_msg_buf* msg_buf,
+			 ptl_resp_buf** new_resp_buf)
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
     int sfd, s;
     size_t len;
-    ssize_t nread;    
+    ssize_t nread;
+    ptl_resp_buf* resp_buf = NULL;
     unsigned char resp_body[MAX_BUF_SIZE];
 
     memset(&hints, 0, sizeof(struct addrinfo));
@@ -42,20 +46,18 @@ void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_b
     hints.ai_protocol = 0;          /* Any protocol */
 
     s = getaddrinfo(node, service, &hints, &result);
-    if (s != 0) {
-	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
-	exit(EXIT_FAILURE);
-    }
+    check(s == 0, "Failed to kyk_send_btc_msg_buf: getaddrinfo: %s", gai_strerror(s));
 
-/* getaddrinfo() returns a list of address structures.
-   Try each address until we successfully connect(2).
-   If socket(2) (or connect(2)) fails, we (close the socket
-   and) try the next address. */
-
-    for (rp = result; rp != NULL; rp = rp->ai_next) {
-	sfd = socket(rp->ai_family,
-		     rp->ai_socktype,
-		     rp->ai_protocol);
+   /*
+   **  getaddrinfo() returns a list of address structures.
+   **  Try each address until we successfully connect(2).
+   **  If socket(2) (or connect(2)) fails, we (close the socket
+   **  and) try the next address.
+   */
+    for (rp = result; rp != NULL; rp = rp -> ai_next) {
+	sfd = socket(rp -> ai_family,
+		     rp -> ai_socktype,
+		     rp -> ai_protocol);
 	if (sfd == -1)
 	    continue;
 
@@ -67,60 +69,55 @@ void kyk_send_btc_msg_buf(const char *node, const char *service, const ptl_msg_b
 	close(sfd);
     }
 
-    if (rp == NULL) {               /* No address succeeded */
-	fprintf(stderr, "Could not connect\n");
-	exit(EXIT_FAILURE);
-    }
+    check(rp, "Failed to kyk_send_btc_msg_buf: Could not connect");
 
-    freeaddrinfo(result);           /* No longer needed */
+    /* No longer needed */
+    freeaddrinfo(result);           
 
     len = msg_buf -> len;
-    if (len + 1> MAX_BUF_SIZE) {
-	fprintf(stderr,
-		"Ignoring long message\n");
+    if (len + 1 > MAX_BUF_SIZE) {
+	fprintf(stderr, "Ignoring long message\n");
 	exit(EXIT_FAILURE);
     }
 
-#ifdef DEBUG
-    printf("msg buf: ");
-    for(int i=0; i < len; i++)
-    {
-	printf("%02x", msg_buf -> body[i]);
-    }
-    printf("\n");
-#endif
-
-    if (write(sfd, msg_buf -> body, len) != (ssize_t)len) {
+    if (write(sfd, msg_buf -> data, len) != (ssize_t)len) {
 	fprintf(stderr, "partial/failed write\n");
 	exit(EXIT_FAILURE);
     }
 
-    nread = recv(sfd, resp_body, MAX_BUF_SIZE-1, 0);
-    if (nread == -1) {
-	perror("read");
-	exit(EXIT_FAILURE);
-    }
+    nread = recv(sfd, resp_body, MAX_BUF_SIZE - 1, 0);
+    check(nread > 0, "Failed to kyk_send_btc_msg_buf");
 
-    printf("Received %zd bytes\n", nread);
+    resp_buf = calloc(1, sizeof(*resp_buf));
+    check(resp_buf, "Failed to kyk_send_btc_msg_buf: resp_buf calloc failed");
+
     resp_buf -> len = nread;
-    /* printf("%s\n", resp_body); */
-    /* for(int i=0; i < nread; i++){ */
-    /* 	printf("%c", resp_body[i]); */
-    /* } */
+    resp_buf -> data = calloc(resp_buf -> len, sizeof(*resp_buf -> data));
+    check(resp_buf -> data, "Failed to kyk_send_btc_msg_buf: resp_buf -> data calloc failed");
 
-    memcpy(resp_buf -> body, resp_body, nread);
+    memcpy(resp_buf -> data, resp_body, resp_buf -> len);
+
+    *new_resp_buf = resp_buf;
+
+    return 0;
+
+error:
+
+    return -1;
 
 }
 
 int kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len, size_t* checksize)
 {
-    unsigned char *bptr = msg_buf -> body;
+    unsigned char *bptr = NULL;
     size_t recv_size = 0;
     size_t pld_size = 0;
     size_t msg_size = 24;
     int pld_flag = 1;
 
     check(msg_buf, "Failed to kyk_recv_btc_msg: msg_buf is NULL");
+
+    bptr = msg_buf -> data;
     
     while(1){
 	ssize_t i = recv(sockfd, bptr, buf_len, 0);
@@ -131,7 +128,7 @@ int kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len, size_t* c
 	recv_size += i;
 	bptr += i;
 	if(recv_size >= 20 && pld_flag == 1){
-	    pld_size = read_pld_len(msg_buf -> body, 16);
+	    pld_size = read_pld_len(msg_buf -> data, 16);
 	    pld_flag = 0;
 	}
 	if(recv_size >= pld_size + msg_size){
@@ -144,7 +141,6 @@ int kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len, size_t* c
 	return -1;
     } else {
 	msg_buf -> len = recv_size;
-	msg_buf -> pld_len = pld_size;
 	if(checksize){
 	    *checksize = recv_size;
 	}
@@ -158,7 +154,7 @@ error:
 
 }
 
-static size_t read_pld_len(const unsigned char *buf, size_t inx)
+size_t read_pld_len(const unsigned char *buf, size_t inx)
 {
     uint32_t len = 0;
     
