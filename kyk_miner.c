@@ -41,7 +41,7 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 		long double btc_num,
 		const char* btc_addr);
 
-int cmd_serve(const char* port);
+int cmd_serve(const char*host, const char* port);
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
 
@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
 	} else if(match_cmd(argv[1], CMD_SHOW_ADDR_LIST)){
 	    wallet = kyk_open_wallet(wdir);
 	    cmd_show_addr_list(wallet);
+	} else if(match_cmd(argv[1], CMD_SERVE)){
+	    cmd_serve("localhost", "8333");
 	} else {
 	    printf("invalid options\n");
 	}
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
 	    check(res == 0, "failed to kyk_wallet_check_config");
 	    cmd_add_address(wallet, argv[2]);
 	} else if(match_cmd(argv[1], CMD_SERVE)){
-	    cmd_serve(argv[2]);
+	    cmd_serve("localhost", argv[2]);
 	} else {
 	    printf("invalid command %s\n", argv[1]);
 	}
@@ -264,9 +266,9 @@ error:
     return -1;
 }
 
-int cmd_serve(const char* port)
+int cmd_serve(const char* host, const char* port)
 {
-    kyk_start_serve(port);
+    kyk_start_serve(host, port);
     return 0;
 }
 

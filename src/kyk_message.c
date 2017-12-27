@@ -10,7 +10,6 @@
 #include "dbg.h"
 
 static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note);
-static size_t format_hex_to_str(char *str, const char *format, const unsigned char *buf, size_t len);
 static int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld);
 
 
@@ -216,28 +215,8 @@ void kyk_print_msg_buf(const ptl_msg_buf *msg_buf)
 
 void kyk_print_ptl_message(ptl_message* ptl_msg)
 {
-    printf("ptl_msg -> magic: %0x", ptl_msg -> magic);
+    printf("ptl_msg -> magic: %0x\n", ptl_msg -> magic);
     printf("ptl_msg -> cmd: %s\n", ptl_msg -> cmd);
-}
-
-static size_t format_hex_to_str(char *str, const char *note, const unsigned char *buf, size_t len)
-{
-    size_t j = 0;
-    size_t i = 0;
-    size_t ofst = 0;
-    
-    j = sprintf(str, "%s: ", note);
-    ofst += j;
-    str += j;
-    for(i=0; i < len; i++){
-	j = sprintf(str, "%02x", buf[i]);
-	ofst += j;
-        str += j;
-    }
-    j = sprintf(str, "\n");
-    ofst += j;
-
-    return ofst;
 }
 
 static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note)
@@ -349,12 +328,51 @@ error:
 
 int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, size_t buf_len)
 {
+    const uint8_t* bufp = NULL;
+    ptl_payload* pld = NULL;
     ptl_message* msg = NULL;
     
     check(buf, "Failed to kyk_deseri_new_ptl_message: buf is NULL");
 
-error:
+    msg = calloc(1, sizeof(*msg));
+    check(msg, "Failed to kyk_deseri_new_ptl_message");
 
+    bufp = buf;
+
+    beej_unpack(bufp, "<L", &msg -> magic);
+    bufp += sizeof(msg -> magic);
+
+    memcpy(msg -> cmd, bufp, sizeof(msg -> cmd));
+    bufp += sizeof(msg -> cmd);
+
+    beej_unpack(bufp, "<L", &msg -> pld_len);
+    bufp += sizeof(msg -> pld_len);
+
+    memcpy(msg -> checksum, bufp, sizeof(msg -> checksum));
+    bufp += sizeof(msg -> checksum);
+
+    msg -> pld = calloc(1, sizeof(*msg -> pld));
+    check(msg -> pld, "Failed to kyk_deseri_new_ptl_message: calloc failed");
+
+    pld = msg -> pld;
+
+    pld -> len = msg -> pld_len;
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_deseri_new_ptl_message: calloc failed");
+
+    memcpy(pld -> data, bufp, pld -> len);
+    bufp += pld -> len;
+
+    if(buf_len > 0){
+	check(buf_len == (size_t)(bufp - buf), "Failed to kyk_deseri_new_ptl_message");
+    }
+
+    *new_ptl_msg = msg;
+  
+    return 0;
+
+error:
+    if(msg) kyk_free_ptl_msg(msg);
     return -1;
 }
 

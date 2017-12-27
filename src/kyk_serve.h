@@ -3,6 +3,6 @@
 
 #include "kyk_defs.h"
 
-int kyk_start_serve(const char* port);
+int kyk_start_serve(const char* host, const char* port);
 
 #endif

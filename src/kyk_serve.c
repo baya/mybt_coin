@@ -22,7 +22,7 @@ static void sigchld_handler(int s);
 static void *get_in_addr(struct sockaddr *sa);
 
 
-int kyk_start_serve(const char* port)
+int kyk_start_serve(const char* host, const char* port)
 {
     int sockfd, new_fd;                   /* listen on sock_fd, new connection on new_fd */
     struct addrinfo hints, *servinfo, *p;
@@ -40,12 +40,12 @@ int kyk_start_serve(const char* port)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;         /* use my IP */
 
-    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(host, port, &hints, &servinfo)) != 0) {
 	fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 	return 1;
     }
 
-    /* loop through all the results and bind to the first we can */
+    /* Loop through all the results and bind to the first we can */
     for(p = servinfo; p != NULL; p = p -> ai_next) {
 	if ((sockfd = socket(p -> ai_family,
 			     p -> ai_socktype,
@@ -112,7 +112,6 @@ int kyk_start_serve(const char* port)
 		perror("recv");
 	    } else {
 		kyk_print_ptl_message(msg);
-		printf("%s\n", resp_msg);
 		if(send(new_fd, resp_msg, strlen(resp_msg), 0) == -1){
 		    perror("send");
 		}
