@@ -30,15 +30,18 @@ static uint32_t read_pld_len(const unsigned char *buf, int pos);
 int kyk_send_ptl_msg(const char* node,
 		     const char* service,
 		     const ptl_message* msg,
-		     ptl_resp_buf** new_resp_buf)
+		     ptl_message** rep_msg)
 {
     ptl_msg_buf* msg_buf = NULL;
     int res = -1;
 
-    res = kyk_new_seri_ptl_message(&msg_buf, msg);
-    check(res == 0, "Failed to kyk_send_btc_msg: kyk_new_seri_ptl_message failed");
+    check(msg, "Failed to kyk_send_ptl_msg: msg is NULL");
+    check(rep_msg, "Failed to kyk_send_ptl_msg: rep_msg is NULL");
 
-    res = kyk_send_ptl_msg_buf(node, service, msg_buf, new_resp_buf);
+    res = kyk_new_seri_ptl_message(&msg_buf, msg);
+    check(res == 0, "Failed to kyk_send_ptlc_msg: kyk_new_seri_ptl_message failed");
+
+    res = kyk_send_ptl_msg_buf(node, service, msg_buf, rep_msg);
     check(res == 0, "Failed to kyk_send_btc_msg");
 
     return 0;
@@ -51,15 +54,17 @@ error:
 int kyk_send_ptl_msg_buf(const char *node,
 			 const char *service,
 			 const ptl_msg_buf* msg_buf,
-			 ptl_resp_buf** new_resp_buf)
+			 ptl_message** new_rep_msg)
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
     int sfd, s;
     size_t len;
-    ssize_t nread;
-    ptl_resp_buf* resp_buf = NULL;
-    unsigned char resp_body[MAX_BUF_SIZE];
+    /* ssize_t nread; */
+    /* ptl_resp_buf* resp_buf = NULL; */
+    /* unsigned char resp_body[MAX_BUF_SIZE]; */
+    ptl_message* rep_msg = NULL;
+    int res = -1;
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
@@ -107,20 +112,11 @@ int kyk_send_ptl_msg_buf(const char *node,
 	exit(EXIT_FAILURE);
     }
 
-    nread = recv(sfd, resp_body, MAX_BUF_SIZE - 1, 0);
-    check(nread > 0, "Failed to kyk_send_btc_msg_buf");
+    res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
+    check(res == 0, "Failed to kyk_send_btc_msg_buf: kyk_recv_ptl_msg failed");
 
-    resp_buf = calloc(1, sizeof(*resp_buf));
-    check(resp_buf, "Failed to kyk_send_btc_msg_buf: resp_buf calloc failed");
-
-    resp_buf -> len = nread;
-    resp_buf -> data = calloc(resp_buf -> len, sizeof(*resp_buf -> data));
-    check(resp_buf -> data, "Failed to kyk_send_btc_msg_buf: resp_buf -> data calloc failed");
-
-    memcpy(resp_buf -> data, resp_body, resp_buf -> len);
-
-    *new_resp_buf = resp_buf;
-
+    *new_rep_msg = rep_msg;
+    
     return 0;
 
 error:
@@ -200,9 +196,18 @@ error:
 
 int kyk_reply_ptl_msg(int sockfd, ptl_message* rep_msg)
 {
+    ptl_msg_buf* msg_buf = NULL;
+    ssize_t sent_len = 0;
+    int res = -1;
+
     check(rep_msg, "Failed to kyk_reply_ptl_msg: rep_msg is NULL");
 
+    res = kyk_new_seri_ptl_message(&msg_buf, rep_msg);
+    check(res == 0, "Failed to kyk_reply_ptl_msg: kyk_new_seri_ptl_message failed");
     
+    sent_len = send(sockfd, msg_buf -> data, msg_buf -> len, 0);
+    check(sent_len > 0, "Failed to kyk_ptl_pong_rep");
+
     return 0;
 
 error:

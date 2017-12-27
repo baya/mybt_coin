@@ -247,13 +247,13 @@ error:
 
 int cmd_ping(const char* node, const char* service)
 {
-    ptl_resp_buf* resp_buf = NULL;
+    ptl_message* rep_msg = NULL;
     int res = -1;
 
-    res = kyk_ptl_ping_req(node, service, &resp_buf);
+    res = kyk_ptl_ping_req(node, service, &rep_msg);
     check(res == 0, "Failed to cmd_ping");
 
-    kyk_print_hex("ping response", resp_buf -> data, resp_buf -> len);
+    kyk_print_ptl_message(rep_msg);
 
     return 0;
 

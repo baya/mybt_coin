@@ -18,7 +18,9 @@
 #define KYK_MSG_CK_LEN 4
 #define KYK_PLD_LEN_POS 16
 #define KYK_MSG_HEADER_LEN 24
+
 #define KYK_MSG_TYPE_PING "ping"
+#define KYK_MSG_TYPE_PONG "pong"
 
 typedef struct var_length_string{
     int len;
@@ -73,12 +75,12 @@ struct ptl_ping_entity{
     uint64_t nonce;
 };
 
-int kyk_build_btc_new_message(ptl_message** new_msg,
+int kyk_build_new_ptl_message(ptl_message** new_msg,
 			      const char* cmd,
 			      uint32_t nt_magic,
 			      const ptl_payload* pld);
 
-int kyk_build_btc_message(ptl_message* msg, const char* cmd, uint32_t nt_magic, const ptl_payload* pld);
+int kyk_build_ptl_message(ptl_message* msg, const char* cmd, uint32_t nt_magic, const ptl_payload* pld);
 int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld);
 int kyk_new_ptl_payload(ptl_payload** new_pld);
 
@@ -117,6 +119,9 @@ int kyk_encode_varstr(var_str *vstr,
 
 /* print functions */
 void kyk_print_ptl_message(ptl_message* ptl_msg);
+
+/* build payload methods */
+int kyk_build_new_pong_payload(ptl_payload** new_pld, uint64_t nonce);
 
 
 #endif

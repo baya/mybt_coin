@@ -13,7 +13,7 @@
 static int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld);
 
 
-int kyk_build_btc_new_message(ptl_message** new_msg,
+int kyk_build_new_ptl_message(ptl_message** new_msg,
 			      const char* cmd,
 			      uint32_t nt_magic,
 			      const ptl_payload* pld)
@@ -28,7 +28,7 @@ int kyk_build_btc_new_message(ptl_message** new_msg,
     msg = calloc(1, sizeof(*msg));
     check(msg, "Failed to kyk_build_btc_new_message: msg calloc failed");    
 
-    res = kyk_build_btc_message(msg, cmd, nt_magic, pld);
+    res = kyk_build_ptl_message(msg, cmd, nt_magic, pld);
     check(res == 0, "Failed to kyk_build_btc_new_message");
 
     *new_msg = msg;
@@ -41,7 +41,7 @@ error:
 }
 
 
-int kyk_build_btc_message(ptl_message* msg,
+int kyk_build_ptl_message(ptl_message* msg,
 			  const char* cmd,
 			  uint32_t nt_magic,
 			  const ptl_payload* pld)
@@ -507,6 +507,28 @@ int kyk_build_new_ping_payload(ptl_payload** new_pld, const struct ptl_ping_enti
 
 error:
     if(pld) kyk_free_ptl_payload(pld);
+    return -1;
+}
+
+int kyk_build_new_pong_payload(ptl_payload** new_pld, uint64_t nonce)
+{
+    ptl_payload* pld = NULL;
+    int res = -1;
+
+    res = kyk_new_ptl_payload(&pld);
+    check(res == 0, "Failed to kyk_build_new_pong_payload: kyk_new_ptl_payload failed");
+
+    pld -> len = sizeof(nonce);
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_build_new_pong_payload: pld -> data calloc failed");
+    beej_pack(pld -> data, "<Q", nonce);
+
+    *new_pld = pld;
+
+    return 0;
+    
+error:
+
     return -1;
 }
 

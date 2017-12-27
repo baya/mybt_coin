@@ -6,7 +6,8 @@
 
 int kyk_ptl_ping_req(const char* node,
 		     const char* service,
-		     ptl_resp_buf** new_resp_buf);
+		     ptl_message** rep_msg);
+
 
 int kyk_ptl_pong_rep(int sockfd, ptl_message* ptl_msg);
 
