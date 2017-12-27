@@ -7,9 +7,9 @@
 #include "beej_pack.h"
 #include "kyk_sha.h"
 #include "kyk_message.h"
+#include "kyk_utils.h"
 #include "dbg.h"
 
-static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note);
 static int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld);
 
 
@@ -47,11 +47,15 @@ int kyk_build_btc_message(ptl_message* msg,
 			  const ptl_payload* pld)
 {
     uint256 digest;
+    size_t cmd_len = 0;
     int res = -1;
 
     check(msg, "Failed to kyk_build_btc_message: msg is NULL");
     check(msg -> pld == NULL, "Failed to kyk_build_btc_message: msg -> pld should be NULL");
     check(pld, "Failed to kyk_build_btc_message: pld is NULL");
+    
+    cmd_len = strlen(cmd);
+    check(cmd_len < sizeof(msg -> cmd), "Failed to kyk_build_btc_message: cmd is invalid");
     
     msg -> magic = nt_magic;
     strcpy(msg -> cmd, cmd);
@@ -184,58 +188,19 @@ ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf)
     return msg;
 }
 
-void kyk_print_msg_buf(const ptl_msg_buf *msg_buf)
-{
-    const unsigned char *buf = msg_buf -> data;
-    size_t len = 0;
-    int wth = 36;
-    size_t i = 0;
-
-    len = print_hex(buf, sizeof(uint32_t), wth, "Magic");
-    buf += len;
-    len = print_hex(buf, 12, wth, "Command name");
-    printf("Command name: %s\n", buf);
-    buf += len;
-    len = print_hex(buf, sizeof(uint32_t), wth, "Payload size");
-    buf += len;
-
-    len = print_hex(buf, 4, wth, "Checksum");
-    buf += len;
-
-    len = msg_buf -> len - 24;
-    len = print_hex(buf, len, wth, "Payload");
-    buf += len;
-
-    for(i=0; i < msg_buf -> len; i++){
-	printf("%02x", msg_buf -> data[i]);
-    }
-
-    printf("\n");
-}
-
 void kyk_print_ptl_message(ptl_message* ptl_msg)
 {
-    printf("ptl_msg -> magic: %0x\n", ptl_msg -> magic);
-    printf("ptl_msg -> cmd: %s\n", ptl_msg -> cmd);
+    ptl_msg_buf* msg_buf = NULL;
+
+    kyk_new_seri_ptl_message(&msg_buf, ptl_msg);
+    
+    printf("ptl_msg -> magic:  %0x\n", ptl_msg -> magic);
+    printf("ptl_msg -> cmd:     %s\n", ptl_msg -> cmd);
+    printf("ptl_msg -> pld_len: %u\n", ptl_msg -> pld_len);
+    kyk_print_hex("ptl_msg -> checksum", ptl_msg -> checksum, sizeof(ptl_msg -> checksum));
+    kyk_print_hex("ptl_msg -> pld", ptl_msg -> pld -> data, ptl_msg -> pld_len);
+    kyk_print_hex("Hex", msg_buf -> data, msg_buf -> len);
 }
-
-static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note)
-{
-    size_t i = 0;
-    for(i=0; i < len; i++){
-	printf("%02x", *buf++);
-    }
-
-    printf(" ");
-    for(i = len*2; i < (size_t)width; i++){
-	printf(".");
-    }
-
-    printf(" %s\n", note);
-
-    return len;
-}
-
 
 void kyk_pack_version(ptl_ver *ver, ptl_payload *pld)
 {

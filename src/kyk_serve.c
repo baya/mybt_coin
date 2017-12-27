@@ -17,7 +17,7 @@
 #include "beej_pack.h"
 #include "kyk_socket.h"
 
-
+static int match_cmd(char *src, char *cmd);
 static void sigchld_handler(int s);
 static void *get_in_addr(struct sockaddr *sa);
 
@@ -33,6 +33,7 @@ int kyk_start_serve(const char* host, const char* port)
     char s[INET6_ADDRSTRLEN];
     int rv;
     ptl_message* msg = NULL;
+    int res = -1;
     char resp_msg[KYK_SERVE_MSG_SIZE];
 
     memset(&hints, 0, sizeof hints);
@@ -89,7 +90,7 @@ int kyk_start_serve(const char* host, const char* port)
 	exit(1);
     }
 
-    printf("server: waiting for connections...\n");
+    printf("server: waiting for connections in %s:%s\n", host, port);
 
     while(1) {  /* main accept() loop */
 	sin_size = sizeof their_addr;
@@ -107,13 +108,16 @@ int kyk_start_serve(const char* host, const char* port)
 
 	if (!fork()) {     /* this is the child process */
 	    close(sockfd); /* child doesn't need the listener */
+	    res = kyk_recv_ptl_msg(new_fd, &msg, KYK_PL_BUF_SIZE, NULL);
 	    
-	    if (kyk_recv_ptl_msg(new_fd, &msg, KYK_PL_BUF_SIZE, NULL) == -1){
+	    if (res == -1){
 		perror("recv");
 	    } else {
 		kyk_print_ptl_message(msg);
-		if(send(new_fd, resp_msg, strlen(resp_msg), 0) == -1){
-		    perror("send");
+		if(match_cmd(msg -> cmd, KYK_MSG_TYPE_PING)){
+		    res = kyk_ptl_pong_rep(new_fd, msg);
+		    if(res == -1) perror("send");
+		} else {
 		}
 	    }
 	    
@@ -148,4 +152,15 @@ void *get_in_addr(struct sockaddr *sa)
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
+
+int match_cmd(char *src, char *cmd)
+{
+    int res = 0;
+    
+    res = strcasecmp(src, cmd) == 0 ? 1 : 0;
+
+    return res;
+}
+
 

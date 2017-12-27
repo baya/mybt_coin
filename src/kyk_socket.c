@@ -198,6 +198,18 @@ error:
 
 }
 
+int kyk_reply_ptl_msg(int sockfd, ptl_message* rep_msg)
+{
+    check(rep_msg, "Failed to kyk_reply_ptl_msg: rep_msg is NULL");
+
+    
+    return 0;
+
+error:
+
+    return -1;
+}
+
 uint32_t read_pld_len(const unsigned char *buf, int pos)
 {
     uint32_t len = 0;

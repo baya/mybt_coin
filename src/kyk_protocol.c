@@ -9,9 +9,9 @@
 #include "dbg.h"
 
 /* The pong message is sent in response to a ping message. In modern protocol versions, a pong response is generated using a nonce included in the ping. */
-int kyk_ptl_ping(const char* node,
-		 const char* service,
-		 ptl_resp_buf** new_resp_buf)
+int kyk_ptl_ping_req(const char* node,
+		     const char* service,
+		     ptl_resp_buf** new_resp_buf)
 {
     ptl_payload* pld = NULL;
     ptl_message* msg = NULL;
@@ -39,4 +39,21 @@ error:
 
     return -1;
 
+}
+
+
+int kyk_ptl_pong_rep(int sockfd, ptl_message* req_msg)
+{
+    int res = -1;
+    
+    check(req_msg, "Failed to kyk_ptl_pong_rep: req_msg is NULL");
+
+    res = send(sockfd, resp_msg, strlen(resp_msg), 0);
+    check(res == 0, "Failed to kyk_ptl_pong_rep");
+
+    return 0;
+
+error:
+
+    return -1;
 }

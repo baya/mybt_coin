@@ -83,7 +83,6 @@ int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld);
 int kyk_new_ptl_payload(ptl_payload** new_pld);
 
 ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf);
-void kyk_print_msg_buf(const ptl_msg_buf *msg_buf);
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf);
 void kyk_pack_version(ptl_ver *, ptl_payload *);
 unsigned int pack_ptl_net_addr(unsigned char *, ptl_net_addr *);
