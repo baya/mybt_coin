@@ -36,7 +36,7 @@ unsigned char * kyk_dble_sha256(const char *str, size_t len)
 int kyk_hash256(uint256* digest, const uint8_t* buf, size_t len)
 {
     check(digest, "Failed to kyk_hash256: digest is NULL");
-    check(buf, "Failed to kyk_hash256: buf is NULL");
+    /* check(buf, "Failed to kyk_hash256: buf is NULL"); */
     
     kyk_dgst_hash256(digest -> data, buf, len);
 

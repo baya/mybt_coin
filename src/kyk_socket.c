@@ -7,13 +7,14 @@
 #include <string.h>
 
 #include "beej_pack.h"
-#include "btc_message.h"
+#include "kyk_message.h"
+#include "kyk_socket.h"
 #include "dbg.h"
 
 
 static uint32_t MAX_BUF_SIZE = 1000 * 1024;
 
-static size_t read_pld_len(const unsigned char *buf, size_t inx);
+static uint32_t read_pld_len(const unsigned char *buf, int pos);
 
 /* struct addrinfo { */
 /*     int              ai_flags; */
@@ -26,7 +27,28 @@ static size_t read_pld_len(const unsigned char *buf, size_t inx);
 /*     struct addrinfo *ai_next; */
 /* }; */
 
-int kyk_send_btc_msg_buf(const char *node,
+int kyk_send_ptl_msg(const char* node,
+		     const char* service,
+		     const ptl_message* msg,
+		     ptl_resp_buf** new_resp_buf)
+{
+    ptl_msg_buf* msg_buf = NULL;
+    int res = -1;
+
+    res = kyk_new_seri_ptl_message(&msg_buf, msg);
+    check(res == 0, "Failed to kyk_send_btc_msg: kyk_new_seri_ptl_message failed");
+
+    res = kyk_send_ptl_msg_buf(node, service, msg_buf, new_resp_buf);
+    check(res == 0, "Failed to kyk_send_btc_msg");
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_send_ptl_msg_buf(const char *node,
 			 const char *service,
 			 const ptl_msg_buf* msg_buf,
 			 ptl_resp_buf** new_resp_buf)
@@ -107,61 +129,83 @@ error:
 
 }
 
-int kyk_recv_btc_msg(int sockfd, ptl_msg_buf *msg_buf, size_t buf_len, size_t* checksize)
+int kyk_recv_ptl_msg(int sockfd, ptl_message** new_ptl_msg, size_t buf_len, size_t* checksize)
 {
-    unsigned char *bptr = NULL;
-    size_t recv_size = 0;
-    size_t pld_size = 0;
-    size_t msg_size = 24;
+    ptl_message* ptl_msg = NULL;
+    uint8_t* buf = NULL;
+    uint8_t* larger_buf = NULL;
+    uint8_t* bufp = NULL;
+    size_t recv_len = 0;
+    uint32_t pld_len = 0;
     int pld_flag = 1;
+    int res = -1;
 
-    check(msg_buf, "Failed to kyk_recv_btc_msg: msg_buf is NULL");
+    check(new_ptl_msg, "Failed to kyk_recv_ptl_msg: new_ptl_msg is NULL");
 
-    bptr = msg_buf -> data;
-    
+    buf = calloc(buf_len, sizeof(*buf));
+    check(buf, "Failed to kyk_recv_ptl_msg: calloc failed");
+
+    bufp = buf;
+
     while(1){
-	ssize_t i = recv(sockfd, bptr, buf_len, 0);
+	ssize_t i = recv(sockfd, bufp, buf_len, 0);
 	if(i == -1){
 	    perror("recv");
 	    break;
 	}
-	recv_size += i;
-	bptr += i;
-	if(recv_size >= 20 && pld_flag == 1){
-	    pld_size = read_pld_len(msg_buf -> data, 16);
+	recv_len += i;
+	bufp += i;
+	if(recv_len >= KYK_MSG_HEADER_LEN && pld_flag == 1){
+	    pld_len = read_pld_len(buf, KYK_PLD_LEN_POS);
 	    pld_flag = 0;
 	}
-	if(recv_size >= pld_size + msg_size){
+	
+	if(recv_len >= pld_len + KYK_MSG_HEADER_LEN){
 	    break;
 	}
 
+	/* need to realloc a larger buffer */
+	if(buf_len < pld_len + KYK_MSG_HEADER_LEN){
+	    size_t total_len = pld_len + KYK_MSG_HEADER_LEN;
+	    larger_buf = realloc(buf, total_len * sizeof(*buf));
+	    check(larger_buf, "Failed to kyk_recv_ptl_msg: realloc failed");
+	    buf = larger_buf;
+	    bufp = buf + recv_len;
+	}
+        
+
     }
 
-    if(recv_size < pld_size + msg_size){
-	return -1;
-    } else {
-	msg_buf -> len = recv_size;
-	if(checksize){
-	    *checksize = recv_size;
-	}
-	
-	return 0;
+    check(recv_len >= pld_len + KYK_MSG_HEADER_LEN, "Failed to kyk_recv_ptl_msg: invalid received bytes len");
+
+    res = kyk_deseri_new_ptl_message(&ptl_msg, buf, recv_len);
+    check(res == 0, "Failed to kyk_recv_ptl_msg: kyk_deseri_new_ptl_message failed");
+
+    *new_ptl_msg = ptl_msg;
+
+    if(checksize){
+	*checksize = recv_len;
     }
+
+    free(buf);
+	
+    return 0;
 
 error:
-
+    if(buf) free(buf);
+    if(ptl_msg) kyk_free_ptl_msg(ptl_msg);
     return -1;
 
 }
 
-size_t read_pld_len(const unsigned char *buf, size_t inx)
+uint32_t read_pld_len(const unsigned char *buf, int pos)
 {
     uint32_t len = 0;
     
-    buf += inx;
+    buf += pos;
     beej_unpack(buf, "<L", &len);
 
-    return (size_t)len;
+    return len;
 }
 
 

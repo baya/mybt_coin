@@ -6,7 +6,7 @@
 
 #include "beej_pack.h"
 #include "kyk_sha.h"
-#include "btc_message.h"
+#include "kyk_message.h"
 #include "dbg.h"
 
 static size_t print_hex(const unsigned char *buf, size_t len, int width, char *note);
@@ -14,12 +14,12 @@ static size_t format_hex_to_str(char *str, const char *format, const unsigned ch
 static int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld);
 
 
-int kyk_build_btc_new_message(ptl_msg** new_msg,
+int kyk_build_btc_new_message(ptl_message** new_msg,
 			      const char* cmd,
 			      uint32_t nt_magic,
 			      const ptl_payload* pld)
 {
-    ptl_msg* msg = NULL;
+    ptl_message* msg = NULL;
     int res = -1;
     
     check(new_msg, "Failed to kyk_build_btc_new_message: new_msg is NULL");
@@ -31,7 +31,8 @@ int kyk_build_btc_new_message(ptl_msg** new_msg,
 
     res = kyk_build_btc_message(msg, cmd, nt_magic, pld);
     check(res == 0, "Failed to kyk_build_btc_new_message");
-    
+
+    *new_msg = msg;
 
     return 0;
     
@@ -41,7 +42,7 @@ error:
 }
 
 
-int kyk_build_btc_message(ptl_msg* msg,
+int kyk_build_btc_message(ptl_message* msg,
 			  const char* cmd,
 			  uint32_t nt_magic,
 			  const ptl_payload* pld)
@@ -56,11 +57,12 @@ int kyk_build_btc_message(ptl_msg* msg,
     msg -> magic = nt_magic;
     strcpy(msg -> cmd, cmd);
     msg -> pld_len = pld -> len;
-    
+
     res = kyk_copy_new_ptl_payload(&msg -> pld, pld);
     check(res == 0, "Failed to kyk_build_btc_message: kyk_copy_new_ptl_payload failed");
-    
-    kyk_hash256(&digest, pld -> data, pld -> len);
+
+    res = kyk_hash256(&digest, pld -> data, pld -> len);
+    check(res == 0, "Failed to kyk_build_btc_message: kyk_hash256 failed");
     memcpy(msg -> checksum, digest.data, sizeof(msg -> checksum));
 
     return 0;
@@ -94,6 +96,9 @@ int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld)
     ptl_payload* pld = NULL;
     int res = -1;
 
+    check(new_pld, "Failed to kyk_copy_new_ptl_payload: new_pld is NULL");
+    check(src_pld, "Failed to kyk_copy_new_ptl_payload: src_pld is NULL");
+
     pld = calloc(1, sizeof(*pld));
     check(pld, "Failed to kyk_copy_new_ptl_payload: pld calloc failed");
     
@@ -115,6 +120,9 @@ int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld)
     check(src_pld, "Failed to kyk_copy_ptl_payload: src_pld is NULL");
 
     dest_pld -> len = src_pld -> len;
+    dest_pld -> data = calloc(dest_pld -> len, sizeof(*dest_pld -> data));
+    check(dest_pld -> data, "Failed to kyk_copy_ptl_payload: calloc failed");
+    
     memcpy(dest_pld -> data, src_pld -> data, dest_pld -> len);
 
     return 0;
@@ -124,7 +132,7 @@ error:
     return -1;
 }
 
-void kyk_free_ptl_msg(ptl_msg* msg)
+void kyk_free_ptl_msg(ptl_message* msg)
 {
     if(msg){
 	if(msg -> pld){
@@ -146,10 +154,10 @@ void kyk_free_ptl_payload(ptl_payload* pld)
     }
 }
 
-ptl_msg * unpack_resp_buf(ptl_resp_buf *resp_buf)
+ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf)
 {
     unsigned char *bptr = NULL;
-    ptl_msg *msg = NULL;
+    ptl_message *msg = NULL;
     ptl_payload *pld = NULL;
 
     msg = calloc(1, sizeof(*msg));
@@ -206,23 +214,10 @@ void kyk_print_msg_buf(const ptl_msg_buf *msg_buf)
     printf("\n");
 }
 
-void format_msg_buf(char *str, const ptl_msg_buf *msg_buf)
+void kyk_print_ptl_message(ptl_message* ptl_msg)
 {
-    const unsigned char *buf = msg_buf -> data;
-    
-    str += format_hex_to_str(str, "Magic", buf, sizeof(uint32_t));
-    buf += 4;
-    
-    str += format_hex_to_str(str, "Command", buf, 12);
-    buf += 12;
-    
-    str += format_hex_to_str(str, "Payload Length", buf, sizeof(uint32_t));
-    buf += 4;
-    
-    str += format_hex_to_str(str, "Checksum", buf, sizeof(uint32_t));
-    buf += 4;
-    
-    format_hex_to_str(str, "Payload", buf, msg_buf -> len);
+    printf("ptl_msg -> magic: %0x", ptl_msg -> magic);
+    printf("ptl_msg -> cmd: %s\n", ptl_msg -> cmd);
 }
 
 static size_t format_hex_to_str(char *str, const char *note, const unsigned char *buf, size_t len)
@@ -262,16 +257,6 @@ static size_t print_hex(const unsigned char *buf, size_t len, int width, char *n
     return len;
 }
 
-void encode_varstr(var_str *vstr, const char *src)
-{
-    size_t len;
-
-    len = strlen(src);
-    // encode_varint(&(vstr -> len), len);
-    vstr -> len = len;
-    vstr -> body = malloc(len * sizeof(char));
-    memcpy(vstr -> body, src, len * sizeof(char));
-}
 
 void kyk_pack_version(ptl_ver *ver, ptl_payload *pld)
 {
@@ -342,23 +327,6 @@ unsigned int pack_ptl_net_addr(unsigned char *bufp, ptl_net_addr *na)
     return m_size;
 }
 
-unsigned int kyk_pack_varstr(unsigned char *bufp, var_str vstr)
-{
-    unsigned int size = 0;
-    unsigned int m_size = 0;
-
-    if(vstr.len > 0)
-    {
-	size = vstr.len * sizeof(char);
-	memcpy(bufp, vstr.body, size);
-	m_size += size;
-
-    }
-
-    return m_size;
-
-}
-
 int kyk_new_ping_entity(struct ptl_ping_entity** new_et)
 {
     struct ptl_ping_entity* et = NULL;
@@ -379,7 +347,18 @@ error:
     return -1;
 }
 
-int kyk_new_seri_ptl_message(ptl_msg_buf** new_msg_buf, const ptl_msg* msg)
+int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, size_t buf_len)
+{
+    ptl_message* msg = NULL;
+    
+    check(buf, "Failed to kyk_deseri_new_ptl_message: buf is NULL");
+
+error:
+
+    return -1;
+}
+
+int kyk_new_seri_ptl_message(ptl_msg_buf** new_msg_buf, const ptl_message* msg)
 {
     ptl_msg_buf* msg_buf = NULL;
     size_t msg_size = 0;
@@ -437,7 +416,7 @@ void kyk_free_ptl_msg_buf(ptl_msg_buf* msg_buf)
     }
 }
 
-int kyk_get_ptl_msg_size(const ptl_msg* msg, size_t* msg_size)
+int kyk_get_ptl_msg_size(const ptl_message* msg, size_t* msg_size)
 {
     size_t len = 0;
     
@@ -475,7 +454,7 @@ error:
 ** ?	     | payload	        uchar[]	        The actual data
 ** ---------------------------------------------------------------------------------------------------------------------------------------------------------
 */
-int kyk_seri_ptl_message(ptl_msg_buf* msg_buf, const ptl_msg* msg)
+int kyk_seri_ptl_message(ptl_msg_buf* msg_buf, const ptl_message* msg)
 {
     unsigned char *buf = NULL;
     size_t len = 0;
@@ -546,4 +525,38 @@ int kyk_build_new_ping_payload(ptl_payload** new_pld, const struct ptl_ping_enti
 error:
     if(pld) kyk_free_ptl_payload(pld);
     return -1;
+}
+
+
+int kyk_encode_varstr(var_str *vstr,
+		      const char *src_str,
+		      size_t len)
+{
+    vstr -> len = len;
+    vstr -> body = malloc(len * sizeof(*src_str));
+    check(vstr -> body, "Failed to kyk_encode_varstr");
+    memcpy(vstr -> body, src_str, len * sizeof(char));
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+unsigned int kyk_pack_varstr(unsigned char *bufp, var_str vstr)
+{
+    unsigned int size = 0;
+    unsigned int m_size = 0;
+
+    if(vstr.len > 0)
+    {
+	size = vstr.len * sizeof(char);
+	memcpy(bufp, vstr.body, size);
+	m_size += size;
+
+    }
+
+    return m_size;
+
 }

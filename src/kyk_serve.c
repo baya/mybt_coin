@@ -12,7 +12,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include "btc_message.h"
+#include "kyk_message.h"
 #include "kyk_sha.h"
 #include "beej_pack.h"
 #include "kyk_socket.h"
@@ -32,7 +32,7 @@ int kyk_start_serve(const char* port)
     int yes=1;
     char s[INET6_ADDRSTRLEN];
     int rv;
-    ptl_msg_buf msg_buf;
+    ptl_message* msg = NULL;
     char resp_msg[KYK_SERVE_MSG_SIZE];
 
     memset(&hints, 0, sizeof hints);
@@ -108,17 +108,16 @@ int kyk_start_serve(const char* port)
 	if (!fork()) {     /* this is the child process */
 	    close(sockfd); /* child doesn't need the listener */
 	    
-	    if (kyk_recv_btc_msg(new_fd, &msg_buf, KYK_PL_BUF_SIZE, NULL) == -1){
+	    if (kyk_recv_ptl_msg(new_fd, &msg, KYK_PL_BUF_SIZE, NULL) == -1){
 		perror("recv");
 	    } else {
-		format_msg_buf(resp_msg, &msg_buf);
+		kyk_print_ptl_message(msg);
 		printf("%s\n", resp_msg);
 		if(send(new_fd, resp_msg, strlen(resp_msg), 0) == -1){
 		    perror("send");
 		}
 	    }
-	    /* if (send(new_fd, "Hello, world!", 13, 0) == -1) */
-	    /* 	perror("send"); */
+	    
 	    close(new_fd);
 	    exit(0);
 	}

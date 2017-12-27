@@ -4,21 +4,26 @@
 
 
 #include "kyk_utils.h"
-#include "btc_message.h"
+#include "kyk_message.h"
 #include "mu_unit.h"
 #include "dbg.h"
 
 char* test_kyk_build_btc_new_message_for_ping()
 {
     ptl_payload* pld = NULL;
-    ptl_msg* msg = NULL;
+    ptl_message* msg = NULL;
+    struct ptl_ping_entity* et = NULL;
+    ptl_msg_buf* msg_buf = NULL;
     int res = -1;
 
-    res = kyk_new_ptl_payload(&pld);
+    kyk_new_ping_entity(&et);
+    res = kyk_build_new_ping_payload(&pld, et);
     check(res == 0, "Failed to test_kyk_build_btc_new_message_for_ping: kyk_new_ptl_payload failed");
 
     res = kyk_build_btc_new_message(&msg, KYK_MSG_TYPE_PING, NT_MAGIC_MAIN, pld);
     mu_assert(res == 0, "Failed to test_kyk_build_btc_new_message_for_ping");
+
+    kyk_new_seri_ptl_message(&msg_buf, msg);
     
     return NULL;
 

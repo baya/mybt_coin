@@ -16,6 +16,8 @@
 
 #define KYK_MSG_TYPE_LEN 12
 #define KYK_MSG_CK_LEN 4
+#define KYK_PLD_LEN_POS 16
+#define KYK_MSG_HEADER_LEN 24
 #define KYK_MSG_TYPE_PING "ping"
 
 typedef struct var_length_string{
@@ -39,7 +41,7 @@ typedef struct protocol_btc_message{
     uint32_t pld_len;
     uint8_t checksum[KYK_MSG_CK_LEN];
     ptl_payload *pld;
-} ptl_msg;
+} ptl_message;
 
 typedef struct protocol_btc_net_addr{
     uint64_t servs;
@@ -71,19 +73,18 @@ struct ptl_ping_entity{
     uint64_t nonce;
 };
 
-int kyk_build_btc_new_message(ptl_msg** new_msg,
+int kyk_build_btc_new_message(ptl_message** new_msg,
 			      const char* cmd,
 			      uint32_t nt_magic,
 			      const ptl_payload* pld);
 
-int kyk_build_btc_message(ptl_msg* msg, const char* cmd, uint32_t nt_magic, const ptl_payload* pld);
+int kyk_build_btc_message(ptl_message* msg, const char* cmd, uint32_t nt_magic, const ptl_payload* pld);
 int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld);
 int kyk_new_ptl_payload(ptl_payload** new_pld);
 
-ptl_msg * unpack_resp_buf(ptl_resp_buf *resp_buf);
+ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf);
 void kyk_print_msg_buf(const ptl_msg_buf *msg_buf);
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf);
-void encode_varstr(var_str *, const char *);
 void kyk_pack_version(ptl_ver *, ptl_payload *);
 unsigned int pack_ptl_net_addr(unsigned char *, ptl_net_addr *);
 unsigned int kyk_pack_varstr(unsigned char *, var_str);
@@ -93,19 +94,30 @@ int kyk_new_msg_buf(ptl_msg_buf** new_msg_buf, uint32_t len);
 
 
 /* free methods */
-void kyk_free_ptl_msg(ptl_msg* msg);
+void kyk_free_ptl_msg(ptl_message* msg);
 void kyk_free_ptl_payload(ptl_payload* pld);
 void kyk_free_ptl_msg_buf(ptl_msg_buf* msg_buf);
 
 /* serialize message to buffer */
-int kyk_seri_ptl_message(ptl_msg_buf *msg_buf, const ptl_msg *msg);
-int kyk_new_seri_ptl_message(ptl_msg_buf** new_msg_buf, const ptl_msg* msg);
+int kyk_seri_ptl_message(ptl_msg_buf *msg_buf, const ptl_message* msg);
+int kyk_new_seri_ptl_message(ptl_msg_buf** new_msg_buf, const ptl_message* msg);
+
+/* deserialize buffer to message */
+int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, size_t buf_len);
 
 /* build payload */
 int kyk_build_new_ping_payload(ptl_payload** new_pld, const struct ptl_ping_entity* et);
 int kyk_new_ping_entity(struct ptl_ping_entity** new_et);
 
 /* util function */
-int kyk_get_ptl_msg_size(const ptl_msg* msg, size_t* msg_size);
+int kyk_get_ptl_msg_size(const ptl_message* msg, size_t* msg_size);
+int kyk_encode_varstr(var_str *vstr,
+		      const char *src_str,
+		      size_t len);
+
+
+/* print functions */
+void kyk_print_ptl_message(ptl_message* ptl_msg);
+
 
 #endif

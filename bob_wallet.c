@@ -16,8 +16,7 @@
 #include "kyk_validate.h"
 #include "kyk_utxo.h"
 #include "kyk_address.h"
-#include "kyk_message.h"
-#include "kyk_socket.h"
+#include "kyk_protocol.h"
 #include "dbg.h"
 
 #define WALLET_NAME ".kyk_miner"
@@ -86,6 +85,8 @@ int main(int argc, char *argv[])
 	} else if(match_cmd(argv[1], CMD_SHOW_ADDR_LIST)){
 	    wallet = kyk_open_wallet(wdir);
 	    cmd_show_addr_list(wallet);
+	} else if(match_cmd(argv[1], CMD_PING)){
+	    cmd_ping("localhost", "8333");
 	} else {
 	    printf("invalid options\n");
 	}
@@ -244,19 +245,16 @@ error:
     return -1;
 }
 
-int cmd_ping(const char *node, const char* service)
+int cmd_ping(const char* node, const char* service)
 {
-    ptl_payload* pld = NULL;
-    ptl_msg* msg = NULL;
-    ptl_msg_buf* msg_buf = NULL;
+    ptl_resp_buf* resp_buf = NULL;
     int res = -1;
 
-    res = kyk_new_ptl_payload(&pld);
+    res = kyk_ptl_ping(node, service, &resp_buf);
     check(res == 0, "Failed to cmd_ping");
 
-    res = kyk_build_btc_new_message(&msg, KYK_MSG_TYPE_PING, NT_MAGIC_MAIN, pld);
-    check(res == 0, "Failed to cmd_ping");
-        
+    kyk_print_hex("ping response", resp_buf -> data, resp_buf -> len);
+
     return 0;
 
 error:
