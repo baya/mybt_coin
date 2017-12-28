@@ -3,6 +3,11 @@
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #include "beej_pack.h"
 #include "kyk_sha.h"
@@ -11,6 +16,7 @@
 #include "dbg.h"
 
 static int kyk_copy_ptl_payload(ptl_payload* dest_pld, const ptl_payload* src_pld);
+static ptl_net_addr* build_net_addr(const char* ip_src, int port);
 
 
 int kyk_build_new_ptl_message(ptl_message** new_msg,
@@ -202,53 +208,6 @@ void kyk_print_ptl_message(ptl_message* ptl_msg)
     kyk_print_hex("Hex", msg_buf -> data, msg_buf -> len);
 }
 
-void kyk_pack_version(ptl_ver *ver, ptl_payload *pld)
-{
-    unsigned int size;
-    unsigned char *bufp = pld -> data;
-    
-    size = beej_pack(bufp, "<l", ver -> vers);
-    pld -> len += size;
-    bufp += size;
-
-    size = beej_pack(bufp, "<Q", ver -> servs);
-    pld -> len += size;
-    bufp += size;
-
-    size = beej_pack(bufp, "<q", ver -> ttamp);
-    pld -> len += size;
-    bufp += size;
-
-    size = pack_ptl_net_addr(bufp, ver -> addr_recv_ptr);
-    pld -> len += size;
-    bufp += size;
-
-    size = pack_ptl_net_addr(bufp, ver -> addr_from_ptr);
-    pld -> len += size;
-    bufp += size;
-
-    size = beej_pack(bufp, "<Q", ver -> nonce);
-    pld -> len += size;
-    bufp += size;
-
-    // size = pack_varint(bufp, ver -> ua_len);
-    size = beej_pack(bufp, "<H", 0);
-    pld -> len += size;
-    bufp += size;
-
-    size = kyk_pack_varstr(bufp, ver -> uagent);
-    pld -> len += size;
-    bufp += size;
-
-    size = beej_pack(bufp, "<l", ver -> start_height);
-    pld -> len += size;
-    bufp += size;
-
-    /* size = beej_pack(bufp, "C", ver -> relay); */
-    /* pld -> len += size; */
-    /* bufp += size; */
-
-}
 
 unsigned int pack_ptl_net_addr(unsigned char *bufp, ptl_net_addr *na)
 {
@@ -533,14 +492,136 @@ error:
 }
 
 
-int kyk_encode_varstr(var_str *vstr,
-		      const char *src_str,
-		      size_t len)
+int kyk_build_new_version_entity(ptl_ver_entity** new_ver,
+				 int32_t vers,
+				 const char* ip_src,
+				 int port,
+				 uint64_t nonce,
+				 const char* uagent,
+				 uint8_t ua_len,
+				 int32_t start_height)
 {
-    vstr -> len = len;
-    vstr -> body = malloc(len * sizeof(*src_str));
-    check(vstr -> body, "Failed to kyk_encode_varstr");
-    memcpy(vstr -> body, src_str, len * sizeof(char));
+    ptl_ver_entity* ver = NULL;
+
+    check(new_ver, "Failed to kyk_build_new_version_entity: new_ver is NULL");
+    check(uagent, "Failed to kyk_build_new_version_entity: uagent is NULL");
+
+    ver = calloc(1, sizeof(*ver));
+    check(ver, "Failed to kyk_build_new_version_entity: calloc failed");
+    
+    /* example vers 70014 */
+    ver -> vers = vers;
+    
+    ver -> servs = NODE_NETWORK;
+    ver -> ttamp = (int64_t)time(NULL);
+    ver -> addr_recv_ptr = build_net_addr(ip_src, port);
+    ver -> addr_from_ptr = build_net_addr(ip_src, port);
+    
+    /* example nonce: 0 */
+    ver -> nonce = nonce;
+    ver -> ua_len = ua_len;
+    ver -> uagent = calloc(ua_len + 1, sizeof(*ver -> uagent));
+    
+    /* uagent example: /Satoshi:0.9.2.1/ */
+    check(ver -> uagent, "Failed to kyk_build_new_version_entity: calloc failed");
+    
+    /* example start height: 329167 */
+    ver -> start_height = start_height;
+    ver -> relay = 0;
+
+    *new_ver = ver;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+/* example ip_src: "::ffff:127.0.0.1" */
+/* bitcoin node default port is 8333 */
+static ptl_net_addr* build_net_addr(const char* ip_src, int port)
+{
+    ptl_net_addr *na_ptr;
+    int s, domain;
+    
+    domain = AF_INET6;
+
+    na_ptr = malloc(sizeof *na_ptr);
+    na_ptr -> servs = 1;
+    na_ptr -> port = port;
+    s = inet_pton(domain, ip_src, na_ptr -> ipv);
+    if (s <= 0) {
+	if (s == 0)
+	    fprintf(stderr, "Not in presentation format");
+	else
+	    perror("inet_pton");
+	exit(EXIT_FAILURE);
+    }
+
+    return na_ptr;
+}
+
+
+int kyk_new_seri_ver_entity_to_pld(ptl_ver_entity* ver, ptl_payload** new_pld)
+{
+    ptl_payload* pld = NULL;
+    int res = -1;
+    
+    check(ver, "Failed to kyk_new_seri_ver_entity_to_pld: ver is NULL");
+    check(new_pld, "Failed to kyk_new_seri_ver_entity_to_pld: new_pld is NULL");
+
+    res = kyk_new_ptl_payload(&pld);
+    check(res == 0, "Failed to kyk_new_seri_ver_entity_to_pld: kyk_new_ptl_payload failed");
+
+    res = kyk_get_ptl_ver_entity_size(ver, (size_t*)&pld -> len);
+    check(res == 0, "Failed to kyk_new_seri_ver_entity_to_pld");
+
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_new_seri_ver_entity_to_pld: calloc failed");
+
+    kyk_seri_version_entity_to_pld(ver, pld);
+
+    *new_pld = pld;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_get_ptl_ver_entity_size(ptl_ver_entity* ver, size_t* entity_size)
+{
+    size_t total_len = 0;
+    size_t len = 0;
+    int res = -1;
+    
+    check(ver, "Failed to kyk_get_ptl_ver_entity_size: ver is NULL");
+
+    total_len += sizeof(ver -> vers);
+    total_len += sizeof(ver -> servs);
+    total_len += sizeof(ver -> ttamp);
+    
+    res = kyk_get_ptl_net_addr_size(ver -> addr_recv_ptr, &len);
+    check(res == 0, "Failed to kyk_get_ptl_ver_entity_size");
+    total_len += len;
+
+    res = kyk_get_ptl_net_addr_size(ver -> addr_from_ptr, &len);
+    check(res == 0, "Failed to kyk_get_ptl_ver_entity_size");
+    total_len += len;
+    
+    total_len += sizeof(ver -> nonce);
+    total_len += sizeof(ver -> ua_len);
+    if(ver -> ua_len > 0){
+	total_len += ver -> ua_len;
+    } else {
+	total_len += 1;
+    }
+    total_len += sizeof(ver -> start_height);
+    total_len += sizeof(ver -> relay);
+
+    *entity_size = total_len;
 
     return 0;
     
@@ -549,19 +630,71 @@ error:
     return -1;
 }
 
-unsigned int kyk_pack_varstr(unsigned char *bufp, var_str vstr)
+int kyk_get_ptl_net_addr_size(ptl_net_addr* net_addr, size_t* net_addr_size)
 {
-    unsigned int size = 0;
-    unsigned int m_size = 0;
+    size_t total_len = 0;
+    
+    check(net_addr, "Failed to kyk_get_ptl_net_addr_size: net_addr is NULL");
 
-    if(vstr.len > 0)
-    {
-	size = vstr.len * sizeof(char);
-	memcpy(bufp, vstr.body, size);
-	m_size += size;
+    total_len += sizeof(net_addr -> servs);
+    total_len += sizeof(net_addr -> ipv);
+    total_len += sizeof(net_addr -> port);
 
+    *net_addr_size = total_len;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_seri_version_entity_to_pld(ptl_ver_entity* ver, ptl_payload* pld)
+{
+    unsigned int len;
+    unsigned char *bufp = pld -> data;
+
+    check(pld, "Failed to kyk_seri_version_entity_to_pld: pld is NULL");
+    check(pld -> data, "Failed to kyk_seri_version_entity_to_pld: pld -> data is NULL");
+    
+    len = beej_pack(bufp, "<l", ver -> vers);
+    bufp += len;
+
+    len = beej_pack(bufp, "<Q", ver -> servs);
+    bufp += len;
+
+    len = beej_pack(bufp, "<q", ver -> ttamp);
+    bufp += len;
+
+    len = pack_ptl_net_addr(bufp, ver -> addr_recv_ptr);
+    bufp += len;
+
+    len = pack_ptl_net_addr(bufp, ver -> addr_from_ptr);
+    bufp += len;
+
+    len = beej_pack(bufp, "<Q", ver -> nonce);
+    bufp += len;
+
+    len = beej_pack(bufp, "<H", 0);
+    bufp += len;
+
+    if(ver -> ua_len > 0){
+	memcpy(bufp, ver -> uagent, ver -> ua_len);
+	bufp += ver -> ua_len;
+    } else {
+	*bufp = 0x00;
+	bufp += 1;
     }
 
-    return m_size;
+    len = beej_pack(bufp, "<l", ver -> start_height);
+    bufp += len;
+
+    *bufp = ver -> relay;
+    
+    return 0;
+
+error:
+
+    return -1;
 
 }

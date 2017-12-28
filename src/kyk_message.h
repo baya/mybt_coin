@@ -1,6 +1,7 @@
 #ifndef BTC_MESSAGE_H__
 #define BTC_MESSAGE_H__
 
+#include "kyk_defs.h"
 
 #define NT_MAGIC_MAIN  (uint32_t)0xD9B4BEF9
 #define NT_MAGIC_TEST  (uint32_t)0xDAB5BFFA
@@ -19,13 +20,9 @@
 #define KYK_PLD_LEN_POS 16
 #define KYK_MSG_HEADER_LEN 24
 
-#define KYK_MSG_TYPE_PING "ping"
-#define KYK_MSG_TYPE_PONG "pong"
-
-typedef struct var_length_string{
-    int len;
-    char *body;
-} var_str;
+#define KYK_MSG_TYPE_PING    "ping"
+#define KYK_MSG_TYPE_PONG    "pong"
+#define KYK_MSG_TYPE_VERSION "version"
 
 typedef struct protocol_message_payload {
     uint32_t len;
@@ -51,7 +48,7 @@ typedef struct protocol_btc_net_addr{
     uint16_t port;
 } ptl_net_addr;
 
-typedef struct protocol_btc_version{
+typedef struct protocol_btc_version_entity{
     int32_t vers;
     uint64_t servs;
     int64_t ttamp;
@@ -59,11 +56,10 @@ typedef struct protocol_btc_version{
     ptl_net_addr *addr_from_ptr;
     uint64_t nonce;
     uint8_t ua_len;
-    var_str uagent;
+    char*   uagent;
     int32_t start_height;
     uint8_t relay;
-    uint32_t len;
-} ptl_ver;
+} ptl_ver_entity;
 
 typedef struct protocol_resp_buf{
     size_t len;
@@ -86,9 +82,7 @@ int kyk_new_ptl_payload(ptl_payload** new_pld);
 
 ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf);
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf);
-void kyk_pack_version(ptl_ver *, ptl_payload *);
 unsigned int pack_ptl_net_addr(unsigned char *, ptl_net_addr *);
-unsigned int kyk_pack_varstr(unsigned char *, var_str);
 
 /* calloc methods */
 int kyk_new_msg_buf(ptl_msg_buf** new_msg_buf, uint32_t len);
@@ -109,13 +103,23 @@ int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, si
 /* build payload */
 int kyk_build_new_ping_payload(ptl_payload** new_pld, const struct ptl_ping_entity* et);
 int kyk_new_ping_entity(struct ptl_ping_entity** new_et);
+int kyk_new_seri_ver_entity_to_pld(ptl_ver_entity* ver, ptl_payload** new_pld);
+int kyk_seri_version_entity_to_pld(ptl_ver_entity* ver, ptl_payload* pld);
+
+int kyk_build_new_version_entity(ptl_ver_entity** new_ver,
+				 int32_t vers,
+				 const char* ip_src,
+				 int port,
+				 uint64_t nonce,
+				 const char* uagent,
+				 uint8_t ua_len,
+				 int32_t start_height);
+
 
 /* util function */
 int kyk_get_ptl_msg_size(const ptl_message* msg, size_t* msg_size);
-int kyk_encode_varstr(var_str *vstr,
-		      const char *src_str,
-		      size_t len);
-
+int kyk_get_ptl_net_addr_size(ptl_net_addr* net_addr, size_t* net_addr_size);
+int kyk_get_ptl_ver_entity_size(ptl_ver_entity* ver, size_t* entity_size);
 
 /* print functions */
 void kyk_print_ptl_message(ptl_message* ptl_msg);

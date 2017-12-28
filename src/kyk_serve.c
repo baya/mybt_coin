@@ -15,6 +15,7 @@
 #include "kyk_message.h"
 #include "kyk_sha.h"
 #include "beej_pack.h"
+#include "kyk_protocol.h"
 #include "kyk_socket.h"
 
 static int match_cmd(char *src, char *cmd);
@@ -34,7 +35,6 @@ int kyk_start_serve(const char* host, const char* port)
     int rv;
     ptl_message* msg = NULL;
     int res = -1;
-    char resp_msg[KYK_SERVE_MSG_SIZE];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -117,6 +117,8 @@ int kyk_start_serve(const char* host, const char* port)
 		if(match_cmd(msg -> cmd, KYK_MSG_TYPE_PING)){
 		    res = kyk_ptl_pong_rep(new_fd, msg);
 		    if(res == -1) perror("send");
+		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_VERSION)){
+		    printf("got version\n");
 		} else {
 		}
 	    }

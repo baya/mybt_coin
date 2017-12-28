@@ -9,7 +9,8 @@
 #include "beej_pack.h"
 #include "dbg.h"
 
-/* The pong message is sent in response to a ping message. In modern protocol versions, a pong response is generated using a nonce included in the ping. */
+/* The ping message is sent primarily to confirm that the TCP/IP connection is still valid. */
+/* An error in transmission is presumed to be a closed connection and the address is removed as a current peer. */
 int kyk_ptl_ping_req(const char* node,
 		     const char* service,
 		     ptl_message** rep_msg)
@@ -39,7 +40,7 @@ error:
 
 }
 
-
+/* The pong message is sent in response to a ping message. In modern protocol versions, a pong response is generated using a nonce included in the ping. */
 int kyk_ptl_pong_rep(int sockfd, ptl_message* req_msg)
 {
     ptl_payload* pld = NULL;
@@ -72,4 +73,13 @@ int kyk_ptl_pong_rep(int sockfd, ptl_message* req_msg)
 error:
 
     return -1;
+}
+
+/* When a node creates an outgoing connection, it will immediately advertise its version. */
+/* The remote node will respond with its version. No further communication is possible until both peers have exchanged their version. */
+int kyk_ptl_version_req(const char* node,
+			const char* service,
+			ptl_message* req_msg,
+			ptl_message** rep_msg)
+{
 }

@@ -116,6 +116,8 @@ int kyk_send_ptl_msg_buf(const char *node,
     check(res == 0, "Failed to kyk_send_btc_msg_buf: kyk_recv_ptl_msg failed");
 
     *new_rep_msg = rep_msg;
+
+    close(sfd);
     
     return 0;
 

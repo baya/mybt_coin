@@ -19,8 +19,8 @@
 #include "kyk_protocol.h"
 #include "dbg.h"
 
-#define WALLET_NAME ".kyk_miner"
-
+#define WALLET_NAME ".bob_wallet"
+#define WALLET_AGENT "/BobWallet:0.0.0.1/"
 
 #define CMD_INIT           "init"
 #define CMD_DELETE         "delete"
@@ -30,18 +30,20 @@
 #define CMD_SHOW_ADDR_LIST "showAddrList"
 #define CMD_MK_TX          "makeTx"
 #define CMD_PING           "ping"
+#define CMD_REQ_VERSION    "req-version"
 
-int match_cmd(char *src, char *cmd);
-int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
-int cmd_query_balance(const struct kyk_wallet* wallet);
-int cmd_show_addr_list(const struct kyk_wallet* wallet);
-int cmd_make_tx(struct kyk_wallet* wallet,
+static int match_cmd(char *src, char *cmd);
+static int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
+static int cmd_query_balance(const struct kyk_wallet* wallet);
+static int cmd_show_addr_list(const struct kyk_wallet* wallet);
+static int cmd_make_tx(struct kyk_wallet* wallet,
 		long double btc_num,
 		const char* btc_addr);
 
-int cmd_ping(const char *node, const char* service);
+static int cmd_ping(const char *node, const char* service);
+static int cmd_req_version(const char* node, const char* service);
 
-void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
+static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
 
 
 int main(int argc, char *argv[])
@@ -66,6 +68,8 @@ int main(int argc, char *argv[])
 	printf("add address:       %s %s [address label]\n", argv[0], CMD_ADD_ADDRESS);
 	printf("query block:       %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
 	printf("delete wallet:     %s %s\n", argv[0], CMD_DELETE);
+	printf("ping request:      %s %s\n", argv[0], CMD_PING);
+	printf("version request:   %s %s\n", argv[0], CMD_REQ_VERSION);
     }
     
     if(argc == 2){
@@ -87,6 +91,8 @@ int main(int argc, char *argv[])
 	    cmd_show_addr_list(wallet);
 	} else if(match_cmd(argv[1], CMD_PING)){
 	    cmd_ping("localhost", "8333");
+	} else if(match_cmd(argv[1], CMD_REQ_VERSION)){
+	    cmd_req_version("localhost", "8333");
 	} else {
 	    printf("invalid options\n");
 	}
@@ -254,6 +260,40 @@ int cmd_ping(const char* node, const char* service)
     check(res == 0, "Failed to cmd_ping");
 
     kyk_print_ptl_message(rep_msg);
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int cmd_req_version(const char* node, const char* service)
+{
+    ptl_message* req_msg = NULL;
+    ptl_message* rep_msg = NULL;
+    ptl_ver_entity* ver = NULL;
+    ptl_payload* pld = NULL;
+    int32_t vers = 70014;
+    const char* ip_src = LOCAL_IP_SRC;
+    int port = 0;
+    uint64_t nonce = 0;
+    const char* agent = WALLET_AGENT;
+    int32_t start_height = 0;
+    int res = -1;
+
+    port = strtol(service, NULL, 10);
+
+    res = kyk_build_new_version_entity(&ver, vers, ip_src, port, nonce, agent, strlen(agent), start_height);
+    check(res == 0, "Failed to cmd_req_version: kyk_build_new_version_entity failed");
+
+    res = kyk_new_seri_ver_entity_to_pld(ver, &pld);
+    check(res == 0, "Failed to cmd_req_version");
+
+    res = kyk_build_new_ptl_message(&req_msg, KYK_MSG_TYPE_VERSION, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to cmd_req_version: kyk_build_new_ptl_message failed");
+
+    res = kyk_send_ptl_msg(node, service, req_msg, &rep_msg);
 
     return 0;
 

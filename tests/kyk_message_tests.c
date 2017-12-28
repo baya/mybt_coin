@@ -72,6 +72,32 @@ char* test_kyk_build_new_ping_payload()
     return NULL;
 }
 
+char* test_kyk_new_seri_ver_entity_to_pld()
+{
+    ptl_payload* pld = NULL;
+    ptl_ver_entity* ver = NULL;
+    int32_t vers = 70014;
+    const char* ip_src = LOCAL_IP_SRC;
+    int port = 8333;
+    uint64_t nonce = 0;
+    const char* agent = "/BobWallet:0.0.0.1/";
+    int32_t start_height = 0;
+    int res = -1;
+
+    res = kyk_build_new_version_entity(&ver, vers, ip_src, port, nonce, agent, strlen(agent), start_height);
+    check(res == 0, "Failed to test_kyk_new_seri_ver_entity_to_pld: kyk_build_new_version_entity failed");
+
+    res = kyk_new_seri_ver_entity_to_pld(ver, &pld);
+    mu_assert(res == 0, "Failed to test_kyk_new_seri_ver_entity_to_pld");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_new_seri_ver_entity_to_pld";
+
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -79,6 +105,7 @@ char *all_tests()
     mu_run_test(test_kyk_build_btc_new_message_for_ping);
     mu_run_test(test_kyk_build_btc_new_message_for_pong);
     mu_run_test(test_kyk_build_new_ping_payload);
+    mu_run_test(test_kyk_new_seri_ver_entity_to_pld);
     
     return NULL;
 }
