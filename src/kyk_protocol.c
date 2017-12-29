@@ -77,9 +77,44 @@ error:
 
 /* When a node creates an outgoing connection, it will immediately advertise its version. */
 /* The remote node will respond with its version. No further communication is possible until both peers have exchanged their version. */
-int kyk_ptl_version_req(const char* node,
-			const char* service,
-			ptl_message* req_msg,
-			ptl_message** rep_msg)
+int kyk_ptl_version_rep(int sockfd, ptl_message* req_msg)
 {
+    ptl_ver_entity* ver_entity = NULL;
+    ptl_message* rep_msg = NULL;
+    ptl_ver_entity* ver = NULL;
+    ptl_payload* pld = NULL;
+    int32_t vers = 70014;
+    const char* ip_src = LOCAL_IP_SRC;
+    int port = 0;
+    uint64_t nonce = 0;
+    const char* agent = "/KykMiner:0.0.0.1/";
+    int32_t start_height = 0;
+    int res = -1;    
+    
+    port = 8333;
+    
+    check(req_msg, "Failed to kyk_ptl_version_rep: req_msg is NULL");
+
+    res = kyk_deseri_new_version_entity(&ver_entity, req_msg -> pld -> data, NULL);
+    check(res == 0, "Failed to kyk_ptl_version_rep");
+
+    kyk_print_ptl_version_entity(ver_entity);
+
+    res = kyk_build_new_version_entity(&ver, vers, ip_src, port, nonce, agent, strlen(agent), start_height);
+    check(res == 0, "Failed to kyk_ptl_version_rep: kyk_build_new_version_entity failed");
+
+    res = kyk_new_seri_ver_entity_to_pld(ver, &pld);
+    check(res == 0, "Failed to kyk_ptl_version_rep: kyk_new_seri_ver_entity_to_pld failed");
+
+    res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_VERSION, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to kyk_ptl_version_rep: kyk_build_new_ptl_message failed");
+
+    res = kyk_reply_ptl_msg(sockfd, rep_msg);
+    check(res == 0, "kyk_ptl_version_rep: kyk_reply_ptl_msg failed");
+    
+    return 0;
+
+error:
+
+    return -1;
 }

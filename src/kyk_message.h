@@ -123,9 +123,15 @@ int kyk_get_ptl_ver_entity_size(ptl_ver_entity* ver, size_t* entity_size);
 
 /* print functions */
 void kyk_print_ptl_message(ptl_message* ptl_msg);
+void kyk_print_ptl_version_entity(ptl_ver_entity* ver);
 
 /* build payload methods */
 int kyk_build_new_pong_payload(ptl_payload** new_pld, uint64_t nonce);
+
+int kyk_deseri_new_version_entity(ptl_ver_entity** new_ver_entity, uint8_t* buf, size_t* checknum);
+int kyk_deseri_new_net_addr(ptl_net_addr** new_net_addr, uint8_t* buf, size_t* checknum);
+
+
 
 
 #endif

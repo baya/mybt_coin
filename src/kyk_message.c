@@ -521,9 +521,9 @@ int kyk_build_new_version_entity(ptl_ver_entity** new_ver,
     ver -> nonce = nonce;
     ver -> ua_len = ua_len;
     ver -> uagent = calloc(ua_len + 1, sizeof(*ver -> uagent));
-    
     /* uagent example: /Satoshi:0.9.2.1/ */
     check(ver -> uagent, "Failed to kyk_build_new_version_entity: calloc failed");
+    memcpy(ver -> uagent, uagent, ver -> ua_len + 1);
     
     /* example start height: 329167 */
     ver -> start_height = start_height;
@@ -675,8 +675,8 @@ int kyk_seri_version_entity_to_pld(ptl_ver_entity* ver, ptl_payload* pld)
     len = beej_pack(bufp, "<Q", ver -> nonce);
     bufp += len;
 
-    len = beej_pack(bufp, "<H", 0);
-    bufp += len;
+    *bufp = ver -> ua_len;
+    bufp += sizeof(ver -> ua_len);
 
     if(ver -> ua_len > 0){
 	memcpy(bufp, ver -> uagent, ver -> ua_len);
@@ -697,4 +697,140 @@ error:
 
     return -1;
 
+}
+
+int kyk_deseri_new_version_entity(ptl_ver_entity** new_ver_entity, uint8_t* buf, size_t* checknum)
+{
+    ptl_ver_entity* ver_entity = NULL;
+    size_t len = 0;
+    size_t total_len = 0;
+    uint8_t* bufp = NULL;
+
+    check(buf, "Failed to kyk_deseri_new_version_entity: buf is NULL");
+
+    bufp = buf;
+
+    ver_entity = calloc(1, sizeof(*ver_entity));
+    check(ver_entity, "Failed to kyk_deseri_new_version_entity: ver_entity calloc failed");
+
+    beej_unpack(bufp, "<l", &ver_entity -> vers);
+    len = sizeof(ver_entity -> vers);
+    total_len += len;
+    bufp += len;
+    
+    beej_unpack(bufp, "<Q", &ver_entity -> servs);
+    len = sizeof(ver_entity -> servs);
+    total_len += len;
+    bufp += len;
+
+    beej_unpack(bufp, "<q", &ver_entity -> ttamp);
+    len = sizeof(ver_entity -> ttamp);
+    total_len += len;
+    bufp += len;
+
+    kyk_deseri_new_net_addr(&ver_entity -> addr_recv_ptr, bufp, &len);
+    total_len += len;
+    bufp += len;
+
+    kyk_deseri_new_net_addr(&ver_entity -> addr_from_ptr, bufp, &len);
+    total_len += len;
+    bufp += len;
+
+    beej_unpack(bufp, "<Q", &ver_entity -> nonce);
+    len = sizeof(ver_entity -> nonce);
+    total_len += len;
+    bufp += len;
+
+    ver_entity -> ua_len = *bufp;
+    len = sizeof(ver_entity -> ua_len);
+    total_len += len;
+    bufp += len;
+
+    ver_entity -> uagent = calloc(ver_entity -> ua_len + 1, sizeof(*ver_entity -> uagent));
+    check(ver_entity -> uagent, "Failed to kyk_deseri_new_version_entity");
+    memcpy(ver_entity -> uagent, bufp, ver_entity -> ua_len);
+    total_len += ver_entity -> ua_len;
+    bufp += ver_entity -> ua_len;
+
+    beej_unpack(bufp, "<l", &ver_entity -> start_height);
+    len = sizeof(ver_entity -> start_height);
+    total_len += len;
+    bufp += len;
+
+    ver_entity -> relay = *bufp;
+    len = sizeof(ver_entity -> relay);
+    total_len += len;
+    bufp += len;
+
+
+    if(checknum){
+	*checknum = total_len;
+    }
+
+    *new_ver_entity = ver_entity;
+    
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_deseri_new_net_addr(ptl_net_addr** new_net_addr, uint8_t* buf, size_t* checknum)
+{
+    ptl_net_addr* net_addr = NULL;
+    size_t len = 0;
+    size_t total_len = 0;
+    uint8_t* bufp = NULL;
+
+    check(buf, "Failed to kyk_deseri_new_net_addr: buf is NULL");
+
+    net_addr = calloc(1, sizeof(*net_addr));
+    check(net_addr, "Failed to kyk_deseri_new_net_addr: net_addr calloc failed");
+
+    bufp = buf;
+
+    beej_unpack(bufp, "<Q", &net_addr -> servs);
+    len = sizeof(net_addr -> servs);
+    total_len += len;
+    bufp += len;
+
+    memcpy(net_addr -> ipv, bufp, sizeof(net_addr -> ipv));
+    len = sizeof(net_addr -> ipv);
+    total_len += len;
+    bufp += len;
+
+    beej_unpack(bufp, ">H", &net_addr -> port);
+    len = sizeof(net_addr -> port);
+    total_len += len;
+    bufp += len;
+
+    if(checknum){
+	*checknum = total_len;
+    }
+
+    *new_net_addr = net_addr;
+    
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+void kyk_print_ptl_version_entity(ptl_ver_entity* ver)
+{
+    printf("vers: %d\n", ver -> vers);
+    printf("ttamp: %lld\n", ver -> ttamp);
+    printf("recv addr servs: %llu\n", ver -> addr_recv_ptr -> servs);
+    kyk_print_hex("recv addr ip", ver -> addr_recv_ptr -> ipv, 16);
+    printf("recv addr port: %u\n", ver -> addr_recv_ptr -> port);
+    printf("from addr servs: %llu\n", ver -> addr_from_ptr -> servs);
+    kyk_print_hex("from addr ip", ver -> addr_from_ptr -> ipv, 16);
+    printf("from addr port: %u\n", ver -> addr_from_ptr -> port);
+    printf("nonce: %llu\n", ver -> nonce);
+    printf("ua_len: %d\n", ver -> ua_len);
+    printf("uagent: %s\n", ver -> uagent);
+    printf("start_height: %u\n", ver -> start_height);
 }

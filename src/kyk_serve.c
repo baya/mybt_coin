@@ -118,7 +118,8 @@ int kyk_start_serve(const char* host, const char* port)
 		    res = kyk_ptl_pong_rep(new_fd, msg);
 		    if(res == -1) perror("send");
 		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_VERSION)){
-		    printf("got version\n");
+		    res = kyk_ptl_version_rep(new_fd, msg);
+		    if(res == -1) perror("send");
 		} else {
 		}
 	    }

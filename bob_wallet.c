@@ -273,6 +273,7 @@ int cmd_req_version(const char* node, const char* service)
     ptl_message* req_msg = NULL;
     ptl_message* rep_msg = NULL;
     ptl_ver_entity* ver = NULL;
+    ptl_ver_entity* rep_ver = NULL;
     ptl_payload* pld = NULL;
     int32_t vers = 70014;
     const char* ip_src = LOCAL_IP_SRC;
@@ -294,6 +295,11 @@ int cmd_req_version(const char* node, const char* service)
     check(res == 0, "Failed to cmd_req_version: kyk_build_new_ptl_message failed");
 
     res = kyk_send_ptl_msg(node, service, req_msg, &rep_msg);
+
+    res = kyk_deseri_new_version_entity(&rep_ver, rep_msg -> pld -> data, NULL);
+
+    printf("got message from server:\n");
+    kyk_print_ptl_version_entity(rep_ver);
 
     return 0;
 

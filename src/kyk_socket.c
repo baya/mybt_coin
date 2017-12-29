@@ -9,6 +9,7 @@
 #include "beej_pack.h"
 #include "kyk_message.h"
 #include "kyk_socket.h"
+#include "kyk_utils.h"
 #include "dbg.h"
 
 
@@ -208,7 +209,7 @@ int kyk_reply_ptl_msg(int sockfd, ptl_message* rep_msg)
     check(res == 0, "Failed to kyk_reply_ptl_msg: kyk_new_seri_ptl_message failed");
     
     sent_len = send(sockfd, msg_buf -> data, msg_buf -> len, 0);
-    check(sent_len > 0, "Failed to kyk_ptl_pong_rep");
+    check(sent_len > 0, "Failed to kyk_reply_ptl_msg: send failed");
 
     return 0;
 

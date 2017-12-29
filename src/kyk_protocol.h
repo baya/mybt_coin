@@ -11,4 +11,6 @@ int kyk_ptl_ping_req(const char* node,
 
 int kyk_ptl_pong_rep(int sockfd, ptl_message* ptl_msg);
 
+int kyk_ptl_version_rep(int sockfd, ptl_message* req_msg);
+
 #endif
