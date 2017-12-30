@@ -98,6 +98,40 @@ error:
 
 }
 
+char* test_kyk_build_new_getheaders_entity()
+{
+    ptl_gethder_entity* et = NULL;
+    uint32_t version = 1;
+    int res = -1;
+
+    res = kyk_build_new_getheaders_entity(&et, version);
+    mu_assert(res == 0, "Failed test_kyk_build_new_getheaders_entity");
+    mu_assert(et, "Failed to kyk_build_new_getheaders_entity");
+
+    return NULL;
+}
+
+char* test_kyk_new_seri_gethder_entity_to_pld()
+{
+    ptl_gethder_entity* et = NULL;
+    ptl_payload* pld = NULL;
+    uint32_t version = 1;
+    int res = -1;
+
+    res = kyk_build_new_getheaders_entity(&et, version);
+    check(res == 0, "Failed to test_kyk_new_seri_gethder_entity_to_pld: kyk_build_new_getheaders_entity failed");
+
+    res = kyk_new_seri_gethder_entity_to_pld(et, &pld);
+    mu_assert(res == 0, "Failed to test_kyk_new_seri_gethder_entity_to_pld");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_new_seri_gethder_entity_to_pld";
+
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -106,6 +140,8 @@ char *all_tests()
     mu_run_test(test_kyk_build_btc_new_message_for_pong);
     mu_run_test(test_kyk_build_new_ping_payload);
     mu_run_test(test_kyk_new_seri_ver_entity_to_pld);
+    mu_run_test(test_kyk_build_new_getheaders_entity);
+    mu_run_test(test_kyk_new_seri_gethder_entity_to_pld);
     
     return NULL;
 }

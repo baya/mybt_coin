@@ -2,6 +2,7 @@
 #define BTC_MESSAGE_H__
 
 #include "kyk_defs.h"
+#include "kyk_block.h"
 
 #define NT_MAGIC_MAIN  (uint32_t)0xD9B4BEF9
 #define NT_MAGIC_TEST  (uint32_t)0xDAB5BFFA
@@ -20,9 +21,11 @@
 #define KYK_PLD_LEN_POS 16
 #define KYK_MSG_HEADER_LEN 24
 
-#define KYK_MSG_TYPE_PING    "ping"
-#define KYK_MSG_TYPE_PONG    "pong"
-#define KYK_MSG_TYPE_VERSION "version"
+#define KYK_MSG_TYPE_PING       "ping"
+#define KYK_MSG_TYPE_PONG       "pong"
+#define KYK_MSG_TYPE_VERSION    "version"
+#define KYK_MSG_TYPE_GETHEADERS "getheaders"
+#define KYK_MSG_TYPE_HEADERS    "headers"
 
 typedef struct protocol_message_payload {
     uint32_t len;
@@ -61,6 +64,18 @@ typedef struct protocol_btc_version_entity{
     uint8_t relay;
 } ptl_ver_entity;
 
+typedef struct protocol_getheaders_entity{
+    uint32_t version;           /* the protocol version */
+    varint_t hash_count;        /* number of block locator hash entries */
+    uint256* locator_hashes;    /* block locator object; newest back to genesis block (dense to start, but then sparse) */
+    uint256 hash_stop;          /* hash of the last desired block header; set to zero to get as many blocks as possible (2000) */
+} ptl_gethder_entity;
+
+typedef struct protocol_headers_entity{
+    varint_t count;
+    struct kyk_blk_header* hd_list;
+} ptl_hder_entity;
+
 typedef struct protocol_resp_buf{
     size_t len;
     char cmdname[12];
@@ -92,6 +107,7 @@ int kyk_new_msg_buf(ptl_msg_buf** new_msg_buf, uint32_t len);
 void kyk_free_ptl_msg(ptl_message* msg);
 void kyk_free_ptl_payload(ptl_payload* pld);
 void kyk_free_ptl_msg_buf(ptl_msg_buf* msg_buf);
+void kyk_free_ptl_gethder_entity(ptl_gethder_entity* entity);
 
 /* serialize message to buffer */
 int kyk_seri_ptl_message(ptl_msg_buf *msg_buf, const ptl_message* msg);
@@ -127,11 +143,12 @@ void kyk_print_ptl_version_entity(ptl_ver_entity* ver);
 
 /* build payload methods */
 int kyk_build_new_pong_payload(ptl_payload** new_pld, uint64_t nonce);
-
+int kyk_build_new_getheaders_entity(ptl_gethder_entity** new_entity,
+				    uint32_t version);
 int kyk_deseri_new_version_entity(ptl_ver_entity** new_ver_entity, uint8_t* buf, size_t* checknum);
 int kyk_deseri_new_net_addr(ptl_net_addr** new_net_addr, uint8_t* buf, size_t* checknum);
 
-
+int kyk_new_seri_gethder_entity_to_pld(ptl_gethder_entity* et, ptl_payload** new_pld);
 
 
 #endif

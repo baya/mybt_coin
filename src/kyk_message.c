@@ -834,3 +834,119 @@ void kyk_print_ptl_version_entity(ptl_ver_entity* ver)
     printf("uagent: %s\n", ver -> uagent);
     printf("start_height: %u\n", ver -> start_height);
 }
+
+void kyk_free_ptl_gethder_entity(ptl_gethder_entity* entity)
+{
+    if(entity){
+	if(entity -> locator_hashes){
+	    free(entity -> locator_hashes);
+	    entity -> locator_hashes = NULL;
+	}
+
+	free(entity);
+    }
+}
+
+int kyk_build_new_getheaders_entity(ptl_gethder_entity** new_entity,
+				    uint32_t version)
+				    
+{
+    ptl_gethder_entity* entity = NULL;
+    int i = 0;
+    uint256* uhash = NULL;
+
+    check(new_entity, "Failed to kyk_build_new_getheaders_entity: new_entity is NULL");
+
+    entity = calloc(1, sizeof(*entity));
+    check(entity, "Failed to kyk_build_new_getheaders_entity: entity calloc failed");
+
+    entity -> version = version;
+    entity -> hash_count = 1;
+    entity -> locator_hashes = calloc(entity -> hash_count, sizeof(*entity -> locator_hashes));
+    check(entity -> locator_hashes, "Failed to kyk_build_new_getheaders_entity: calloc failed");
+
+    for(i = 0; i < entity -> hash_count; i++){
+	uhash = entity -> locator_hashes + i;
+	memset(uhash -> data, 0, sizeof(uhash -> data));
+    }
+
+    uhash = &entity -> hash_stop;
+    memset(uhash -> data, 0, sizeof(uhash -> data));
+
+    uhash = NULL;
+
+    *new_entity = entity;
+
+    return 0;
+
+error:
+    if(entity) kyk_free_ptl_gethder_entity(entity);
+    return -1;
+}
+
+int kyk_new_seri_gethder_entity_to_pld(ptl_gethder_entity* et, ptl_payload** new_pld)
+{
+    ptl_payload* pld = NULL;
+    size_t pld_len = 0;
+    size_t len = 0;
+    varint_t i = 0;
+    uint256* h = NULL;
+    uint8_t* bufp = NULL;
+    
+    check(et, "Failed to kyk_new_seri_gethder_entity_to_pld: et is NULL");
+
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_new_seri_gethder_entity_to_pld: pld calloc failed");
+
+    kyk_get_gethder_entity_size(et, &pld_len);
+    check(pld_len > 0, "Failed to kyk_new_seri_gethder_entity_to_pld");
+
+    pld -> len = pld_len;
+    pld -> data = calloc(pld_len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_new_seri_gethder_entity_to_pld");
+
+    bufp = pld -> data;
+
+    len = beej_pack(bufp, "<L", et -> version);
+    bufp += len;
+
+    len = kyk_pack_varint(bufp, et -> hash_count);
+    bufp += len;
+
+    for(i = 0; i < et -> hash_count; i++){
+	h = et -> locator_hashes + i;
+	memcpy(bufp, h -> data, sizeof(h -> data));
+	bufp += sizeof(h -> data);
+    }
+
+    h = &et -> hash_stop;
+    memcpy(bufp, h -> data, sizeof(h -> data));
+    bufp += sizeof(h -> data);
+
+    *new_pld = pld;
+
+    return 0;
+    
+error:
+    
+    return -1;
+}
+
+int kyk_get_gethder_entity_size(ptl_gethder_entity* et, size_t* elen)
+{
+    size_t total_len = 0;
+    check(et, "Failed to kyk_get_gethder_entity_size: et is NULL");
+
+    total_len += sizeof(et -> version);
+    total_len += get_varint_size(et -> hash_count);
+    total_len += et -> hash_count * sizeof(uint256);
+    total_len += sizeof(uint256);
+
+    *elen = total_len;
+
+    return 0;
+
+error:
+
+    return -1;
+}

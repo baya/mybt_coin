@@ -31,6 +31,7 @@
 #define CMD_MK_TX          "makeTx"
 #define CMD_PING           "ping"
 #define CMD_REQ_VERSION    "req-version"
+#define CMD_REQ_GETHEADERS "req-getheaders"
 
 static int match_cmd(char *src, char *cmd);
 static int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
@@ -93,6 +94,8 @@ int main(int argc, char *argv[])
 	    cmd_ping("localhost", "8333");
 	} else if(match_cmd(argv[1], CMD_REQ_VERSION)){
 	    cmd_req_version("localhost", "8333");
+	} else if(match_cmd(argv[1], CMD_REQ_GETHEADERS)){
+	    cmd_req_getheaders("localhost", "8333");
 	} else {
 	    printf("invalid options\n");
 	}
@@ -306,6 +309,10 @@ int cmd_req_version(const char* node, const char* service)
 error:
 
     return -1;
+}
+
+int cmd_req_getheaders(const char* node, const char* service)
+{
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
