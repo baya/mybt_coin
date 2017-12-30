@@ -177,7 +177,7 @@ int kyk_recv_ptl_msg(int sockfd, ptl_message** new_ptl_msg, size_t buf_len, size
 
     check(recv_len >= pld_len + KYK_MSG_HEADER_LEN, "Failed to kyk_recv_ptl_msg: invalid received bytes len");
 
-    res = kyk_deseri_new_ptl_message(&ptl_msg, buf, recv_len);
+    res = kyk_deseri_new_ptl_message(&ptl_msg, buf, 0);
     check(res == 0, "Failed to kyk_recv_ptl_msg: kyk_deseri_new_ptl_message failed");
 
     *new_ptl_msg = ptl_msg;
@@ -202,15 +202,20 @@ int kyk_reply_ptl_msg(int sockfd, ptl_message* rep_msg)
     ptl_msg_buf* msg_buf = NULL;
     ssize_t sent_len = 0;
     ssize_t len = 0;
+    uint8_t* bufp = NULL;
     int res = -1;
 
     check(rep_msg, "Failed to kyk_reply_ptl_msg: rep_msg is NULL");
 
     res = kyk_new_seri_ptl_message(&msg_buf, rep_msg);
     check(res == 0, "Failed to kyk_reply_ptl_msg: kyk_new_seri_ptl_message failed");
+
+    bufp = msg_buf -> data;
+    
     while(1){
-	len = send(sockfd, msg_buf -> data, KYK_PL_BUF_SIZE, 0);
+	len = send(sockfd, bufp, KYK_PL_BUF_SIZE, 0);
 	check(len >= 0, "Failed to kyk_reply_ptl_msg: send failed");
+	bufp += len;
 	sent_len += len;
 	if(sent_len >= msg_buf -> len){
 	    break;

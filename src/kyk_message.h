@@ -136,6 +136,7 @@ int kyk_build_new_version_entity(ptl_ver_entity** new_ver,
 int kyk_get_ptl_msg_size(const ptl_message* msg, size_t* msg_size);
 int kyk_get_ptl_net_addr_size(ptl_net_addr* net_addr, size_t* net_addr_size);
 int kyk_get_ptl_ver_entity_size(ptl_ver_entity* ver, size_t* entity_size);
+int kyk_get_gethder_entity_size(ptl_gethder_entity* et, size_t* elen);
 
 /* print functions */
 void kyk_print_ptl_message(ptl_message* ptl_msg);

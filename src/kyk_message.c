@@ -250,7 +250,7 @@ error:
     return -1;
 }
 
-int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, size_t buf_len)
+int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, size_t checklen)
 {
     const uint8_t* bufp = NULL;
     ptl_payload* pld = NULL;
@@ -287,8 +287,8 @@ int kyk_deseri_new_ptl_message(ptl_message** new_ptl_msg, const uint8_t* buf, si
     memcpy(pld -> data, bufp, pld -> len);
     bufp += pld -> len;
 
-    if(buf_len > 0){
-	check(buf_len == (size_t)(bufp - buf), "Failed to kyk_deseri_new_ptl_message");
+    if(checklen > 0){
+	check(checklen == (size_t)(bufp - buf), "Failed to kyk_deseri_new_ptl_message");
     }
 
     *new_ptl_msg = msg;
@@ -852,7 +852,7 @@ int kyk_build_new_getheaders_entity(ptl_gethder_entity** new_entity,
 				    
 {
     ptl_gethder_entity* entity = NULL;
-    int i = 0;
+    varint_t i = 0;
     uint256* uhash = NULL;
 
     check(new_entity, "Failed to kyk_build_new_getheaders_entity: new_entity is NULL");
