@@ -201,15 +201,22 @@ int kyk_reply_ptl_msg(int sockfd, ptl_message* rep_msg)
 {
     ptl_msg_buf* msg_buf = NULL;
     ssize_t sent_len = 0;
+    ssize_t len = 0;
     int res = -1;
 
     check(rep_msg, "Failed to kyk_reply_ptl_msg: rep_msg is NULL");
 
     res = kyk_new_seri_ptl_message(&msg_buf, rep_msg);
     check(res == 0, "Failed to kyk_reply_ptl_msg: kyk_new_seri_ptl_message failed");
+    while(1){
+	len = send(sockfd, msg_buf -> data, KYK_PL_BUF_SIZE, 0);
+	check(len >= 0, "Failed to kyk_reply_ptl_msg: send failed");
+	sent_len += len;
+	if(sent_len >= msg_buf -> len){
+	    break;
+	}
+    }
     
-    sent_len = send(sockfd, msg_buf -> data, msg_buf -> len, 0);
-    check(sent_len > 0, "Failed to kyk_reply_ptl_msg: send failed");
 
     return 0;
 

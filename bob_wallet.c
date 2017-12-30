@@ -43,6 +43,7 @@ static int cmd_make_tx(struct kyk_wallet* wallet,
 
 static int cmd_ping(const char *node, const char* service);
 static int cmd_req_version(const char* node, const char* service);
+static int cmd_req_getheaders(const char* node, const char* service);
 
 static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
 
@@ -313,6 +314,33 @@ error:
 
 int cmd_req_getheaders(const char* node, const char* service)
 {
+    ptl_gethder_entity* et = NULL;
+    uint32_t version = 1;
+    ptl_payload* pld = NULL;
+    ptl_message* req_msg = NULL;
+    ptl_message* rep_msg = NULL;
+    int res = -1;
+
+    res = kyk_build_new_getheaders_entity(&et, version);
+    check(res == 0, "kyk_build_new_getheaders_entity failed");
+
+    res = kyk_new_seri_gethder_entity_to_pld(et, &pld);
+    check(res == 0, "kyk_new_seri_gethder_entity_to_pld failed");
+
+    res = kyk_build_new_ptl_message(&req_msg, KYK_MSG_TYPE_GETHEADERS, NT_MAGIC_MAIN, pld);
+    check(res == 0, "kyk_build_new_ptl_message failed");
+
+    res = kyk_send_ptl_msg(node, service, req_msg, &rep_msg);
+    check(res == 0, "kyk_send_ptl_msg failed");
+
+    kyk_print_ptl_message(rep_msg);
+    
+    return 0;
+    
+error:
+
+    return -1;
+
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
