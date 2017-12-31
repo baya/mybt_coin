@@ -12,15 +12,25 @@
 #include <signal.h>
 #include <time.h>
 
+#include "kyk_file.h"
+#include "kyk_block.h"
+#include "kyk_validate.h"
+#include "kyk_utxo.h"
+#include "kyk_address.h"
+#include "kyk_wallet.h"
 #include "kyk_message.h"
 #include "kyk_sha.h"
 #include "beej_pack.h"
 #include "kyk_protocol.h"
 #include "kyk_socket.h"
+#include "dbg.h"
+
+#define WALLET_NAME ".kyk_miner"
 
 static int match_cmd(char *src, char *cmd);
 static void sigchld_handler(int s);
 static void *get_in_addr(struct sockaddr *sa);
+static int load_wallet(struct kyk_wallet** wallet);
 
 
 int kyk_start_serve(const char* host, const char* port)
@@ -34,6 +44,8 @@ int kyk_start_serve(const char* host, const char* port)
     char s[INET6_ADDRSTRLEN];
     int rv;
     ptl_message* msg = NULL;
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    struct kyk_wallet* wallet = NULL;
     int res = -1;
 
     memset(&hints, 0, sizeof hints);
@@ -120,6 +132,12 @@ int kyk_start_serve(const char* host, const char* port)
 		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_VERSION)){
 		    res = kyk_ptl_version_rep(new_fd, msg);
 		    if(res == -1) perror("send");
+		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_GETHEADERS)){
+		    res = load_wallet(&wallet);
+		    res = kyk_load_blk_header_chain(&hd_chain, wallet);
+		    check(res == 0, "Failed to kyk_load_blk_header_chain");
+		    res = kyk_ptl_headers_rep(new_fd, msg, hd_chain);
+		    check(res == 0, "Failed to kyk_ptl_headers_rep");
 		} else {
 		}
 	    }
@@ -131,6 +149,10 @@ int kyk_start_serve(const char* host, const char* port)
     }
 
     return 0;
+
+error:
+
+    return -1;
 
 }
 
@@ -164,6 +186,26 @@ int match_cmd(char *src, char *cmd)
     res = strcasecmp(src, cmd) == 0 ? 1 : 0;
 
     return res;
+}
+
+static int load_wallet(struct kyk_wallet** wallet)
+{
+    char *hmdir = NULL;
+    char *wdir = NULL;
+
+    hmdir = kyk_gethomedir();
+    check(hmdir != NULL, "failed to find the current dir");
+    wdir = kyk_pth_concat(hmdir, WALLET_NAME);
+    check(wdir != NULL, "failed to find the wallet dir");
+
+    *wallet = kyk_open_wallet(wdir);
+
+    return 0;
+
+error:
+    
+    return -1;
+
 }
 
 

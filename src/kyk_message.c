@@ -163,37 +163,6 @@ void kyk_free_ptl_payload(ptl_payload* pld)
     }
 }
 
-ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf)
-{
-    unsigned char *bptr = NULL;
-    ptl_message *msg = NULL;
-    ptl_payload *pld = NULL;
-
-    msg = calloc(1, sizeof(*msg));
-    pld = calloc(1, sizeof(*pld));
-
-    bptr = resp_buf -> data;
-    beej_unpack(bptr, "<L", &(msg -> magic));
-    bptr += 4;
-
-    memcpy(msg -> cmd, bptr, 12);
-    bptr += 12;
-
-    beej_unpack(bptr, "<L", &msg -> pld_len);
-    bptr += 4;
-
-    memcpy(msg -> checksum, bptr, 4);
-    bptr += 4;
-
-    pld -> len = msg -> pld_len;
-    memcpy(pld -> data, bptr, pld -> len);
-
-    msg -> pld = pld;
-    
-
-    return msg;
-}
-
 void kyk_print_ptl_message(ptl_message* ptl_msg)
 {
     ptl_msg_buf* msg_buf = NULL;
@@ -950,3 +919,76 @@ error:
 
     return -1;
 }
+
+
+int kyk_seri_hd_chain_to_new_pld(ptl_payload** new_pld, const struct kyk_blk_hd_chain* hd_chain)
+{
+    ptl_payload* pld = NULL;
+    struct kyk_blk_header* hd = NULL;
+    uint8_t* bufp = NULL;
+    size_t pld_len = 0;
+    size_t len = 0;
+    size_t i = 0;
+    
+    check(hd_chain, "Failed to kyk_seri_hd_chain_to_new_pld: hd_chain is NULL");
+    check(hd_chain -> len > 0, "Failed to kyk_seri_hd_chain_to_new_pld: hd_chain is NULL");
+
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_seri_hd_chain_to_new_pld: calloc failed");
+
+    kyk_get_headers_pld_len(hd_chain, &pld_len);
+
+    pld -> len = pld_len;
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_seri_hd_chain_to_new_pld: calloc failed");
+
+    bufp = pld -> data;
+
+    len = kyk_pack_varint(bufp, (varint_t)hd_chain -> len);
+    bufp += len;
+
+    for(i = 0; i < hd_chain -> len; i++){
+	hd = hd_chain -> hd_list + i;
+	len = kyk_seri_blk_hd(bufp, hd);
+	bufp += len;
+	*bufp = 0;
+	bufp += 1;
+    }
+
+    *new_pld = pld;
+    
+    return 0;
+
+error:
+
+    return -1;
+    
+}
+
+int kyk_get_headers_pld_len(const struct kyk_blk_hd_chain* hd_chain, size_t* pld_len)
+{
+    size_t len = 0;
+    size_t total_len = 0;
+    varint_t count = 0;
+
+    check(hd_chain, "Failed to kyk_get_headers_pld_len: hd_chain is NULL");
+
+    count = hd_chain -> len;
+
+    len = get_varint_size(count);
+    total_len += len;
+
+    /* 1 byte for txn_count    var_int	Number of transaction entries, this value is always 0 */
+    len = KYK_BLK_HD_LEN + 1;
+
+    total_len += hd_chain -> len * len;
+
+    *pld_len = total_len;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+

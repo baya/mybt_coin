@@ -71,17 +71,6 @@ typedef struct protocol_getheaders_entity{
     uint256 hash_stop;          /* hash of the last desired block header; set to zero to get as many blocks as possible (2000) */
 } ptl_gethder_entity;
 
-typedef struct protocol_headers_entity{
-    varint_t count;
-    struct kyk_blk_header* hd_list;
-} ptl_hder_entity;
-
-typedef struct protocol_resp_buf{
-    size_t len;
-    char cmdname[12];
-    uint8_t* data;
-} ptl_resp_buf;
-
 struct ptl_ping_entity{
     uint64_t nonce;
 };
@@ -95,7 +84,7 @@ int kyk_build_ptl_message(ptl_message* msg, const char* cmd, uint32_t nt_magic, 
 int kyk_copy_new_ptl_payload(ptl_payload** new_pld, const ptl_payload* src_pld);
 int kyk_new_ptl_payload(ptl_payload** new_pld);
 
-ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf);
+/* ptl_message * unpack_resp_buf(ptl_resp_buf *resp_buf); */
 void format_msg_buf(char *str, const ptl_msg_buf *msg_buf);
 unsigned int pack_ptl_net_addr(unsigned char *, ptl_net_addr *);
 
@@ -151,5 +140,7 @@ int kyk_deseri_new_net_addr(ptl_net_addr** new_net_addr, uint8_t* buf, size_t* c
 
 int kyk_new_seri_gethder_entity_to_pld(ptl_gethder_entity* et, ptl_payload** new_pld);
 
+int kyk_seri_hd_chain_to_new_pld(ptl_payload** new_pld, const struct kyk_blk_hd_chain* hd_chain);
+int kyk_get_headers_pld_len(const struct kyk_blk_hd_chain* hd_chain, size_t* pld_len);
 
 #endif

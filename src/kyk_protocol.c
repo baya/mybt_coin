@@ -110,10 +110,38 @@ int kyk_ptl_version_rep(int sockfd, ptl_message* req_msg)
     check(res == 0, "Failed to kyk_ptl_version_rep: kyk_build_new_ptl_message failed");
 
     res = kyk_reply_ptl_msg(sockfd, rep_msg);
-    check(res == 0, "kyk_ptl_version_rep: kyk_reply_ptl_msg failed");
+    check(res == 0, "Failed to kyk_ptl_version_rep: kyk_reply_ptl_msg failed");
     
     return 0;
 
+error:
+
+    return -1;
+}
+
+
+int kyk_ptl_headers_rep(int sockfd,
+			const ptl_message* req_msg,
+			const struct kyk_blk_hd_chain* hd_chain)
+{
+    ptl_payload* pld = NULL;
+    ptl_message* rep_msg = NULL;
+    int res = -1;
+    
+    check(req_msg, "Failed to kyk_ptl_headers_rep: req_msg is NULL");
+    check(hd_chain, "Failed to kyk_ptl_headers_rep: hd_chain is NULL");
+
+    res = kyk_seri_hd_chain_to_new_pld(&pld, hd_chain);
+    check(res == 0, "Failed to kyk_ptl_headers_rep: kyk_seri_hd_chain_to_new_pld failed");
+
+    res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_HEADERS, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to kyk_ptl_headers_rep: kyk_build_new_ptl_message failed");
+
+    res = kyk_reply_ptl_msg(sockfd, rep_msg);
+    check(res == 0, "Failed to kyk_ptl_headers_rep: kyk_reply_ptl_msg failed");
+
+    return 0;
+    
 error:
 
     return -1;

@@ -333,6 +333,7 @@ int cmd_req_getheaders(const char* node, const char* service)
     res = kyk_send_ptl_msg(node, service, req_msg, &rep_msg);
     check(res == 0, "kyk_send_ptl_msg failed");
 
+    printf("received response from node:\n");
     kyk_print_ptl_message(rep_msg);
     
     return 0;
