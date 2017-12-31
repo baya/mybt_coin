@@ -325,6 +325,7 @@ int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet*
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
     ptl_message* rep_msg = NULL;
+    size_t hd_inx = 0;
     int res = -1;
 
     res = kyk_load_blk_header_chain(&wallet_hd_chain, wallet);
@@ -351,8 +352,19 @@ int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet*
     printf("===============> RECEIVED BLOCK HEADERS FROM NODE:\n");
     kyk_print_blk_hd_chain(rep_hd_chain);
 
-    res = kyk_save_blk_header_chain(wallet, hd_chain);
-    check(res == 0, "Failed to cmd_req_getheaders: kyk_save_blk_header_chain failed");
+    res = kyk_compare_hd_chain(wallet_hd_chain, rep_hd_chain, &hd_inx);
+    check(res == 0, "Failed to cmd_req_getheaders: kyk_compare_hd_chain failed");
+
+    if(hd_inx < rep_hd_chain -> len){
+	hd_chain = calloc(1, sizeof(*hd_chain));
+	check(hd_chain, "Failed to cmd_req_getheaders: calloc failed");
+
+	hd_chain -> len = rep_hd_chain -> len - hd_inx;
+	hd_chain -> hd_list = rep_hd_chain -> hd_list + hd_inx;
+
+	res = kyk_save_blk_header_chain(wallet, hd_chain, "ab");
+	check(res == 0, "Failed to cmd_req_getheaders: kyk_save_blk_header_chain failed");
+    }
     
     return 0;
     

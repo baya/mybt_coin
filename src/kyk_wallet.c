@@ -398,7 +398,7 @@ int save_setup_data_to_wallet(struct kyk_wallet *wallet)
     res = kyk_append_blk_hd_chain(hd_chain, blk -> hd, 1);
     check(res == 0, "Failed to save_setup_data_to_wallet: kyk_append_blk_hd_chain failed");
 
-    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    res = kyk_save_blk_header_chain(wallet, hd_chain, NULL);
     check(res == 0, "Failed to save_setup_data_to_wallet: kyk_save_blk_header_chain failed");
 
     kyk_free_block(blk);
@@ -680,7 +680,8 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
 
 /* save block header chain */
 int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
-			    const struct kyk_blk_hd_chain* hd_chain)
+			      const struct kyk_blk_hd_chain* hd_chain,
+			      const char* mode)
 {
     FILE* fp = NULL;
     const struct kyk_blk_hd_chain* hdc = NULL;
@@ -693,7 +694,12 @@ int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
     check(wallet -> blk_hd_chain_path, "Failed to kyk_save_blk_head_chain: wallet -> blk_hd_chain_path is NULL");
     check(hd_chain, "Failed to kyk_save_blk_head_chain: hd_chain is NULL");
 
-    fp = fopen(wallet -> blk_hd_chain_path, "wb");
+    if(mode == NULL){
+	fp = fopen(wallet -> blk_hd_chain_path, "wb");
+    } else {
+	fp = fopen(wallet -> blk_hd_chain_path, mode);
+    }
+    
     check(fp, "Failed to kyk_save_blk_head_chain: fopen failed");
 
     hdc = hd_chain;
@@ -715,6 +721,7 @@ error:
     if(fp) fclose(fp);
     return -1;
 }
+
 
 int kyk_load_blk_header_chain(struct kyk_blk_hd_chain** hd_chain,
 			      const struct kyk_wallet* wallet)
@@ -1444,7 +1451,7 @@ int kyk_wallet_make_coinbase_block(struct kyk_block** new_blk, const struct kyk_
     res = kyk_wallet_save_utxo_chain(wallet, utxo_chain);
     check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_wallet_save_utxo_chain failed");
 
-    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    res = kyk_save_blk_header_chain(wallet, hd_chain, NULL);
     check(res == 0, "Failed to kyk_wallet_make_coinbase_block: kyk_save_blk_header_chain failed");
 
     res = kyk_wallet_save_block(wallet, blk);
@@ -1539,7 +1546,7 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
     res = kyk_wallet_save_utxo_chain(wallet, updated_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_save_utxo_chain failed");
 
-    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    res = kyk_save_blk_header_chain(wallet, hd_chain, NULL);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_save_blk_header_chain failed");
 
     res = kyk_wallet_save_block(wallet, blk);

@@ -820,3 +820,53 @@ void kyk_print_blk_header(const struct kyk_blk_header* hd)
 }
 
 
+int kyk_compare_hd_chain(const struct kyk_blk_hd_chain* lhd_chain,
+			 const struct kyk_blk_hd_chain* rhd_chain,
+			 size_t* inx)
+{
+    struct kyk_blk_header* lhd = NULL;
+    struct kyk_blk_header* rhd = NULL;
+    size_t i = 0;
+    
+    check(lhd_chain, "Failed to kyk_compare_hd_chain: lhd_chain is NULL");
+    check(rhd_chain, "Failed to kyk_compare_hd_chain: rhd_chain is NULL");
+    check(rhd_chain -> hd_list, "Failed to kyk_compare_hd_chain: rhd_chain -> hd_list is NULL");
+
+    if(lhd_chain -> len == 0){
+	*inx = 0;
+	return 0;
+    }
+
+    /* go the tail of lhd_chain */
+    lhd = lhd_chain -> hd_list + lhd_chain -> len - 1;
+
+    for(i = 0; i < rhd_chain -> len; i++){
+	rhd = rhd_chain -> hd_list + i;
+	if(kyk_eq_blk_hd(lhd, rhd)){
+	    *inx = i + 1;
+	    break;
+	}
+    }
+
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header* rhd)
+{
+    int pre_blk_hash_eq = 0;
+    int mrk_root_hash_eq = 0;
+    
+    pre_blk_hash_eq = kyk_digest_eq(lhd -> pre_blk_hash, rhd -> pre_blk_hash, sizeof(lhd -> pre_blk_hash));
+    mrk_root_hash_eq = kyk_digest_eq(lhd -> mrk_root_hash, rhd -> mrk_root_hash, sizeof(lhd -> mrk_root_hash));
+
+    if(pre_blk_hash_eq && mrk_root_hash_eq){
+	return 1;
+    } else {
+	return 0;
+    }
+}

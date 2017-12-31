@@ -133,7 +133,7 @@ char* test_kyk_save_blk_header_chain()
     res = make_testing_blk_hd_chain(&hd_chain);
     check(res == 0, "Failed to test_kyk_save_blk_head_chain: make_testing_blk_hd_chain failed");
 
-    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    res = kyk_save_blk_header_chain(wallet, hd_chain, NULL);
     mu_assert(res == 0, "Failed to test_kyk_save_blk_head_chain");
 
     
