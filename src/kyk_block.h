@@ -108,4 +108,9 @@ int kyk_make_tx_block(struct kyk_block** new_blk,
 
 int kyk_set_blkself_info(struct kyk_block* blk);
 
+
+void kyk_print_blk_hd_chain(const struct kyk_blk_hd_chain* hd_chain);
+
+void kyk_print_blk_header(const struct kyk_blk_header* hd);
+
 #endif

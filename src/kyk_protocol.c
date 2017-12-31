@@ -7,6 +7,7 @@
 #include "kyk_protocol.h"
 #include "kyk_utils.h"
 #include "beej_pack.h"
+#include "kyk_block.h"
 #include "dbg.h"
 
 /* The ping message is sent primarily to confirm that the TCP/IP connection is still valid. */
@@ -127,7 +128,7 @@ int kyk_ptl_headers_rep(int sockfd,
     ptl_payload* pld = NULL;
     ptl_message* rep_msg = NULL;
     int res = -1;
-    
+
     check(req_msg, "Failed to kyk_ptl_headers_rep: req_msg is NULL");
     check(hd_chain, "Failed to kyk_ptl_headers_rep: hd_chain is NULL");
 

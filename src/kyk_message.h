@@ -143,4 +143,6 @@ int kyk_new_seri_gethder_entity_to_pld(ptl_gethder_entity* et, ptl_payload** new
 int kyk_seri_hd_chain_to_new_pld(ptl_payload** new_pld, const struct kyk_blk_hd_chain* hd_chain);
 int kyk_get_headers_pld_len(const struct kyk_blk_hd_chain* hd_chain, size_t* pld_len);
 
+int kyk_deseri_headers_msg_to_new_hd_chain(ptl_message* msg, struct kyk_blk_hd_chain** new_hd_chain);
+
 #endif

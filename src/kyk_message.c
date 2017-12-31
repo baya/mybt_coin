@@ -992,3 +992,45 @@ error:
     return -1;
 }
 
+int kyk_deseri_headers_msg_to_new_hd_chain(ptl_message* msg, struct kyk_blk_hd_chain** new_hd_chain)
+{
+    struct kyk_blk_hd_chain* hd_chain = NULL;
+    struct kyk_blk_header* hd = NULL;
+    uint8_t* bufp = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    varint_t count = 0;
+    int res = -1;
+    
+    check(msg, "Failed to kyk_deseri_headers_msg_to_new_hd_chain: msg is NULL");
+
+    hd_chain = calloc(1, sizeof(*hd_chain));
+    check(hd_chain, "Failed to kyk_deseri_headers_msg_to_new_hd_chain: calloc failed");
+
+    bufp = msg -> pld -> data;
+
+    len = kyk_unpack_varint(bufp, &count);
+    bufp += len;
+
+    hd_chain -> len = count;
+
+    hd_chain -> hd_list = calloc(hd_chain -> len, sizeof(*hd_chain -> hd_list));
+    check(hd_chain -> hd_list, "Failed to kyk_deseri_headers_msg_to_new_hd_chain: calloc failed");
+
+    for(i = 0; i < hd_chain -> len; i++){
+	hd = hd_chain -> hd_list + i;
+	res = kyk_deseri_blk_header(hd, bufp, &len);
+	check(res == 0, "Failed to kyk_deseri_headers_msg_to_new_hd_chain: kyk_deseri_blk_header failed");
+	bufp += len;
+	bufp += 1;
+    }
+
+    *new_hd_chain = hd_chain;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+

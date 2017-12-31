@@ -798,3 +798,25 @@ void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
 }
 
 
+void kyk_print_blk_hd_chain(const struct kyk_blk_hd_chain* hd_chain)
+{
+    struct kyk_blk_header* hd = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < hd_chain -> len; i++){
+	hd = hd_chain -> hd_list + i;
+	kyk_print_blk_header(hd);
+    }
+}
+
+void kyk_print_blk_header(const struct kyk_blk_header* hd)
+{
+    printf("version: %u\n", hd -> version);
+    kyk_print_hex("pre_blk_hash ", hd -> pre_blk_hash, sizeof(hd -> pre_blk_hash));
+    kyk_print_hex("mrk_root_hash ", hd -> mrk_root_hash, sizeof(hd -> mrk_root_hash));
+    printf("tts: %u\n", hd -> tts);
+    printf("bts: %0x\n", hd -> bts);
+    printf("nonce: %u\n", hd -> nonce);
+}
+
+

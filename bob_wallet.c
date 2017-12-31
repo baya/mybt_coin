@@ -17,6 +17,7 @@
 #include "kyk_utxo.h"
 #include "kyk_address.h"
 #include "kyk_protocol.h"
+#include "kyk_block.h"
 #include "dbg.h"
 
 #define WALLET_NAME ".bob_wallet"
@@ -315,6 +316,7 @@ error:
 int cmd_req_getheaders(const char* node, const char* service)
 {
     ptl_gethder_entity* et = NULL;
+    struct kyk_blk_hd_chain* hd_chain = NULL;
     uint32_t version = 1;
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
@@ -333,15 +335,20 @@ int cmd_req_getheaders(const char* node, const char* service)
     res = kyk_send_ptl_msg(node, service, req_msg, &rep_msg);
     check(res == 0, "kyk_send_ptl_msg failed");
 
-    printf("received response from node:\n");
+    printf("===============> RECEIVED RESPONSE FROM NODE:\n");
     kyk_print_ptl_message(rep_msg);
+
+    res = kyk_deseri_headers_msg_to_new_hd_chain(rep_msg, &hd_chain);
+    check(res == 0, "Failed to cmd_req_getheaders: kyk_deseri_headers_msg_to_new_hd_chain failed");
+
+    printf("===============> RECEIVED BLOCK HEADERS FROM NODE:\n");
+    kyk_print_blk_hd_chain(hd_chain);
     
     return 0;
     
 error:
 
     return -1;
-
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
