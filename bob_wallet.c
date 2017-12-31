@@ -44,7 +44,7 @@ static int cmd_make_tx(struct kyk_wallet* wallet,
 
 static int cmd_ping(const char *node, const char* service);
 static int cmd_req_version(const char* node, const char* service);
-static int cmd_req_getheaders(const char* node, const char* service);
+static int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet* wallet);
 
 static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
 
@@ -64,15 +64,15 @@ int main(int argc, char *argv[])
 
     if(argc == 1){
 	printf("usage: %s command [args]\n", argv[0]);
-	printf("init a wallet:     %s %s\n", argv[0], CMD_INIT);
-	printf("make tx:           %s %s [amount] [address]\n", argv[0], CMD_MK_TX);
-	printf("query blance:      %s %s\n", argv[0], CMD_QUERY_BALANCE);
-	printf("show address list: %s %s\n", argv[0], CMD_SHOW_ADDR_LIST);
-	printf("add address:       %s %s [address label]\n", argv[0], CMD_ADD_ADDRESS);
-	printf("query block:       %s %s [block hash]\n", argv[0], CMD_QUERY_BLOCK);
-	printf("delete wallet:     %s %s\n", argv[0], CMD_DELETE);
-	printf("ping request:      %s %s\n", argv[0], CMD_PING);
-	printf("version request:   %s %s\n", argv[0], CMD_REQ_VERSION);
+	printf("init a wallet:      %s %s\n", argv[0], CMD_INIT);
+	printf("make tx:            %s %s [amount] [address]\n", argv[0], CMD_MK_TX);
+	printf("query blance:       %s %s\n", argv[0], CMD_QUERY_BALANCE);
+	printf("show address list:  %s %s\n", argv[0], CMD_SHOW_ADDR_LIST);
+	printf("add address:        %s %s [address label]\n", argv[0], CMD_ADD_ADDRESS);
+	printf("delete wallet:      %s %s\n", argv[0], CMD_DELETE);
+	printf("ping request:       %s %s\n", argv[0], CMD_PING);
+	printf("version request:    %s %s\n", argv[0], CMD_REQ_VERSION);
+	printf("getheaders request: %s %s\n", argv[0], CMD_REQ_GETHEADERS);
     }
     
     if(argc == 2){
@@ -81,9 +81,9 @@ int main(int argc, char *argv[])
 		printf("wallet is already in %s\n", wdir);
 		return 0;
 	    }
-	    res = kyk_setup_wallet(&wallet, wdir);
-	    check(res == 0, "Failed to init wallet: kyk_setup_wallet failed");
-	    check(wallet, "Failed to init wallet: kyk_setup_wallet failed");
+	    res = kyk_setup_spv_wallet(&wallet, wdir);
+	    check(res == 0, "Failed to init wallet: kyk_setup_spv_wallet failed");
+	    check(wallet, "Failed to init wallet: kyk_setup_spv_wallet failed");
 	} else if(match_cmd(argv[1], CMD_DELETE)){
 	    printf("please use system command `rm -rf %s` to delete wallet\n", wdir);
 	} else if(match_cmd(argv[1], CMD_QUERY_BALANCE)){
@@ -97,7 +97,9 @@ int main(int argc, char *argv[])
 	} else if(match_cmd(argv[1], CMD_REQ_VERSION)){
 	    cmd_req_version("localhost", "8333");
 	} else if(match_cmd(argv[1], CMD_REQ_GETHEADERS)){
-	    cmd_req_getheaders("localhost", "8333");
+	    wallet = kyk_open_wallet(wdir);
+	    check(wallet, "failed to open wallet");
+	    cmd_req_getheaders("localhost", "8333", wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -313,15 +315,20 @@ error:
     return -1;
 }
 
-int cmd_req_getheaders(const char* node, const char* service)
+int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet* wallet)
 {
     ptl_gethder_entity* et = NULL;
+    struct kyk_blk_hd_chain* rep_hd_chain = NULL;
+    struct kyk_blk_hd_chain* wallet_hd_chain = NULL;
     struct kyk_blk_hd_chain* hd_chain = NULL;
     uint32_t version = 1;
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
     ptl_message* rep_msg = NULL;
     int res = -1;
+
+    res = kyk_load_blk_header_chain(&wallet_hd_chain, wallet);
+    check(res == 0, "Failed to kyk_load_blk_header_chain");
 
     res = kyk_build_new_getheaders_entity(&et, version);
     check(res == 0, "kyk_build_new_getheaders_entity failed");
@@ -338,11 +345,14 @@ int cmd_req_getheaders(const char* node, const char* service)
     printf("===============> RECEIVED RESPONSE FROM NODE:\n");
     kyk_print_ptl_message(rep_msg);
 
-    res = kyk_deseri_headers_msg_to_new_hd_chain(rep_msg, &hd_chain);
+    res = kyk_deseri_headers_msg_to_new_hd_chain(rep_msg, &rep_hd_chain);
     check(res == 0, "Failed to cmd_req_getheaders: kyk_deseri_headers_msg_to_new_hd_chain failed");
 
     printf("===============> RECEIVED BLOCK HEADERS FROM NODE:\n");
-    kyk_print_blk_hd_chain(hd_chain);
+    kyk_print_blk_hd_chain(rep_hd_chain);
+
+    res = kyk_save_blk_header_chain(wallet, hd_chain);
+    check(res == 0, "Failed to cmd_req_getheaders: kyk_save_blk_header_chain failed");
     
     return 0;
     

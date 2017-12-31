@@ -45,6 +45,8 @@ struct kyk_wallet {
     struct config* wallet_cfg;
 };
 
+int kyk_setup_spv_wallet(struct kyk_wallet** new_wallet, const char* wdir);
+
 int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir);
 
 struct kyk_wallet* kyk_open_wallet(const char *wdir);

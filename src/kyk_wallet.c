@@ -43,6 +43,21 @@ static int get_address(const struct KeyValuePair* ev, char** new_addr);
 
 static void free_addr_list(char** addr_list, size_t len);
 
+int kyk_setup_spv_wallet(struct kyk_wallet** new_wallet, const char* wdir)
+{
+    int res = -1;
+
+    res = kyk_setup_wallet(new_wallet, wdir);
+    check(res == 0, "Failed to kyk_setup_spv_wallet: kyk_setup_wallet failed");
+    
+    return 0;
+    
+error:
+
+    return -1;
+
+}
+
 int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
 {
     struct kyk_wallet* wallet = NULL;
@@ -52,10 +67,10 @@ int kyk_setup_wallet(struct kyk_wallet** outWallet, const char* wdir)
     check(wdir, "Failed to kyk_setup_wallet: wdir is NULL");
 
     wallet = kyk_new_wallet(wdir);
-    check(wallet, "Failed to kyk_open_wallet: kyk_new_wallet failed");
+    check(wallet, "Failed to kyk_setup_wallet: kyk_new_wallet failed");
 
     res = kyk_init_wallet(wallet);
-    check(res == 0, "Failed to kyk_open_wallet: kyk_init_wallet failed");
+    check(res == 0, "Failed to kyk_setup_wallet: kyk_init_wallet failed");
 
     res = save_setup_data_to_wallet(wallet);
     check(res == 0, "failed to init wallet");
@@ -663,7 +678,7 @@ void kyk_destroy_wallet_key(struct kyk_wallet_key* k)
 }
 
 
-/* block header chain */
+/* save block header chain */
 int kyk_save_blk_header_chain(const struct kyk_wallet* wallet,
 			    const struct kyk_blk_hd_chain* hd_chain)
 {
