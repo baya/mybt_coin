@@ -356,6 +356,7 @@ int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet*
     check(res == 0, "Failed to cmd_req_getheaders: kyk_compare_hd_chain failed");
 
     if(hd_inx < rep_hd_chain -> len){
+	/* have got some new headers needed to be saved to the block headers file */
 	hd_chain = calloc(1, sizeof(*hd_chain));
 	check(hd_chain, "Failed to cmd_req_getheaders: calloc failed");
 
