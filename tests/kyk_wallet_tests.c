@@ -177,8 +177,8 @@ char* test_kyk_wallet_save_block()
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_setup_wallet failed");
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, NULL);
-    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, NULL);
+    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_deseri_new_block failed");
 
     res = kyk_set_blkself_info(blk);
     check(res == 0, "Failed to test_kyk_wallet_save_block: failed to kyk_set_blkself_info");

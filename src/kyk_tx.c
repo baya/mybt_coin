@@ -51,6 +51,17 @@ void kyk_print_txout(const struct kyk_txout* txout)
     kyk_print_hex("txout -> sc", txout -> sc, txout -> sc_size);
 }
 
+void kyk_print_tx_list(const struct kyk_tx* tx_list, size_t tx_count)
+{
+    const struct kyk_tx* tx = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < tx_count; i++){
+	tx = tx_list + i;
+	kyk_print_tx(tx);
+    }
+}
+
 void kyk_print_tx(const struct kyk_tx* tx)
 {
     varint_t i = 0;

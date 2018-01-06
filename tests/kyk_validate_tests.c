@@ -74,8 +74,8 @@ char* test_kyk_validate_block()
     res = kyk_deseri_blk_hd_chain(&hd_chain, BTC_01_BLK_HD_BUF, sizeof(BTC_01_BLK_HD_BUF));
     check(res == 0, "Failed to test_kyk_validate_block: kyk_deseri_blk_hd_chain failed");
 
-    res = kyk_deseri_block(&blk, BTC_2_BLOCK_BUF, &check_size);
-    check(res == 0, "Failed to test_kyk_validate_block: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BTC_2_BLOCK_BUF, &check_size);
+    check(res == 0, "Failed to test_kyk_validate_block: kyk_deseri_new_block failed");
 
     res = kyk_validate_block(hd_chain, blk);
     mu_assert(res == 0, "Failed to test_kyk_validate_block");

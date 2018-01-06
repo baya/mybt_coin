@@ -153,7 +153,22 @@ int kyk_ptl_blk_rep(int sockfd,
 		    const ptl_message* req_msg,
 		    struct kyk_wallet* wallet)
 {
+    struct ptl_inv* inv_list = NULL;
+    struct ptl_inv* inv = NULL;
+    varint_t inv_count = 0;
+    varint_t i = 0;
+    int res = -1;
+    
     check(wallet, "Failed to kyk_ptl_blk_rep: wallet is NULL");
+    check(req_msg, "Failed to kyk_ptl_blk_rep: req_msg is NULL");
+    check(req_msg -> pld, "Failed to yk_ptl_blk_rep: req_msg -> pld is NULL");
+
+    res = kyk_deseri_new_ptl_inv_list(req_msg -> pld -> data, &inv_list, &inv_count);
+    check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_deseri_new_ptl_inv_list failed");
+
+    for(i = 0; i < inv_count; i++){
+	inv = inv_list + i;
+    }
     
     return 0;
 

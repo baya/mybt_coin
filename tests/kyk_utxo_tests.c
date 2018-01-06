@@ -213,8 +213,8 @@ char* test_kyk_append_utxo_chain_from_tx()
     uint8_t blkhash[32];
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_f8517_BUF, NULL);
-    check(res == 0, "Failed to test_kyk_append_utxo_chain_from_tx: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_f8517_BUF, NULL);
+    check(res == 0, "Failed to test_kyk_append_utxo_chain_from_tx: kyk_deseri_new_block failed");
 
     utxo_chain = malloc(sizeof(*utxo_chain));
     kyk_init_utxo_chain(utxo_chain);
@@ -242,8 +242,8 @@ char* test_kyk_append_utxo_chain_from_block()
     };
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_f8517_BUF, NULL);
-    check(res == 0, "Failed to test_kyk_append_utxo_chain_from_tx: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_f8517_BUF, NULL);
+    check(res == 0, "Failed to test_kyk_append_utxo_chain_from_tx: kyk_deseri_new_block failed");
 
     utxo_chain = malloc(sizeof(*utxo_chain));
     kyk_init_utxo_chain(utxo_chain);

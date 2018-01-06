@@ -273,6 +273,96 @@ error:
     return -1;
 }
 
+int kyk_wallet_query_block(const struct kyk_wallet* wallet,
+			   const char* blk_hash,
+			   struct kyk_block** new_blk)
+{
+    struct kyk_block* blk = NULL;
+    struct kyk_bkey_val* bval = NULL;
+    char* errptr = NULL;
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_wallet_query_block: wallet is NULL");
+    check(blk_hash, "Failed to kyk_wallet_query_block: blk_hash is NULL");
+
+    bval = w_get_bval(wallet, blk_hash, &errptr);
+    check(errptr == NULL, "Failed to kyk_wallet_query_block: w_get_bval failed %s", errptr);
+
+    res = kyk_wallet_get_new_block_from_bval(wallet, bval, &blk);
+    check(res == 0, "Failed to kyk_wallet_query_block: kyk_wallet_get_new_block_from_bval failed");
+
+    *new_blk = blk;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_wallet_get_new_block_from_bval(const struct kyk_wallet* wallet,
+				       const struct kyk_bkey_val* bval,
+				       struct kyk_block** new_blk)
+{
+    struct kyk_block* blk = NULL;
+    char* blk_file_path = NULL;
+    uint8_t buf[8];
+    uint8_t* bufp = NULL;
+    uint8_t* blk_buf = NULL;
+    FILE* fp = NULL;
+    size_t checksize = 0;
+    int res = -1;
+    size_t ret_code;
+
+    check(wallet, "Failed to kyk_wallet_get_new_block_from_bval: wallet is NULL");
+    check(bval, "Failed to kyk_wallet_get_new_block_from_bval: bval is NULL");
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to kyk_wallet_get_new_block_from_bval: calloc failed");
+
+    blk_file_path = kyk_asprintf("%s/blk%05d.dat", wallet -> blk_dir, bval -> nFile);
+    fp = fopen(blk_file_path, "rb");
+    check(fp, "Failed to kyk_wallet_get_new_block_from_bval: fopen failed");
+
+    res = fseek(fp, bval -> nDataPos - 8, SEEK_SET);
+    check(res == 0, "Failed to kyk_wallet_get_new_block_from_bval: fseek failed");
+
+    bufp = buf;
+
+    fread(bufp, sizeof(blk -> magic_no), 1, fp);
+    bufp += sizeof(blk -> magic_no);
+
+    fread(bufp, sizeof(blk -> blk_size), 1, fp);
+    bufp += sizeof(blk -> blk_size);
+
+    bufp = buf;
+    beej_unpack(bufp, "<L", &blk -> magic_no);
+    bufp += sizeof(blk -> magic_no);
+
+    beej_unpack(bufp, "<L", &blk -> blk_size);
+
+    blk_buf = calloc(blk -> blk_size, sizeof(*blk_buf));
+    check(blk_buf, "Failed to kyk_wallet_get_new_block_from_bval: calloc failed");
+
+    ret_code = fread(blk_buf, sizeof(*blk_buf), blk -> blk_size, fp);
+    check(ret_code == blk -> blk_size, "Failed to kyk_wallet_get_new_block_from_bval: fread failed");
+
+    res = kyk_deseri_block(blk, blk_buf, &checksize);
+    check(res == 0, "Failed to kyk_wallet_get_new_block_from_bval: kyk_deseri_block failed");
+
+
+    *new_blk = blk;
+    
+    fclose(fp);
+    free(blk_buf);
+    
+    return 0;
+
+error:
+    if(fp) fclose(fp);
+    if(blk_buf) free(blk_buf);
+    return -1;
+}
 
 struct kyk_bkey_val* w_get_bval(const struct kyk_wallet* wallet, const char* blk_hash_str, char **errptr)
 {

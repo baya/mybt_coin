@@ -6,10 +6,6 @@
 #include "kyk_ldb.h"
 #include "kyk_buff.h"
 
-#define KYK_BLK_HD_LEN 80
-#define KYK_BLK_HD_NO_NONCE_LEN 76
-#define KYK_BLK_MAGIC_NO 0xD9B4BEF9
-
 struct kyk_blk_hd_chain {
     struct kyk_blk_header* hd_list;
     size_t len;
@@ -38,9 +34,9 @@ size_t kyk_seri_blk_hd_without_nonce(uint8_t *buf, const struct kyk_blk_header *
 int kyk_seri_blk(uint8_t* buf, const struct kyk_block* blk, size_t* check_size);
 int kyk_seri_blkself(uint8_t* buf, const struct kyk_block* blk, size_t* check_size);
 
-int kyk_deseri_block(struct kyk_block** blk,
-		     const uint8_t* buf,
-		     size_t* byte_num);
+int kyk_deseri_new_block(struct kyk_block** blk,
+			 const uint8_t* buf,
+			 size_t* byte_num);
 
 int kyk_deseri_blk_header(struct kyk_blk_header *hd,
 			  const uint8_t *buf,
@@ -117,5 +113,12 @@ int kyk_compare_hd_chain(const struct kyk_blk_hd_chain* lhd_chain,
 			 const struct kyk_blk_hd_chain* rhd_chain,
 			 size_t* inx);
 
+int kyk_deseri_block(struct kyk_block* blk,
+		     const uint8_t* buf,
+		     size_t* checknum);
 
+
+int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header* rhd);
+
+void kyk_print_block(const struct kyk_block* blk);
 #endif

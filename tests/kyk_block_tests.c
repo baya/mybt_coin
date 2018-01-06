@@ -113,7 +113,7 @@ error:
 }
 
 
-char* test_deseri_block()
+char* test_deseri_new_block()
 {
     struct kyk_block* blk = NULL;
     uint8_t target_blk_hash[] = {
@@ -144,8 +144,8 @@ char* test_deseri_block()
     size_t blk_size = 0;
 
     
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size);
-    mu_assert(res == 0, "Failed to test_deseri_block");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size);
+    mu_assert(res == 0, "Failed to test_deseri_new_block");
     res = kyk_blk_hash256(blk_hash, blk -> hd);
     mu_assert(res == 0, "Failed to test_parse_block: kyk_blk_hash256 failed");
     mu_assert(kyk_digest_eq(blk_hash, target_blk_hash, sizeof(blk_hash)), "Failed to test_parse_block");
@@ -200,8 +200,8 @@ char* test_make_blk_header()
     
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
-    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_new_block failed");
 
     tx_list = blk -> tx;
 
@@ -237,8 +237,8 @@ char* test_kyk_make_block()
     size_t target_blk_size = 490;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
-    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_new_block failed");
 
     res = kyk_make_block(&blk2, blk -> hd, blk -> tx, blk -> tx_count);
     mu_assert(res == 0, "Failed to test_kyk_make_block");
@@ -367,8 +367,8 @@ char* test_kyk_get_blk_size()
     size_t blk_size2 = 0;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
-    check(res == 0, "Failed to test_kyk_get_blk_size: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blk_size: kyk_deseri_new_block failed");
 
     res = kyk_get_blk_size(blk, &blk_size2);
     mu_assert(res == 0, "Failed to test_kyk_get_blk_size");
@@ -390,8 +390,8 @@ char* test_kyk_get_blkself_size()
     size_t blk_size2 = 0;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
-    check(res == 0, "Failed to test_kyk_get_blkself_size: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blkself_size: kyk_deseri_new_block failed");
 
     res = kyk_get_blkself_size(blk, &blk_size2);
     mu_assert(res == 0, "Failed to test_kyk_get_blkself_size");
@@ -486,7 +486,7 @@ char *all_tests()
     mu_run_test(test_kyk_seri_blk);
     mu_run_test(test_kyk_seri_blkself);
     mu_run_test(test_deseri_blk_header);
-    mu_run_test(test_deseri_block);
+    mu_run_test(test_deseri_new_block);
     mu_run_test(test_make_blk_header);
     mu_run_test(test_kyk_make_block);
     mu_run_test(test_kyk_init_blk_hd_chain);

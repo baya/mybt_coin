@@ -161,4 +161,14 @@ int kyk_wallet_get_mfee(const struct kyk_tx* tx,
 			const struct kyk_utxo_chain* utxo_chain,
 			uint64_t* mfee);
 
+int kyk_wallet_query_block(const struct kyk_wallet* wallet,
+			   const char* blk_hash,
+			   struct kyk_block** new_blk);
+
+int kyk_wallet_get_new_block_from_bval(const struct kyk_wallet* wallet,
+				       const struct kyk_bkey_val* bval,
+				       struct kyk_block** new_blk);
+
+
+
 #endif
