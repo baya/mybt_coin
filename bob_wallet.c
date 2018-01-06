@@ -33,6 +33,7 @@
 #define CMD_PING           "ping"
 #define CMD_REQ_VERSION    "req-version"
 #define CMD_REQ_GETHEADERS "req-getheaders"
+#define CMD_REQ_GETDATA    "req-getdata"
 
 static int match_cmd(char *src, char *cmd);
 static int cmd_add_address(struct kyk_wallet* wallet, const char* desc);
@@ -45,6 +46,7 @@ static int cmd_make_tx(struct kyk_wallet* wallet,
 static int cmd_ping(const char *node, const char* service);
 static int cmd_req_version(const char* node, const char* service);
 static int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet* wallet);
+static int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wallet);
 
 static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
 
@@ -100,6 +102,9 @@ int main(int argc, char *argv[])
 	    wallet = kyk_open_wallet(wdir);
 	    check(wallet, "failed to open wallet");
 	    cmd_req_getheaders("localhost", "8333", wallet);
+	} else if(match_cmd(argv[1], CMD_REQ_GETDATA)){
+	    wallet = kyk_open_wallet(wdir);
+	    cmd_req_getdata("localhost", "8333", wallet);
 	} else {
 	    printf("invalid options\n");
 	}
@@ -372,6 +377,46 @@ int cmd_req_getheaders(const char* node, const char* service, struct kyk_wallet*
 error:
 
     return -1;
+}
+
+int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wallet)
+{
+    struct kyk_blk_hd_chain* wallet_hd_chain = NULL;
+    struct ptl_inv* inv_list = NULL;
+    ptl_payload* pld = NULL;
+    ptl_message* req_msg = NULL;
+    varint_t inv_count = 0;
+    int sfd = 0;
+    int res = -1;
+
+    res = kyk_load_blk_header_chain(&wallet_hd_chain, wallet);
+    check(res == 0, "Failed to kyk_load_blk_header_chain");
+
+    res = kyk_hd_chain_to_inv_list(wallet_hd_chain, PTL_INV_MSG_BLOCK, &inv_list, &inv_count);
+    check(res == 0, "Failed to cmd_req_getdata: kyk_hd_chain_to_inv_list failed");
+
+
+    res = kyk_seri_ptl_inv_list_to_new_pld(&pld, inv_list, inv_count);
+    check(res == 0, "Failed to cmd_req_getdata: kyk_seri_ptl_inv_list_to_new_pld failed");
+
+    res = kyk_build_new_ptl_message(&req_msg, KYK_MSG_TYPE_GETDATA, NT_MAGIC_MAIN, pld);
+    check(res == 0, "kyk_build_new_ptl_message failed");
+
+    res = kyk_socket_connect(node, service, &sfd);
+    check(res == 0, "Failed to kyk_socket_connect");
+
+    res = kyk_write_ptl_msg(sfd, req_msg);
+
+    close(sfd);
+
+    return 0;
+
+error:
+
+    if(sfd) close(sfd);
+    
+    return -1;
+    
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)

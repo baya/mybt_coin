@@ -117,6 +117,5 @@ int kyk_compare_hd_chain(const struct kyk_blk_hd_chain* lhd_chain,
 			 const struct kyk_blk_hd_chain* rhd_chain,
 			 size_t* inx);
 
-int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header* rhd);
 
 #endif

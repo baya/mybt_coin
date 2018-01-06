@@ -1034,3 +1034,205 @@ error:
     return -1;
 }
 
+int kyk_seri_ptl_inv_list_to_new_pld(ptl_payload** new_pld,
+				     const struct ptl_inv* inv_list,
+				     varint_t inv_count)
+{
+    ptl_payload* pld = NULL;
+    const struct ptl_inv* inv = NULL;
+    uint8_t* bufp = NULL;
+    size_t len = 0;
+    varint_t i = 0;
+
+    check(inv_list, "Failed to kyk_seri_ptl_inv_list_to_new_pld: inv_list is NULL");
+
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_seri_ptl_inv_list_to_new_pld: calloc failed");
+
+    pld -> len = inv_count * sizeof(struct ptl_inv);
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+
+    check(pld -> data, "Failed to kyk_seri_ptl_inv_list_to_new_pld: calloc failed");
+
+    bufp = pld -> data;
+    len = kyk_pack_varint(bufp, inv_count);
+    bufp += len;
+
+    for(i = 0; i < inv_count; i++){
+	inv = inv_list + i;
+	kyk_seri_ptl_inv(bufp, inv, &len);
+	bufp += len;
+    }
+
+    *new_pld = pld;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_seri_ptl_inv(uint8_t* buf,
+		     const struct ptl_inv* inv,
+		     size_t* checknum)
+{
+    uint8_t* bufp = NULL;
+    
+    check(buf, "Failed to kyk_seri_ptl_inv: buf is NULL");
+    check(inv, "Failed to kyk_seri_ptl_inv: inv is NULL");
+
+    bufp = buf;
+
+    beej_pack(bufp, "<L", inv -> type);
+    bufp += sizeof(inv -> type);
+    
+    memcpy(bufp, inv -> hash, sizeof(inv -> hash));
+    bufp += sizeof(inv -> hash);
+
+    if(checknum){
+	*checknum = bufp - buf;
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+void kyk_print_inv_list(const struct ptl_inv* inv_list, varint_t inv_count)
+{
+    const struct ptl_inv* inv = NULL;
+    varint_t i = 0;
+
+    for(i = 0; i < inv_count; i++){
+	inv = inv_list + i;
+	kyk_print_inv(inv);
+    }
+}
+
+void kyk_print_inv(const struct ptl_inv* inv)
+{
+    switch(inv -> type){
+    case PTL_INV_ERROR:
+	printf("inv -> type: PTL_INV_ERROR\n");
+	break;
+    case PTL_INV_MSG_TX:
+	printf("inv -> type: PTL_INV_MSG_TX\n");
+	break;
+    case PTL_INV_MSG_BLOCK:
+	printf("inv -> type: PTL_INV_MSG_BLOCK\n");
+	break;
+    case PTL_INV_MSG_FILTERED_BLOCK:
+	printf("inv -> type: PTL_INV_MSG_FILTERED_BLOCK\n");
+	break;
+    case PTL_INV_MSG_CMPCT_BLOCK:
+	printf("inv -> type: PTL_INV_MSG_CMPCT_BLOCK\n");
+	break;
+    default:
+	printf("inv -> type: invalid type\n");
+	break;
+    }
+
+    kyk_print_hex("inv -> hash", (uint8_t*)inv -> hash, sizeof(inv -> hash));
+}
+
+int kyk_deseri_new_ptl_inv_list(const uint8_t* buf,
+				struct ptl_inv** new_inv_list,
+				varint_t* inv_count)
+{
+    struct ptl_inv* inv_list = NULL;
+    struct ptl_inv* inv = NULL;
+    size_t len = 0;
+    varint_t count = 0;
+    varint_t i = 0;
+    const uint8_t* bufp = NULL;
+    
+    check(buf, "Failed to kyk_deseri_new_ptl_inv_list: buf is NULL");
+
+    bufp = buf;
+
+    len = kyk_unpack_varint(bufp, &count);
+    bufp += len;
+
+    inv_list = calloc(count, sizeof(*inv_list));
+    check(inv_list, "Failed to kyk_deseri_new_ptl_inv_list: calloc failed");
+
+    for(i = 0; i < count; i++){
+	inv = inv_list + i;
+	kyk_deseri_ptl_inv(bufp, inv, &len);
+	check(len > 0, "Failed to kyk_deseri_new_ptl_inv_list: kyk_deseri_ptl_inv failed");
+	bufp += len;
+    }
+    
+    *new_inv_list = inv_list;
+    *inv_count = count;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_deseri_ptl_inv(const uint8_t* buf, struct ptl_inv* inv, size_t* checknum)
+{
+    const uint8_t* bufp = NULL;
+    
+    check(buf, "Failed to kyk_deseri_ptl_inv: buf is NULL");
+    check(inv, "Failed to kyk_deseri_ptl_inv: inv is NULL");
+
+    bufp = buf;
+
+    beej_unpack(bufp, "<L", &inv -> type);
+    bufp += sizeof(inv -> type);
+
+    memcpy(inv -> hash, bufp, sizeof(inv -> hash));
+    bufp += sizeof(inv -> hash);
+
+    *checknum = bufp - buf;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_hd_chain_to_inv_list(const struct kyk_blk_hd_chain* hd_chain,
+			     uint32_t type,
+			     struct ptl_inv** new_inv_list,
+			     varint_t* inv_count)
+			     
+{
+    struct ptl_inv* inv_list = NULL;
+    struct ptl_inv* inv = NULL;
+    const struct kyk_blk_header* hd = NULL;
+    uint8_t digest[32];
+    size_t i = 0;
+
+    check(hd_chain, "Failed to kyk_hd_chain_to_inv_list: hd_chain is NULL");
+    check(hd_chain -> len > 0, "Failed to kyk_hd_chain_to_inv_list: hd_chain -> len is invalid");
+
+    inv_list = calloc(hd_chain -> len, sizeof(*inv));
+    check(inv_list, "Failed to kyk_hd_chain_to_inv_list: calloc failed");    
+
+    for(i = 0; i < hd_chain -> len; i++){
+	hd = hd_chain -> hd_list + i;
+	inv = inv_list + i;
+	inv -> type = type;
+	kyk_blk_hash256(digest, hd);
+	memcpy(inv -> hash, digest, sizeof(digest));
+    }
+
+    *new_inv_list = inv_list;/* -----------+**------------------------------------------------------------------------------------------------------*+ cat's codes */
+    *inv_count = hd_chain -> len;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+

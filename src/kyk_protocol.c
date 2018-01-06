@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "kyk_protocol.h"
+#include "kyk_wallet.h"
 #include "kyk_utils.h"
 #include "beej_pack.h"
 #include "kyk_block.h"
@@ -143,6 +144,19 @@ int kyk_ptl_headers_rep(int sockfd,
 
     return 0;
     
+error:
+
+    return -1;
+}
+
+int kyk_ptl_blk_rep(int sockfd,
+		    const ptl_message* req_msg,
+		    struct kyk_wallet* wallet)
+{
+    check(wallet, "Failed to kyk_ptl_blk_rep: wallet is NULL");
+    
+    return 0;
+
 error:
 
     return -1;

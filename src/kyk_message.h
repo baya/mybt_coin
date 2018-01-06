@@ -26,6 +26,16 @@
 #define KYK_MSG_TYPE_VERSION    "version"
 #define KYK_MSG_TYPE_GETHEADERS "getheaders"
 #define KYK_MSG_TYPE_HEADERS    "headers"
+#define KYK_MSG_TYPE_GETDATA    "getdata"
+#define KYK_MSG_TYPE_BLOCK      "block"
+#define KYK_MSG_TYPE_TX         "tx"
+
+#define PTL_INV_ERROR              0
+#define PTL_INV_MSG_TX             1
+#define PTL_INV_MSG_BLOCK          2
+#define PTL_INV_MSG_FILTERED_BLOCK 3
+#define PTL_INV_MSG_CMPCT_BLOCK    4
+
 
 typedef struct protocol_message_payload {
     uint32_t len;
@@ -73,6 +83,11 @@ typedef struct protocol_getheaders_entity{
 
 struct ptl_ping_entity{
     uint64_t nonce;
+};
+
+struct ptl_inv {
+    uint32_t type;
+    char hash[32];
 };
 
 int kyk_build_new_ptl_message(ptl_message** new_msg,
@@ -144,5 +159,26 @@ int kyk_seri_hd_chain_to_new_pld(ptl_payload** new_pld, const struct kyk_blk_hd_
 int kyk_get_headers_pld_len(const struct kyk_blk_hd_chain* hd_chain, size_t* pld_len);
 
 int kyk_deseri_headers_msg_to_new_hd_chain(ptl_message* msg, struct kyk_blk_hd_chain** new_hd_chain);
+
+int kyk_seri_ptl_inv(uint8_t* buf, const struct ptl_inv* inv, size_t* checknum);
+
+int kyk_seri_ptl_inv_list_to_new_pld(ptl_payload** new_pld,
+				     const struct ptl_inv* inv_list,
+				     varint_t inv_count);
+
+int kyk_hd_chain_to_inv_list(const struct kyk_blk_hd_chain* hd_chain,
+			     uint32_t type,
+			     struct ptl_inv** new_inv_list,
+			     varint_t* inv_count);
+
+int kyk_deseri_ptl_inv(const uint8_t* buf, struct ptl_inv* inv, size_t* checknum);
+
+int kyk_deseri_new_ptl_inv_list(const uint8_t* buf,
+				struct ptl_inv** new_inv_list,
+				varint_t* inv_count);
+
+void kyk_print_inv(const struct ptl_inv* inv);
+
+void kyk_print_inv_list(const struct ptl_inv* inv_list, varint_t inv_count);
 
 #endif

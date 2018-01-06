@@ -138,6 +138,10 @@ int kyk_start_serve(const char* host, const char* port)
 		    check(res == 0, "Failed to kyk_load_blk_header_chain");
 		    res = kyk_ptl_headers_rep(new_fd, msg, hd_chain);
 		    check(res == 0, "Failed to kyk_ptl_headers_rep");
+		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_GETDATA)){
+		    load_wallet(&wallet);
+		    res = kyk_ptl_blk_rep(new_fd, msg, wallet);
+		    check(res == 0, "Failed to kyk_ptl_blk_rep");
 		} else {
 		}
 	    }
