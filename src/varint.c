@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "varint.h"
+#include "dbg.h"
 
 size_t kyk_pack_varint(unsigned char *buf, varint_t v)
 {
@@ -70,4 +71,54 @@ size_t get_varint_size(const varint_t v)
     res = kyk_pack_varint(buf, v);
 
     return res;
+}
+
+
+size_t get_var_str_size(const var_str* vstr)
+{
+    return get_varint_size(vstr -> len) + vstr -> len;
+}
+
+size_t kyk_pack_var_str(uint8_t* buf, const var_str* vstr)
+{
+    uint8_t* bufp = buf;
+
+    bufp += kyk_pack_varint(bufp, vstr -> len);
+    memcpy(bufp, vstr -> data, vstr -> len);
+    bufp += vstr -> len;
+
+    return bufp - buf;
+}
+
+
+var_str* kyk_new_var_str(const char* str)
+{
+    var_str* vstr = NULL;
+
+    vstr = calloc(1, sizeof(*vstr));
+    check(vstr, "Failed to kyk_new_var_str: calloc failed");
+
+    vstr -> len = strlen(str);
+    vstr -> data = calloc(vstr -> len + 1, sizeof(vstr -> data));
+    check(vstr -> data, "Failed to kyk_new_var_str: calloc failed");
+
+    strcpy(vstr -> data, str);
+
+    return vstr;
+
+error:
+
+    return NULL;
+}
+
+void kyk_free_var_str(var_str* vstr)
+{
+    if(vstr){
+	if(vstr -> data){
+	    free(vstr -> data);
+	    vstr -> data = NULL;
+	}
+
+	free(vstr);
+    }
 }

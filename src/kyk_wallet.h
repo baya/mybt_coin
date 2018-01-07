@@ -170,5 +170,8 @@ int kyk_wallet_get_new_block_from_bval(const struct kyk_wallet* wallet,
 				       struct kyk_block** new_blk);
 
 
+int kyk_wallet_query_block_by_hashbytes(const struct kyk_wallet* wallet,
+					const uint8_t* blk_hash,
+					struct kyk_block** new_blk);
 
 #endif

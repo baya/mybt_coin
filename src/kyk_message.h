@@ -14,7 +14,6 @@
 #define NODE_BLOOM 4
 
 #define LOCAL_IP_SRC "::ffff:127.0.0.1"
-#define KYK_PL_BUF_SIZE 1024
 
 #define KYK_MSG_TYPE_LEN 12
 #define KYK_MSG_CK_LEN 4
@@ -29,12 +28,22 @@
 #define KYK_MSG_TYPE_GETDATA    "getdata"
 #define KYK_MSG_TYPE_BLOCK      "block"
 #define KYK_MSG_TYPE_TX         "tx"
+#define KYK_MSG_TYPE_REJECT     "reject"
 
 #define PTL_INV_ERROR              0
 #define PTL_INV_MSG_TX             1
 #define PTL_INV_MSG_BLOCK          2
 #define PTL_INV_MSG_FILTERED_BLOCK 3
 #define PTL_INV_MSG_CMPCT_BLOCK    4
+
+#define CC_REJECT_MALFORMED       0x01
+#define CC_REJECT_INVALID         0x10
+#define CC_REJECT_OBSOLETE        0x11
+#define CC_REJECT_DUPLICATE       0x12
+#define CC_REJECT_NONSTANDARD     0x40
+#define CC_REJECT_DUST            0x41
+#define CC_REJECT_INSUFFICIENTFEE 0x42
+#define CC_REJECT_CHECKPOINT      0x43
 
 
 typedef struct protocol_message_payload {
@@ -180,5 +189,16 @@ int kyk_deseri_new_ptl_inv_list(const uint8_t* buf,
 void kyk_print_inv(const struct ptl_inv* inv);
 
 void kyk_print_inv_list(const struct ptl_inv* inv_list, varint_t inv_count);
+
+int kyk_seri_blk_to_new_pld(ptl_payload** new_pld, const struct kyk_block* blk);
+
+
+int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
+				     const var_str* message,
+				     uint8_t ccode,
+				     const var_str* reason,
+				     uint8_t* data,
+				     size_t data_len);
+
 
 #endif

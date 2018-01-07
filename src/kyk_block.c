@@ -137,6 +137,8 @@ int kyk_deseri_block(struct kyk_block* blk,
     check(res == 0, "Failed to kyk_deseri_new_block: kyk_deseri_tx_list failed");
     bufp += len;
 
+    blk -> blk_size = bufp - buf;
+
     if(checknum){
 	*checknum = bufp - buf;
     }

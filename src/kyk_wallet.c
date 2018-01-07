@@ -273,6 +273,36 @@ error:
     return -1;
 }
 
+int kyk_wallet_query_block_by_hashbytes(const struct kyk_wallet* wallet,
+					const uint8_t* blk_hash,
+					struct kyk_block** new_blk)
+{
+    struct kyk_block* blk = NULL;
+    struct kyk_bkey_val* bval = NULL;
+    char* errptr = NULL;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_wallet_query_block_by_hashbytes: wallet is NULL");
+    check(blk_hash, "Failed to kyk_wallet_query_block_by_hashbytes: blk_hash is NULL");
+
+    bval = kyk_read_block(wallet -> blk_index_db, (char*)blk_hash, &errptr);
+    check(errptr == NULL, "Failed to kyk_wallet_query_block_by_hashbytes: kyk_read_block failed");
+
+    res = kyk_wallet_get_new_block_from_bval(wallet, bval, &blk);
+    check(res == 0, "Failed to kyk_wallet_query_block_by_hashbytes: kyk_wallet_get_new_block_from_bval failed");
+
+    *new_blk = blk;
+    
+    kyk_free_bval(bval);
+    
+    return 0;
+    
+error:
+
+    return -1;
+
+}
+
 int kyk_wallet_query_block(const struct kyk_wallet* wallet,
 			   const char* blk_hash,
 			   struct kyk_block** new_blk)
@@ -293,12 +323,15 @@ int kyk_wallet_query_block(const struct kyk_wallet* wallet,
 
     *new_blk = blk;
 
+    kyk_free_bval(bval);
+    
     return 0;
 
 error:
-
+    if(bval) kyk_free_bval(bval);
     return -1;
 }
+
 
 int kyk_wallet_get_new_block_from_bval(const struct kyk_wallet* wallet,
 				       const struct kyk_bkey_val* bval,

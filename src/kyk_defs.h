@@ -69,5 +69,6 @@ typedef struct {
 #define KYK_SERVE_BACKLOG  10      /* how many pending connections queue will hold */
 #define KYK_SERVE_MSG_SIZE 6000
 
+#define KYK_PL_BUF_SIZE    1024
 
 #endif

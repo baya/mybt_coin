@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 
+#include "test_data.h"
 #include "kyk_utils.h"
 #include "kyk_message.h"
 #include "mu_unit.h"
@@ -203,6 +204,41 @@ char* test_kyk_deseri_new_ptl_inv_list()
     return NULL;
 }
 
+char* test_kyk_seri_blk_to_new_pld()
+{
+    struct kyk_block* blk = NULL;
+    ptl_payload* pld = NULL;
+    size_t blk_size = 0;
+    int res = -1;
+
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size);
+    check(res == 0, "Failed to test_kyk_seri_blk_to_new_pld: kyk_deseri_new_block failed");
+
+    res = kyk_seri_blk_to_new_pld(&pld, blk);
+    mu_assert(res == 0, "Failed to test_kyk_seri_blk_to_new_pld");
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_seri_blk_to_new_pld";
+}
+
+char* test_kyk_build_new_reject_ptl_payload()
+{
+    ptl_payload* pld = NULL;
+    var_str* msg = NULL;
+    var_str* reason = NULL;
+    int res = -1;
+
+    msg = kyk_new_var_str("invalid block hash");
+    reason = kyk_new_var_str("invalid block hash");
+    res = kyk_build_new_reject_ptl_payload(&pld, msg, CC_REJECT_INVALID, reason, NULL, 0);
+    mu_assert(res == 0, "Failed to test_kyk_build_new_reject_ptl_payload");
+    
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -215,6 +251,8 @@ char *all_tests()
     mu_run_test(test_kyk_new_seri_gethder_entity_to_pld);
     mu_run_test(test_kyk_seri_hd_chain_to_new_pld);
     mu_run_test(test_kyk_deseri_new_ptl_inv_list);
+    mu_run_test(test_kyk_seri_blk_to_new_pld);
+    mu_run_test(test_kyk_build_new_reject_ptl_payload);
     
     return NULL;
 }

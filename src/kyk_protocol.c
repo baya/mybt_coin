@@ -153,8 +153,11 @@ int kyk_ptl_blk_rep(int sockfd,
 		    const ptl_message* req_msg,
 		    struct kyk_wallet* wallet)
 {
+    struct kyk_block* blk = NULL;
     struct ptl_inv* inv_list = NULL;
     struct ptl_inv* inv = NULL;
+    ptl_payload* pld = NULL;
+    ptl_message* rep_msg = NULL;
     varint_t inv_count = 0;
     varint_t i = 0;
     int res = -1;
@@ -168,7 +171,57 @@ int kyk_ptl_blk_rep(int sockfd,
 
     for(i = 0; i < inv_count; i++){
 	inv = inv_list + i;
+
+	res = kyk_wallet_query_block_by_hashbytes(wallet, (uint8_t*)inv -> hash, &blk);
+	if(res != 0){
+	    kyk_print_hex("invalid blk hash", inv -> hash, 32);
+	    kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "no found block");
+	    break;
+	}
+	
+	res = kyk_seri_blk_to_new_pld(&pld, blk);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_seri_blk_to_new_pld failed");
+	
+	res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_BLOCK, NT_MAGIC_MAIN, pld);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_build_new_ptl_message failed");
+
+	res = kyk_write_ptl_msg(sockfd, rep_msg);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_write_ptl_msg failed");
+
     }
+    
+    return 0;
+
+error:
+    
+    return -1;
+}
+
+int kyk_ptl_reject_rep(int sockfd,
+		       uint8_t ccode,
+		       const char* message)
+{
+    ptl_payload* pld = NULL;
+    ptl_message* rep_msg = NULL;
+    var_str* msg = NULL;
+    var_str* rsn = NULL;
+    int res = -1;
+
+    msg = kyk_new_var_str(message);
+    rsn = kyk_new_var_str(message);
+    res = kyk_build_new_reject_ptl_payload(&pld, msg, ccode, rsn, NULL, 0);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_build_new_reject_ptl_payload failed");
+
+    res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_REJECT, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_build_new_ptl_message failed");
+
+    res = kyk_write_ptl_msg(sockfd, rep_msg);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_write_ptl_msg failed");
+
+    kyk_free_var_str(msg);
+    kyk_free_var_str(rsn);
+    kyk_free_ptl_msg(rep_msg);
+    kyk_free_ptl_payload(pld);
     
     return 0;
 

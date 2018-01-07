@@ -1236,3 +1236,78 @@ error:
     return -1;
 }
 
+
+int kyk_seri_blk_to_new_pld(ptl_payload** new_pld, const struct kyk_block* blk)
+{
+    ptl_payload* pld = NULL;
+    size_t checknum = 0;
+    int res = -1;
+
+    check(blk, "Failed to kyk_seri_blk_to_new_pld: blk is NULL");
+    check(blk -> blk_size > 0, "Failed to kyk_seri_blk_to_new_pld: blk -> blk_size is invalid");
+    check(blk -> hd, "Failed to kyk_seri_blk_to_new_pld: blk -> hd is NULL");
+    check(blk -> tx, "Failed to kyk_seri_blk_to_new_pld: blk -> tx is NULL");
+
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_seri_blk_to_new_pld: calloc failed");
+
+    pld -> len = blk -> blk_size;
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+
+    res = kyk_seri_blk(pld -> data, blk, &checknum);
+    check(res == 0, "Failed to kyk_seri_blk_to_new_pld: kyk_seri_blk failed");
+    check(checknum == pld -> len, "Failed to kyk_seri_blk_to_new_pld: kyk_seri_blk failed");
+
+    *new_pld = pld;
+
+    return 0;
+    
+error:
+    if(pld) kyk_free_ptl_payload(pld);
+    return -1;
+}
+
+int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
+				     const var_str* message,
+				     uint8_t ccode,
+				     const var_str* reason,
+				     uint8_t* data,
+				     size_t data_len)
+{
+    ptl_payload* pld = NULL;
+    uint8_t* bufp = NULL;
+
+    check(new_pld, "Failed to kyk_build_new_reject_ptl_payload: new_pld is NULL");
+    check(message, "Failed to kyk_build_new_reject_ptl_payload: message is NULL");
+    check(reason, "Failed to kyk_build_new_reject_ptl-payload: reason is NULL");
+    
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_build_new_reject_ptl_payload: calloc failed");
+
+    pld -> len = get_var_str_size(message) + sizeof(ccode) + get_var_str_size(reason) + data_len;
+    pld -> data = calloc(pld -> len, sizeof(*pld -> data));
+    check(pld -> data, "Failed to kyk_build_new_reject_ptl_payload: calloc failed");
+
+    bufp = pld -> data;
+
+    bufp += kyk_pack_var_str(bufp, message);
+    
+    *bufp = ccode;
+    bufp += 1;
+
+    bufp += kyk_pack_var_str(bufp, reason);
+
+    if(data){
+	memcpy(bufp, data, data_len);
+    }
+    
+
+    *new_pld = pld;
+
+    return 0;
+
+error:
+    if(pld) kyk_free_ptl_payload(pld);
+    return -1;
+}
+

@@ -49,6 +49,7 @@ static int cmd_req_getheaders(const char* node, const char* service, struct kyk_
 static int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wallet);
 
 static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
+static int be_rejected(const ptl_message* rep_msg);
 
 
 int main(int argc, char *argv[])
@@ -385,6 +386,7 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
     struct ptl_inv* inv_list = NULL;
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
+    ptl_message* rep_msg = NULL;
     varint_t inv_count = 0;
     int sfd = 0;
     int res = -1;
@@ -407,6 +409,15 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
 
     res = kyk_write_ptl_msg(sfd, req_msg);
 
+    while(1){
+	res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
+	kyk_print_ptl_message(rep_msg);
+	if(be_rejected(rep_msg)){
+	    printf("rejected by node\n");
+	    break;
+	}
+    }
+
     close(sfd);
 
     return 0;
@@ -417,6 +428,15 @@ error:
     
     return -1;
     
+}
+
+int be_rejected(const ptl_message* rep_msg)
+{
+    int res = 0;
+
+    res = strcmp(rep_msg -> cmd, KYK_MSG_TYPE_REJECT) == 0 ? 1 : 0;
+
+    return res;
 }
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
