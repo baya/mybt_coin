@@ -154,6 +154,7 @@ int kyk_ptl_blk_rep(int sockfd,
 		    struct kyk_wallet* wallet)
 {
     struct kyk_block* blk = NULL;
+    struct kyk_block** blk_list = NULL;
     struct ptl_inv* inv_list = NULL;
     struct ptl_inv* inv = NULL;
     ptl_payload* pld = NULL;
@@ -169,15 +170,25 @@ int kyk_ptl_blk_rep(int sockfd,
     res = kyk_deseri_new_ptl_inv_list(req_msg -> pld -> data, &inv_list, &inv_count);
     check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_deseri_new_ptl_inv_list failed");
 
+    blk_list = calloc(inv_count, sizeof(*blk_list));
+    check(blk_list, "Failed to kyk_ptl_blk_rep: calloc failed");
+
     for(i = 0; i < inv_count; i++){
 	inv = inv_list + i;
+	blk = blk_list[i];
 
 	res = kyk_wallet_query_block_by_hashbytes(wallet, (uint8_t*)inv -> hash, &blk);
 	if(res != 0){
 	    kyk_print_hex("invalid blk hash", inv -> hash, 32);
 	    kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "no found block");
-	    break;
+	    goto error;
 	}
+	
+
+    }
+
+    for(i = 0; i < inv_count; i++){
+	blk = blk_list[i];
 	
 	res = kyk_seri_blk_to_new_pld(&pld, blk);
 	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_seri_blk_to_new_pld failed");
@@ -185,15 +196,17 @@ int kyk_ptl_blk_rep(int sockfd,
 	res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_BLOCK, NT_MAGIC_MAIN, pld);
 	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_build_new_ptl_message failed");
 
-	res = kyk_write_ptl_msg(sockfd, rep_msg);
+	res = kyk_reply_ptl_msg(sockfd, rep_msg);
 	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_write_ptl_msg failed");
 
     }
+
+    kyk_free_block_list(blk_list, inv_count);
     
     return 0;
 
 error:
-    
+    if(blk_list) kyk_free_block_list(blk_list, inv_count);
     return -1;
 }
 
@@ -215,7 +228,7 @@ int kyk_ptl_reject_rep(int sockfd,
     res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_REJECT, NT_MAGIC_MAIN, pld);
     check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_build_new_ptl_message failed");
 
-    res = kyk_write_ptl_msg(sockfd, rep_msg);
+    res = kyk_reply_ptl_msg(sockfd, rep_msg);
     check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_write_ptl_msg failed");
 
     kyk_free_var_str(msg);

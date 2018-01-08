@@ -239,6 +239,27 @@ char* test_kyk_build_new_reject_ptl_payload()
     return NULL;
 }
 
+char* test_kyk_deseri_new_reject_entity()
+{
+    ptl_reject_entity* et = NULL;
+    uint8_t buf[] = {
+	0x0e, 0x6e, 0x6f, 0x20, 0x66, 0x6f, 0x75, 0x6e,
+	0x64, 0x20, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x10,
+	0x0e, 0x6e, 0x6f, 0x20, 0x66, 0x6f, 0x75, 0x6e,
+	0x64, 0x20, 0x62, 0x6c, 0x6f, 0x63, 0x6b
+    };
+    int res = -1;
+
+    res = kyk_deseri_new_reject_entity(buf, sizeof(buf), &et, NULL);
+    mu_assert(res == 0, "Failed to test_kyk_deseri_new_reject_entity");
+
+    /* kyk_print_ptl_reject_entity(et); */
+
+    kyk_free_ptl_reject_entity(et);
+    
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
@@ -253,6 +274,7 @@ char *all_tests()
     mu_run_test(test_kyk_deseri_new_ptl_inv_list);
     mu_run_test(test_kyk_seri_blk_to_new_pld);
     mu_run_test(test_kyk_build_new_reject_ptl_payload);
+    mu_run_test(test_kyk_deseri_new_reject_entity);
     
     return NULL;
 }

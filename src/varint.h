@@ -26,4 +26,5 @@ var_str* kyk_new_var_str(const char* str);
 
 void kyk_free_var_str(var_str* vstr);
 
+int kyk_unpack_var_str(const uint8_t* buf, var_str** new_vstr, size_t* checknum);
 #endif

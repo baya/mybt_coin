@@ -907,3 +907,20 @@ int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header*
 	return 0;
     }
 }
+
+void kyk_free_block_list(struct kyk_block** blk_list, size_t count)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+
+    if(blk_list){
+	for(i = 0; i < count; i++){
+	    blk = blk_list[i];
+	    if(blk){
+		kyk_free_block(blk);
+	    }
+	}
+
+	free(blk_list);
+    }
+}

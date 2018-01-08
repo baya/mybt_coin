@@ -99,6 +99,13 @@ struct ptl_inv {
     char hash[32];
 };
 
+typedef struct ptl_reject_entity {
+    var_str* message;
+    uint8_t ccode;
+    var_str* reason;
+    uint8_t* data;
+} ptl_reject_entity;
+
 int kyk_build_new_ptl_message(ptl_message** new_msg,
 			      const char* cmd,
 			      uint32_t nt_magic,
@@ -200,5 +207,12 @@ int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
 				     uint8_t* data,
 				     size_t data_len);
 
+void kyk_free_ptl_reject_entity(ptl_reject_entity* et);
 
+int kyk_deseri_new_reject_entity(const uint8_t* buf,
+				 size_t buf_len,
+				 ptl_reject_entity** new_entity,
+				 size_t* checknum);
+
+void kyk_print_ptl_reject_entity(const ptl_reject_entity* et);
 #endif

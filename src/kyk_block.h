@@ -121,4 +121,6 @@ int kyk_deseri_block(struct kyk_block* blk,
 int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header* rhd);
 
 void kyk_print_block(const struct kyk_block* blk);
+
+void kyk_free_block_list(struct kyk_block** blk_list, size_t count);
 #endif

@@ -1298,6 +1298,7 @@ int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
     bufp += kyk_pack_var_str(bufp, reason);
 
     if(data){
+	check(data_len == 32, "Failed to kyk_build_new_reject_ptl_payload: data len is invalid");
 	memcpy(bufp, data, data_len);
     }
     
@@ -1309,5 +1310,116 @@ int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
 error:
     if(pld) kyk_free_ptl_payload(pld);
     return -1;
+}
+
+int kyk_deseri_new_reject_entity(const uint8_t* buf,
+				 size_t buf_len,
+				 ptl_reject_entity** new_entity,
+				 size_t* checknum)
+{
+    ptl_reject_entity* et = NULL;
+    const uint8_t* bufp = NULL;
+    size_t len = 0;
+    int res = -1;
+    size_t data_len = 0;
+    
+    check(buf, "Failed to kyk_deseri_new_reject_entity: buf is NULL");
+
+    et = calloc(1, sizeof(*et));
+    check(et, "Failed to kyk_deseri_new_reject_entity: calloc failed");
+
+    bufp = buf;
+
+    res = kyk_unpack_var_str(bufp, &et -> message, &len);
+    check(res == 0, "Failed to kyk_deseri_new_reject_entity: kyk_unpack_var_str failed");
+    bufp += len;
+
+    et -> ccode = *bufp;
+    bufp += sizeof(et -> ccode);
+
+    res = kyk_unpack_var_str(bufp, &et -> reason, &len);
+    check(res == 0, "Failed to kyk_deseri_new_reject_entity: kyk_unpack_var_str failed");
+    bufp += len;
+
+    if(bufp - buf < buf_len){
+	data_len = buf_len - (bufp - buf);
+	check(data_len == 32, "Failed to kyk_deseri_new_reject_entity: invalid data len");
+	et -> data = calloc(data_len, sizeof(*et -> data));
+	check(et -> data, "Failed to kyk_deseri_new_reject_entity: calloc failed");
+	memcpy(et -> data, bufp, data_len);
+	bufp += data_len;
+    }
+
+    *new_entity = et;
+
+    if(checknum){
+	*checknum = bufp - buf;
+    }
+    
+    return 0;
+
+error:
+    if(et) kyk_free_ptl_reject_entity(et);
+    return -1;
+}
+
+void kyk_print_ptl_reject_entity(const ptl_reject_entity* et)
+{
+    printf("reject_entity -> message: %s\n", et -> message -> data);
+    switch(et -> ccode){
+    case CC_REJECT_MALFORMED:
+	printf("reject_entity -> ccode: CC_REJECT_MALFORMED\n");
+	break;
+    case CC_REJECT_INVALID:
+	printf("reject_entity -> ccode: CC_REJECT_INVALID\n");
+	break;
+    case CC_REJECT_OBSOLETE:
+	printf("reject_entity -> ccode: CC_REJECT_OBSOLETE\n");
+	break;
+    case CC_REJECT_DUPLICATE:
+	printf("reject_entity -> ccode: CC_REJECT_DUPLICATE\n");
+	break;
+    case CC_REJECT_NONSTANDARD:
+	printf("reject_entity -> ccode: CC_REJECT_NONSTANDARD\n");
+	break;
+    case CC_REJECT_DUST:
+	printf("reject_entity -> ccode: CC_REJECT_DUST\n");
+	break;
+    case CC_REJECT_INSUFFICIENTFEE:
+	printf("reject_entity -> ccode: CC_REJECT_INSUFFICIENTFEE\n");
+	break;
+    case CC_REJECT_CHECKPOINT:
+	printf("reject_entity -> ccode: CC_REJECT_CHECKPOINT\n");
+	break;
+    default:
+	printf("reject_entity -> ccode: %d\n", et -> ccode);
+	break;
+    }
+    printf("reject_entity -> reason: %s\n", et -> reason -> data);
+    if(et -> data){
+	kyk_print_hex("reject_entity -> data", et -> data, 32);
+    }
+}
+
+void kyk_free_ptl_reject_entity(ptl_reject_entity* et)
+{
+    if(et){
+	if(et -> message){
+	    kyk_free_var_str(et -> message);
+	    et -> message = NULL;
+	}
+
+	if(et -> reason){
+	    kyk_free_var_str(et -> reason);
+	    et -> reason = NULL;
+	}
+
+	if(et -> data){
+	    free(et -> data);
+	    et -> data = NULL;
+	}
+
+	free(et);
+    }
 }
 

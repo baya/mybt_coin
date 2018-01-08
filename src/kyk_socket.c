@@ -116,6 +116,8 @@ int kyk_write_ptl_msg(int sfd, const ptl_message* msg)
 
     kyk_write_msg_buf(sfd, msg_buf);
 
+    kyk_print_ptl_message(msg);
+
     return 0;
 
 error:
@@ -137,6 +139,7 @@ int kyk_write_msg_buf(int sfd, const ptl_msg_buf* msg_buf)
 	fprintf(stderr, "partial/failed write\n");
 	exit(EXIT_FAILURE);
     }/* 011111{:"? this is typed by my cat */
+
 
     return 0;
 }

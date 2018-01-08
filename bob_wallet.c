@@ -413,7 +413,11 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
 	res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
 	kyk_print_ptl_message(rep_msg);
 	if(be_rejected(rep_msg)){
+	    ptl_reject_entity* et = NULL;
+	    pld = rep_msg -> pld;
+	    res = kyk_deseri_new_reject_entity(pld -> data, pld -> len, &et, NULL);
 	    printf("rejected by node\n");
+	    kyk_print_ptl_reject_entity(et);
 	    break;
 	}
     }
