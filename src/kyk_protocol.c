@@ -153,7 +153,7 @@ int kyk_ptl_blk_rep(int sockfd,
 		    const ptl_message* req_msg,
 		    struct kyk_wallet* wallet)
 {
-    struct kyk_block* blk = NULL;
+    /* struct kyk_block** blk = NULL; */
     struct kyk_block** blk_list = NULL;
     struct ptl_inv* inv_list = NULL;
     struct ptl_inv* inv = NULL;
@@ -161,6 +161,8 @@ int kyk_ptl_blk_rep(int sockfd,
     ptl_message* rep_msg = NULL;
     varint_t inv_count = 0;
     varint_t i = 0;
+    char* hashstr = NULL;
+    char* msg = NULL;
     int res = -1;
     
     check(wallet, "Failed to kyk_ptl_blk_rep: wallet is NULL");
@@ -175,12 +177,18 @@ int kyk_ptl_blk_rep(int sockfd,
 
     for(i = 0; i < inv_count; i++){
 	inv = inv_list + i;
-	blk = blk_list[i];
-
-	res = kyk_wallet_query_block_by_hashbytes(wallet, (uint8_t*)inv -> hash, &blk);
+	res = kyk_wallet_query_block_by_hashbytes(wallet, (uint8_t*)inv -> hash, &blk_list[i]);
 	if(res != 0){
-	    kyk_print_hex("invalid blk hash", inv -> hash, 32);
-	    kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "no found block");
+	    hashstr = bytes2hexstr((uint8_t*)inv -> hash, sizeof(inv -> hash));
+	    check(hashstr, "Failed to kyk_ptl_blk_rep: bytes2hexstr failed");
+	    
+	    msg = kyk_asprintf("found no block: %s", hashstr);
+	    check(msg, "Failed to kyk_ptl_blk_rep: kyk_asprintf failed");
+	    
+	    kyk_print_hex("invalid blk hash", (uint8_t*)inv -> hash, sizeof(inv -> hash));
+	    kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, msg);
+	    free(hashstr);
+	    free(msg);
 	    goto error;
 	}
 	
@@ -188,9 +196,8 @@ int kyk_ptl_blk_rep(int sockfd,
     }
 
     for(i = 0; i < inv_count; i++){
-	blk = blk_list[i];
 	
-	res = kyk_seri_blk_to_new_pld(&pld, blk);
+	res = kyk_seri_blk_to_new_pld(&pld, blk_list[i]);
 	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_seri_blk_to_new_pld failed");
 	
 	res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_BLOCK, NT_MAGIC_MAIN, pld);

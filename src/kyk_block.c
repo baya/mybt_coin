@@ -848,12 +848,16 @@ void kyk_print_blk_hd_chain(const struct kyk_blk_hd_chain* hd_chain)
 
 void kyk_print_blk_header(const struct kyk_blk_header* hd)
 {
+    uint8_t digest[32];
+
+    kyk_blk_hash256(digest, hd);
     printf("version: %u\n", hd -> version);
     kyk_print_hex("pre_blk_hash ", hd -> pre_blk_hash, sizeof(hd -> pre_blk_hash));
     kyk_print_hex("mrk_root_hash ", hd -> mrk_root_hash, sizeof(hd -> mrk_root_hash));
     printf("tts: %u\n", hd -> tts);
     printf("bts: %0x\n", hd -> bts);
     printf("nonce: %u\n", hd -> nonce);
+    kyk_print_hex("hash", digest, sizeof(digest));
 }
 
 

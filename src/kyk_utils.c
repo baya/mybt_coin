@@ -256,6 +256,26 @@ error:
     return NULL;
 }
 
+char* bytes2hexstr(const uint8_t* buf, size_t buflen)
+{
+    char* str = NULL;
+    size_t len = 0;
+    int res = -1;
+
+    len = buflen * 2 + 1;
+    str = calloc(len, sizeof(*str));
+    check(str, "Failed to bytes2hexstr: calloc failed");
+
+    res = str_snprintf_bytes(str, len, buf, buflen);
+    check(res == 0, "Failed to bytes2hexstr: str_snprintf_bytes failed");
+
+    return str;
+
+error:
+
+    return NULL;
+}
+
 
 int str_snprintf_bytes(char        *str,
 		       size_t       len,

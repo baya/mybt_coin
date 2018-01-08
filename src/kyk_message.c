@@ -1049,7 +1049,7 @@ int kyk_seri_ptl_inv_list_to_new_pld(ptl_payload** new_pld,
     pld = calloc(1, sizeof(*pld));
     check(pld, "Failed to kyk_seri_ptl_inv_list_to_new_pld: calloc failed");
 
-    pld -> len = inv_count * sizeof(struct ptl_inv);
+    pld -> len = get_varint_size(inv_count) + inv_count * sizeof(struct ptl_inv);
     pld -> data = calloc(pld -> len, sizeof(*pld -> data));
 
     check(pld -> data, "Failed to kyk_seri_ptl_inv_list_to_new_pld: calloc failed");
@@ -1086,7 +1086,7 @@ int kyk_seri_ptl_inv(uint8_t* buf,
 
     beej_pack(bufp, "<L", inv -> type);
     bufp += sizeof(inv -> type);
-    
+
     memcpy(bufp, inv -> hash, sizeof(inv -> hash));
     bufp += sizeof(inv -> hash);
 

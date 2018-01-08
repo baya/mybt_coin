@@ -397,6 +397,7 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
     res = kyk_hd_chain_to_inv_list(wallet_hd_chain, PTL_INV_MSG_BLOCK, &inv_list, &inv_count);
     check(res == 0, "Failed to cmd_req_getdata: kyk_hd_chain_to_inv_list failed");
 
+    kyk_print_inv_list(inv_list, inv_count);
 
     res = kyk_seri_ptl_inv_list_to_new_pld(&pld, inv_list, inv_count);
     check(res == 0, "Failed to cmd_req_getdata: kyk_seri_ptl_inv_list_to_new_pld failed");
