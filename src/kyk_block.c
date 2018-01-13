@@ -12,6 +12,7 @@
 #include "kyk_sha.h"
 #include "kyk_hash_nonce.h"
 #include "kyk_validate.h"
+#include "kyk_message.h"
 #include "dbg.h"
 
 int kyk_get_blkself_size(const struct kyk_block* blk,
@@ -98,6 +99,29 @@ int kyk_init_block(struct kyk_block *blk)
 
     return 0;
 
+error:
+
+    return -1;
+}
+
+int kyk_deseri_block_from_blk_message(struct kyk_block* blk,
+				      ptl_message* msg,
+				      size_t* checknum)
+{
+    int res = -1;
+    uint8_t* bufp = NULL;
+    
+    check(blk, "Failed to kyk_deseri_block_from_blk_message: blk is NULL");
+    check(msg, "Failed to kyk_deseri_block_from_blk_message: msg is NULL");
+    check(strcmp(msg -> cmd, KYK_MSG_TYPE_BLOCK) == 0, "Failed to kyk_deseri_block_from_blk_message: invalid message type");
+
+    bufp = msg -> pld -> data;
+
+    res = kyk_deseri_block(blk, bufp, checknum);
+    check(res == 0, "Failed to kyk_deseri_block_from_blk_message: kyk_deseri_block failed");
+    
+    return 0;
+    
 error:
 
     return -1;
@@ -926,5 +950,34 @@ void kyk_free_block_list(struct kyk_block** blk_list, size_t count)
 	}
 
 	free(blk_list);
+    }
+}
+
+
+void kyk_free_kyk_block_list(struct kyk_block_list* blk_list)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+    
+    if(blk_list){
+	for(i = blk_list -> len - 1; i >= 1; i--){
+	    blk = blk_list -> data + i;
+	    kyk_free_block(blk);
+	}
+        kyk_free_block(blk_list -> data);
+	free(blk_list);
+    }
+}
+
+
+void kyk_print_kyk_block_list(const struct kyk_block_list* blk_list)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < blk_list -> len; i++){
+	blk = blk_list -> data + i;
+	printf("============================Block#%zu\n", i);
+	kyk_print_block(blk);
     }
 }

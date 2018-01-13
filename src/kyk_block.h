@@ -6,8 +6,15 @@
 #include "kyk_ldb.h"
 #include "kyk_buff.h"
 
+typedef struct protocol_btc_message ptl_message;
+
 struct kyk_blk_hd_chain {
     struct kyk_blk_header* hd_list;
+    size_t len;
+};
+
+struct kyk_block_list {
+    struct kyk_block* data;
     size_t len;
 };
 
@@ -123,4 +130,12 @@ int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header*
 void kyk_print_block(const struct kyk_block* blk);
 
 void kyk_free_block_list(struct kyk_block** blk_list, size_t count);
+
+void kyk_free_kyk_block_list(struct kyk_block_list* blk_list);
+
+int kyk_deseri_block_from_blk_message(struct kyk_block* blk,
+				      ptl_message* msg,
+				      size_t* checknum);
+
+void kyk_print_kyk_block_list(const struct kyk_block_list* blk_list);
 #endif

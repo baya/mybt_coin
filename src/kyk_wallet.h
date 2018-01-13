@@ -174,4 +174,7 @@ int kyk_wallet_query_block_by_hashbytes(const struct kyk_wallet* wallet,
 					const uint8_t* blk_hash,
 					struct kyk_block** new_blk);
 
+int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet,
+						 const struct kyk_block_list* blk_list);
+
 #endif

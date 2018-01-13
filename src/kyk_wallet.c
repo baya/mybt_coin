@@ -1602,6 +1602,45 @@ error:
 
 }
 
+int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet,
+						 const struct kyk_block_list* blk_list)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo_chain* newly_utxo_chain = NULL;
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+    int res = -1;
+
+    res = kyk_load_utxo_chain(&utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_load_utxo_chain failed");
+
+    for(i = 0; i < blk_list -> len; i++){
+	blk = blk_list -> data + i;
+	res = kyk_append_utxo_chain_from_block(utxo_chain, blk);
+	check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_append_utxo_chain_from_block failed");
+    }
+
+    for(i = 0; i < blk_list -> len; i++){
+	blk = blk_list -> data + i;
+	res = kyk_set_spent_utxo_within_block(utxo_chain, blk);
+	check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_set_spent_utxo failed");
+    }
+
+    res = kyk_remove_spent_utxo(&newly_utxo_chain, utxo_chain);
+    check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_remove_spent_utxo failed");
+
+    res = kyk_wallet_save_utxo_chain(wallet, newly_utxo_chain);
+    check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_wallet_save_utxo_chain failed");
+
+    kyk_free_utxo_chain(utxo_chain);
+    return 0;
+    
+error:
+    
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+    
+}
 
 int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
 			    struct kyk_wallet* wallet,

@@ -383,11 +383,14 @@ error:
 int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wallet)
 {
     struct kyk_blk_hd_chain* wallet_hd_chain = NULL;
+    struct kyk_block_list* blk_list = NULL;
+    struct kyk_block* blk;
     struct ptl_inv* inv_list = NULL;
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
     ptl_message* rep_msg = NULL;
     varint_t inv_count = 0;
+    varint_t i = 0;
     int sfd = 0;
     int res = -1;
 
@@ -398,6 +401,13 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
     check(res == 0, "Failed to cmd_req_getdata: kyk_hd_chain_to_inv_list failed");
 
     kyk_print_inv_list(inv_list, inv_count);
+
+    blk_list = calloc(1, sizeof(*blk_list));
+    check(blk_list, "Failed to cmd_req_getdata: calloc failed");
+
+    blk_list -> len = inv_count;
+    blk_list -> data = calloc(blk_list -> len, sizeof(*blk_list -> data));
+    check(blk_list -> data, "Failed to cmd_req_getdata: calloc failed");
 
     res = kyk_seri_ptl_inv_list_to_new_pld(&pld, inv_list, inv_count);
     check(res == 0, "Failed to cmd_req_getdata: kyk_seri_ptl_inv_list_to_new_pld failed");
@@ -412,7 +422,10 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
 
     while(1){
 	res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
+	check(res == 0, "Failed to cmd_req_getdata: kyk_recv_ptl_msg failed");	
 	kyk_print_ptl_message(rep_msg);
+	blk = blk_list -> data + i;
+	res = kyk_deseri_block_from_blk_message(blk, rep_msg, NULL);
 	if(be_rejected(rep_msg)){
 	    ptl_reject_entity* et = NULL;
 	    pld = rep_msg -> pld;
@@ -421,14 +434,26 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
 	    kyk_print_ptl_reject_entity(et);
 	    break;
 	}
+
+	i++;
+	if(i >= blk_list -> len){
+	    break;
+	}
     }
+
+    kyk_print_kyk_block_list(blk_list);
+
+    res = kyk_wallet_update_utxo_chain_with_block_list(wallet, blk_list);
+    check(res == 0, "Failed to cmd_req_getdata: kyk_wallet_update_utxo_chain_with_block_list failed");
+    
+    kyk_free_kyk_block_list(blk_list);
 
     close(sfd);
 
     return 0;
 
 error:
-
+    if(blk_list) kyk_free_kyk_block_list(blk_list);
     if(sfd) close(sfd);
     
     return -1;

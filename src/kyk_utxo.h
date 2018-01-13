@@ -95,4 +95,8 @@ int kyk_utxo_chain_append_force(struct kyk_utxo_chain* utxo_chain,
 
 int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value);
 
+
+int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
+				    const struct kyk_block* blk);
+
 #endif

@@ -14,6 +14,16 @@
 #include "dbg.h"
 
 
+static int kyk_utxo_match_txin(const struct kyk_utxo* utxo,
+			const struct kyk_txin* txin);
+
+static int kyk_set_spent_utxo_with_txin(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_txin* txin);
+
+static int kyk_set_spent_utxo_within_tx(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_tx* tx);
+
+
 int kyk_free_utxo_chain(struct kyk_utxo_chain* utxo_chain)
 {
     struct kyk_utxo* curr;
@@ -812,4 +822,86 @@ int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* 
 error:
 
     return -1;
+}
+
+
+int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
+				    const struct kyk_block* blk)
+{
+    const struct kyk_tx* tx = NULL;
+    varint_t i = 0;
+    int res = -1;
+    
+    check(utxo_chain, "Failed to kyk_set_spent_utxo_within_block: utxo_chain is NULL");
+    check(utxo_chain -> hd, "Failed to kyk_set_spent_utxo_within_block: utxo_chain -> hd is NULL");
+    check(blk, "Failed to kyk_set_spent_utxo_within_block: blk is NULL");
+
+    for(i = 0; i < blk -> tx_count; i++){
+	tx = blk -> tx + i;
+	res = kyk_set_spent_utxo_within_tx(utxo_chain, tx);
+	check(res == 0, "Failed to kyk_set_spent_utxo_within_block: kyk_set_spent_utxo_within_tx failed");
+    }
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+static int kyk_set_spent_utxo_within_tx(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_tx* tx)
+{    
+    const struct kyk_txin* txin = NULL;
+    varint_t i = 0;
+    
+    check(utxo_chain, "Failed to kyk_set_spent_utxo_within_tx: utxo_chain is NULL");
+    check(utxo_chain -> hd, "Failed to kyk_set_spent_utxo_within_tx: utxo_chain -> hd is NULL");
+    check(tx, "Failed to kyk_set_spent_utxo_within_tx: tx is NULL");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	txin = tx -> txin + i;
+	kyk_set_spent_utxo_with_txin(utxo_chain, txin);
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+static int kyk_set_spent_utxo_with_txin(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_txin* txin)
+{
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	res = kyk_utxo_match_txin(utxo, txin);
+	if(res == 0){
+	    utxo -> spent = 1;
+	}
+	utxo = utxo -> next;
+    }
+
+    return 0;
+}
+
+static int kyk_utxo_match_txin(const struct kyk_utxo* utxo,
+			       const struct kyk_txin* txin)
+{
+    int txid_eq = -1;
+    int inx_eq = -1;
+
+    txid_eq = kyk_digest_eq(utxo -> txid, txin -> pre_txid, sizeof(txin -> pre_txid));
+    inx_eq = utxo -> outidx == txin -> pre_txout_inx;
+
+    if(txid_eq && inx_eq){
+	return 0;
+    } else {
+	return -1;
+    }
+    
 }
