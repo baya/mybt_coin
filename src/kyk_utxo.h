@@ -99,4 +99,13 @@ int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* 
 int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
 				    const struct kyk_block* blk);
 
+
+int kyk_remove_repeated_utxo(struct kyk_utxo_chain** new_utxo_chain,
+			     const struct kyk_utxo_chain* src_utxo_chain);
+
+
+int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
+				const struct kyk_utxo* src_utxo);
+
+int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo);
 #endif

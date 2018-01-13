@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 	printf("ping request:       %s %s\n", argv[0], CMD_PING);
 	printf("version request:    %s %s\n", argv[0], CMD_REQ_VERSION);
 	printf("getheaders request: %s %s\n", argv[0], CMD_REQ_GETHEADERS);
+	printf("getdata request: %s %s\n", argv[0], CMD_REQ_GETDATA);
     }
     
     if(argc == 2){

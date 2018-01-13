@@ -1606,6 +1606,7 @@ int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet
 						 const struct kyk_block_list* blk_list)
 {
     struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo_chain* utxo_chain1 = NULL;
     struct kyk_utxo_chain* newly_utxo_chain = NULL;
     struct kyk_block* blk = NULL;
     size_t i = 0;
@@ -1626,8 +1627,13 @@ int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet
 	check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_set_spent_utxo failed");
     }
 
-    res = kyk_remove_spent_utxo(&newly_utxo_chain, utxo_chain);
+    res = kyk_remove_spent_utxo(&utxo_chain1, utxo_chain);
     check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_remove_spent_utxo failed");
+
+    kyk_print_utxo_chain(utxo_chain);
+
+    res = kyk_remove_repeated_utxo(&newly_utxo_chain, utxo_chain1);
+    check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_remove_repeated_utxo failed");
 
     res = kyk_wallet_save_utxo_chain(wallet, newly_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_update_utxo_chain_with_block_list: kyk_wallet_save_utxo_chain failed");

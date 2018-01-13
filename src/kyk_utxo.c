@@ -799,6 +799,82 @@ error:
     return -1;
 }
 
+int kyk_remove_repeated_utxo(struct kyk_utxo_chain** new_utxo_chain,
+			     const struct kyk_utxo_chain* src_utxo_chain)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_remove_repeated_utxo: calloc failed");
+
+    utxo = src_utxo_chain -> hd;
+    while(utxo){
+	res = kyk_utxo_chain_include_utxo(utxo_chain, utxo);
+	check(res >= 0, "Failed to kyk_remove_repeated_utxo: kyk_utxo_chain_include_utxo failed");
+	if(res == 0){
+	    res = kyk_utxo_chain_append_force(utxo_chain, utxo);
+	    check(res == 0, "Failed to kyk_remove_repeated_utxo: kyk_utxo_chain_append failed");
+	}
+	utxo = utxo -> next;
+    }
+
+    *new_utxo_chain = utxo_chain;
+
+    return 0;
+
+error:
+    if(utxo_chain) free(utxo_chain);
+    return -1;
+}
+
+int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
+				const struct kyk_utxo* src_utxo)
+{
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+
+    check(utxo_chain, "Failed to kyk_utxo_chain_include_utxo: utxo_chain is NULL");
+    check(src_utxo, "Failed to kyk_utxo_chain_include_utxo: src_utxo is NULL");
+
+    utxo = utxo_chain -> hd;
+    
+    for(i = 0; i < utxo_chain -> len; i++){
+	if(kyk_cmp_utxo(utxo, src_utxo) == 0){
+	    return 1;
+	}
+	utxo = utxo -> next;
+    }
+    
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo)
+{
+    int txid_eq = -1;
+    int blk_eq = -1;
+    int idx_eq = -1;
+    int res = -1;
+
+    txid_eq = kyk_digest_eq(l_utxo -> txid, r_utxo -> txid, sizeof(r_utxo -> txid));
+    blk_eq = kyk_digest_eq(l_utxo -> blkhash, r_utxo -> blkhash, sizeof(r_utxo -> blkhash));
+    idx_eq = l_utxo -> outidx == r_utxo -> outidx;
+
+    res = txid_eq && blk_eq && idx_eq;
+
+    if(res == 1){
+	return 0;
+    } else {
+	return -1;
+    }
+
+}
+
 int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value)
 {
     struct kyk_utxo* utxo = NULL;
