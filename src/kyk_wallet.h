@@ -177,4 +177,9 @@ int kyk_wallet_query_block_by_hashbytes(const struct kyk_wallet* wallet,
 int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet,
 						 const struct kyk_block_list* blk_list);
 
+int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
+			   struct kyk_wallet* wallet,
+			   long double btc_num,
+			   const char* btc_addr);
+
 #endif

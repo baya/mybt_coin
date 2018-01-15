@@ -49,6 +49,7 @@ static int cmd_req_getheaders(const char* node, const char* service, struct kyk_
 static int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wallet);
 
 static void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
+static void dump_tx_to_file(const struct kyk_tx* tx, const char* filepath)
 static int be_rejected(const ptl_message* rep_msg);
 
 
@@ -242,7 +243,7 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 		long double btc_num,
 		const char* btc_addr)
 {
-    struct kyk_block* blk = NULL;
+    struct kyk_tx* tx = NULL;
     int res = -1;
 
     check(wallet, "Failed to cmd_make_tx: wallet is NULL");
@@ -253,10 +254,10 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 	return -1;
     }
 
-    res = kyk_wallet_cmd_make_tx(&blk, wallet, btc_num, btc_addr);
-    check(res == 0, "Failed to cmd_make_tx");
+    res = kyk_spv_wallet_make_tx(&tx, wallet, btc_num, btc_addr);
+    check(res == 0, "Failed to cmd_make_tx: kyk_wallet_make_tx failed");
 
-    dump_block_to_file(blk, "tmp/cmd_make_tx_blk_dump.dat");
+    dump_tx_to_file(tx, "tmp/cmd_make_tx_dump.dat");
 
     return 0;
     
@@ -477,6 +478,19 @@ void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
 
     kyk_seri_blk(buf, blk, &check_size);
     FILE* fp = fopen(filepath, "wb");
+    fwrite(buf, sizeof(*buf), check_size, fp);
+
+    fclose(fp);
+}
+
+void dump_tx_to_file(const struct kyk_tx* tx, const char* filepath)
+{
+    uint8_t buf[1000];
+    size_t check_size = 0;
+    FILE* fp = NULL;
+
+    check_size = kyk_ser_tx(buf, tx);
+    fp = fopen(filepath, "wb");
     fwrite(buf, sizeof(*buf), check_size, fp);
 
     fclose(fp);

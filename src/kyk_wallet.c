@@ -1187,7 +1187,7 @@ int kyk_wallet_make_tx(struct kyk_tx** new_tx,
     check(new_tx, "Failed to kyk_wallet_make_tx: new_tx is NULL");
     check(wallet, "Failed to kyk_wallet_make_tx: wallet is NULL");
     check(wallet_utxo_chain, "Failed to kyk_wallet_make_tx: wallet_utxo_chain is NULL");
-    check(new_utxo_chain, "Failed to kyk_wallet_make_tx: new_utxo_chain is NULL");
+    /* check(new_utxo_chain, "Failed to kyk_wallet_make_tx: new_utxo_chain is NULL"); */
     check(value > 0, "Failed to kyk_wallet_makx_tx: value should greater than zero");
     check(value < TOTAL_BTC_VALUE, "Failed to kyk_wallet_makx_tx: value should be less than TOTAL_BTC_VALUE");
     check(btc_addr, "Failed to kyk_wallet_make_tx: btc_addr is NULL");
@@ -1197,11 +1197,6 @@ int kyk_wallet_make_tx(struct kyk_tx** new_tx,
 
     res = kyk_validate_address(btc_addr, strlen(btc_addr));
     check(res == 0, "Failed to kyk_wallet_make_tx: kyk_validate_address failed");
-
-
-    /* res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet); */
-    /* check(res == 0, "Failed to kyk_wallet_make_tx: kyk_load_utxo_chain failed"); */
-
 
     res = kyk_find_available_utxo_list(&value_utxo_chain, wallet_utxo_chain, amount + mfee);
     check(res == 0, "Failed to kyk_wallet_make_tx: kyk_find_available_utxo_list failed");
@@ -1218,17 +1213,16 @@ int kyk_wallet_make_tx(struct kyk_tx** new_tx,
 
     *new_tx = tx;
 
-    *new_utxo_chain = value_utxo_chain;
+    if(new_utxo_chain){
+	*new_utxo_chain = value_utxo_chain;
+    }
 
-    /* kyk_free_utxo_chain(value_utxo_chain); */
-    /* kyk_free_utxo_chain(wallet_utxo_chain); */
     kyk_wkey_chain_free(wkey_chain);
     
     return 0;
 
 error:
     if(value_utxo_chain) kyk_free_utxo_chain(value_utxo_chain);
-    /* if(wallet_utxo_chain) kyk_free_utxo_chain(wallet_utxo_chain); */
     if(wkey_chain) kyk_wkey_chain_free(wkey_chain);
     return -1;
 }
@@ -1667,9 +1661,9 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
     uint64_t mfee = 0;
     int res = -1;
 
-    check(wallet, "Failed to cmd_make_tx: wallet is NULL");
-    check(btc_num > 0, "Failed to cmd_make_tx: btc_num is invalid");
-    check(btc_addr, "Failed to cmd_make_tx: btc_addr is NULL");
+    check(wallet, "Failed to kyk_wallet_cmd_make_tx: wallet is NULL");
+    check(btc_num > 0, "Failed to kyk_wallet_cmd_make_tx: btc_num is invalid");
+    check(btc_addr, "Failed to kyk_wallet_cmd_make_tx: btc_addr is NULL");
 
     value = btc_num * ONE_BTC_COIN_VALUE;
 
@@ -1795,4 +1789,43 @@ int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain)
 error:
 
     return -1;
+}
+
+
+int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
+			   struct kyk_wallet* wallet,
+			   long double btc_num,
+			   const char* btc_addr)
+{
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_tx* tx = NULL;
+    uint32_t version = 1;
+    uint64_t value = 0;
+    uint64_t total_value = 0;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_spv_wallet_make_tx: wallet is NULL");
+    check(btc_num > 0, "Failed to kyk_spv_wallet__make_tx: btc_num is invalid");
+    check(btc_addr, "Failed to kyk_spv_wallet_make_tx: btc_addr is NULL");
+
+    value = btc_num * ONE_BTC_COIN_VALUE;
+
+    res = kyk_wallet_query_total_balance(wallet, &total_value);
+    check(res == 0, "Fialed to kyk_spv_wallet_make_tx: kyk_wallet_query_total_balance failed");
+    check(total_value >= value, "Failed to kyk_spv_wallet_make_tx: not sufficient funds");
+
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");    
+
+    res = kyk_wallet_make_tx(&tx, NULL, version, wallet, wallet_utxo_chain, value, btc_addr);
+    check(res == 0, "Failed to kyk_spv_wallet_make_tx: kyk_wallet_make_tx failed");
+
+    *new_tx = tx;
+
+    return 0;
+
+error:
+
+    return -1;
+
 }
