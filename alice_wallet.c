@@ -21,8 +21,8 @@
 #include "kyk_tx.h"
 #include "dbg.h"
 
-#define WALLET_NAME ".bob_wallet"
-#define WALLET_AGENT "/BobWallet:0.0.0.1/"
+#define WALLET_NAME ".alice_wallet"
+#define WALLET_AGENT "/AliceWallet:0.0.0.1/"
 
 #define CMD_INIT           "init"
 #define CMD_DELETE         "delete"

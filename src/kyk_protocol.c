@@ -250,4 +250,31 @@ error:
     return -1;
 }
 
+int kyk_ptl_tx_rep(int sockfd,
+		   const ptl_message* req_msg,
+		   struct kyk_wallet* wallet)
+{
+    struct kyk_tx* tx = NULL;
+    ptl_payload* pld = NULL;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_ptl_tx_rep: wallet is NULL");
+    check(req_msg, "Failed to kyk_ptl_tx_rep: req_msg is NULL");
+    check(req_msg -> pld, "Failed to kyk_ptl_tx_rep: req_msg -> pld is NULL");
+
+    pld = req_msg -> pld;
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_ptl_tx_rep: calloc failed");
+
+    res = kyk_deseri_tx(tx, pld -> data, NULL);
+    check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_deseri_tx failed");
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
 

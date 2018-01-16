@@ -900,6 +900,28 @@ error:
     return -1;
 }
 
+int kyk_get_total_utxo_list_value(const struct kyk_utxo* utxo_list, size_t len, uint64_t* value)
+{
+    struct kyk_utxo* utxo = NULL;
+    uint64_t total_value = 0;
+    size_t i = 0;
+
+    check(utxo_list, "Failed to kyk_get_total_utxo_list_value: utxo_list is NULL");
+
+    for(i = 0; i < len; i++){
+	utxo = utxo_list + i;
+	total_value += utxo -> value;
+    }
+
+    *value = total_value;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
 
 int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
 				    const struct kyk_block* blk)

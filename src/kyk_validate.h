@@ -10,6 +10,7 @@ struct kyk_block;
 struct kyk_txin;
 struct kyk_tx;
 struct kyk_txout;
+struct kyk_utxo;
 
 int kyk_validate_blk_header(const struct kyk_blk_hd_chain* hd_chain,
 			    const struct kyk_blk_header* outHd);
@@ -32,5 +33,8 @@ int kyk_validate_tx_txin_script_sig(const struct kyk_tx* tx,
 				    const struct kyk_txout* txout);
 
 
+int kyk_validate_tx(const struct kyk_tx* tx,
+		    const struct kyk_utxo* utxo_list,
+		    size_t len);
 
 #endif

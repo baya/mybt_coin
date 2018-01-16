@@ -142,6 +142,9 @@ int kyk_start_serve(const char* host, const char* port)
 		    load_wallet(&wallet);
 		    res = kyk_ptl_blk_rep(new_fd, msg, wallet);
 		    /* check(res == 0, "Failed to kyk_ptl_blk_rep"); */
+		} else if(match_cmd(msg -> cmd, KYK_MSG_TYPE_TX)){
+		    load_wallet(&wallet);
+		    
 		} else {
 		}
 	    }

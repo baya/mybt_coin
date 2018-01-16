@@ -167,5 +167,6 @@ int kyk_get_total_txout_value(const struct kyk_tx* tx, uint64_t* value);
 
 void kyk_print_tx_list(const struct kyk_tx* tx_list, size_t tx_count);
 
+int kyk_copy_txout_from_utxo(struct kyk_txout* txout, const struct kyk_utxo* utxo);
 
 #endif

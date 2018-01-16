@@ -108,4 +108,6 @@ int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
 				const struct kyk_utxo* src_utxo);
 
 int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo);
+
+int kyk_get_total_utxo_list_value(const struct kyk_utxo* utxo_list, size_t len, uint64_t* value);
 #endif

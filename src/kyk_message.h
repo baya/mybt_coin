@@ -215,4 +215,7 @@ int kyk_deseri_new_reject_entity(const uint8_t* buf,
 				 size_t* checknum);
 
 void kyk_print_ptl_reject_entity(const ptl_reject_entity* et);
+
+int kyk_seri_tx_to_new_pld(ptl_payload** new_pld, const struct kyk_tx* tx);
+
 #endif

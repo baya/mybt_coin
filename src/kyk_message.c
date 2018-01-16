@@ -1423,3 +1423,25 @@ void kyk_free_ptl_reject_entity(ptl_reject_entity* et)
     }
 }
 
+int kyk_seri_tx_to_new_pld(ptl_payload** new_pld, const struct kyk_tx* tx)
+{
+    ptl_payload* pld = NULL;
+    int res = -1;
+
+    check(tx, "Failed to kyk_seri_tx_to_new_pld: tx is NULL");
+
+    pld = calloc(1, sizeof(*pld));
+    check(pld, "Failed to kyk_seri_tx_to_new_pld: calloc failed");
+
+    res = kyk_seri_tx_to_new_buf(tx, &pld -> data, &pld -> len);
+    check(res == 0, "Failed to kyk_seri_tx_to_new_pld: kyk_seri_tx_to_new_buf failed");
+
+    *new_pld = pld;
+
+    return 0;
+
+error:
+    if(pld) kyk_free_ptl_payload(pld);
+    return -1;
+}
+

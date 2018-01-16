@@ -82,6 +82,11 @@ bob_wallet: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
 bob_wallet: bob_wallet.c
 	$(CC) $(CFLAGS) $< -o $@.out
 
+alice_wallet: $(TARGET) $(SO_TARGET)
+alice_wallet: CFLAGS += $(SO_TARGET) -L$(LIB_PATHS) $(LIBS)
+alice_wallet: alice_wallet.c
+	$(CC) $(CFLAGS) $< -o $@.out
+
 dev_tool: CFLAGS += $(TARGET) -L$(LIB_PATHS) $(LIBS)
 dev_tool: dev_tool.c
 	$(CC) $(CFLAGS) $< -o $@.out
