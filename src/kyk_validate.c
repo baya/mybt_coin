@@ -233,8 +233,6 @@ int kyk_validate_tx(const struct kyk_tx* tx,
     struct kyk_txout* txout_list = NULL;
     struct kyk_txout* txout = NULL;
     const struct kyk_utxo* utxo = NULL;
-    uint8_t* unsig_buf = NULL;
-    size_t buf_len = 0;
     size_t i = 0;
     uint64_t total_value = 0;
     uint64_t total_utxo_value = 0;
@@ -250,10 +248,8 @@ int kyk_validate_tx(const struct kyk_tx* tx,
 	txout = txout_list + i;
 	utxo = utxo_list + i;
 	res = kyk_copy_txout_from_utxo(txout, utxo);
+	kyk_print_txout(txout);
 	check(res == 0, "Failed to kyk_validate_tx: kyk_copy_txout_from_utxo failed");
-
-	res = kyk_seri_tx_for_sig(tx, HTYPE_SIGHASH_ALL, i, txout, &unsig_buf, &buf_len);
-	check(res == 0, "Failed to kyk_validate_tx: kyk_seri_tx_for_sig failed");
 
 	res = kyk_validate_tx_txin_script_sig(tx, i, txout);
 	check(res == 0, "Failed to kyk_validate_tx: kyk_validate_tx_txin_script_sig failed");
@@ -274,3 +270,5 @@ error:
     if(txout_list) kyk_free_txout_list(txout_list, len);
     return -1;
 }
+
+

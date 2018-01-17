@@ -132,7 +132,7 @@ char* test_kyk_make_utxo()
     res = kyk_deseri_tx(tx, TX_43fcd_BUF, NULL);
     check(res ==0, "Failed to test_kyk_get_addr_from_txout: kyk_deseri_tx failed");
 
-    res = kyk_make_utxo(&utxo, txid, blkhash, tx -> txout, txout_idx);
+    res = kyk_make_new_utxo(&utxo, txid, blkhash, tx -> txout, txout_idx);
     mu_assert(res == 0, "Failed to test_kyk_make_utxo");
     mu_assert(strcmp(utxo -> btc_addr, expect_addr) == 0, "Failed to test_kyk_make_utxo");
     

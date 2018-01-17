@@ -46,11 +46,11 @@ int kyk_utxo_chain_append(struct kyk_utxo_chain* utxo_chain,
 
 int kyk_get_utxo_size(const struct kyk_utxo* utxo, size_t* utxo_size);
 
-int kyk_make_utxo(struct kyk_utxo** new_utxo,
-		  const uint8_t* txid,
-		  const uint8_t* blkhash,
-		  const struct kyk_txout* txout,
-		  uint32_t txout_idx);
+int kyk_make_new_utxo(struct kyk_utxo** new_utxo,
+		      const uint8_t* txid,
+		      const uint8_t* blkhash,
+		      const struct kyk_txout* txout,
+		      uint32_t txout_idx);
 
 int kyk_valid_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 
@@ -110,4 +110,11 @@ int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
 int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo);
 
 int kyk_get_total_utxo_list_value(const struct kyk_utxo* utxo_list, size_t len, uint64_t* value);
+
+int kyk_make_utxo(struct kyk_utxo* utxo,
+		  const uint8_t* txid,
+		  const uint8_t* blkhash,
+		  const struct kyk_txout* txout,
+		  uint32_t txout_idx);
+
 #endif

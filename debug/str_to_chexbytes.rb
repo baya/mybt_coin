@@ -15,7 +15,7 @@ bstr_list = tokens.map {|tkn| "0x#{tkn}" }.each_with_index {|item, i|
   tokens_list[count] ||= []
   tokens_list[count] << item
 
-  if (i+1) % 16 == 0
+  if (i+1) % 8 == 0
     count += 1
   end
 
