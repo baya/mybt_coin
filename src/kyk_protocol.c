@@ -9,6 +9,7 @@
 #include "kyk_utils.h"
 #include "beej_pack.h"
 #include "kyk_block.h"
+#include "kyk_utxo.h"
 #include "dbg.h"
 
 /* The ping message is sent primarily to confirm that the TCP/IP connection is still valid. */
@@ -255,6 +256,7 @@ int kyk_ptl_tx_rep(int sockfd,
 		   struct kyk_wallet* wallet)
 {
     struct kyk_tx* tx = NULL;
+    struct kyk_utxo_list* utxo_list = NULL;
     ptl_payload* pld = NULL;
     int res = -1;
 
@@ -269,6 +271,14 @@ int kyk_ptl_tx_rep(int sockfd,
 
     res = kyk_deseri_tx(tx, pld -> data, NULL);
     check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_deseri_tx failed");
+
+    utxo_list = calloc(1, sizeof(*utxo_list));
+    check(utxo_list, "Failed to kyk_ptl_tx_rep: calloc failed");
+
+    res = kyk_wallet_find_utxo_list_for_tx(wallet, tx, utxo_list);
+    check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_wallet_find_utxo_list_for_tx failed");
+
+    kyk_print_utxo_list(utxo_list);
 
     return 0;
     

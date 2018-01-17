@@ -22,6 +22,10 @@ struct kyk_utxo_chain {
     uint32_t len;
 };
 
+struct kyk_utxo_list {
+    struct kyk_utxo* data;
+    size_t len;
+};
 
 int kyk_free_utxo_chain(struct kyk_utxo_chain* utxo_chain);
 int kyk_free_utxo(struct kyk_utxo* utxo);
@@ -83,7 +87,7 @@ int kyk_utxo_chain_get_total_value(const struct kyk_utxo_chain* utxo_chain, uint
 
 void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 
-int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
+int kyk_copy_new_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
 
 int kyk_refer_to_utxo(struct kyk_utxo* utxo, struct kyk_utxo* ref_utxo);
 
@@ -116,5 +120,12 @@ int kyk_make_utxo(struct kyk_utxo* utxo,
 		  const uint8_t* blkhash,
 		  const struct kyk_txout* txout,
 		  uint32_t txout_idx);
+
+int kyk_utxo_match_txin(const struct kyk_utxo* utxo,
+			const struct kyk_txin* txin);
+
+int kyk_copy_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* src_utxo);
+
+void kyk_print_utxo_list(const struct kyk_utxo_list* utxo_list);
 
 #endif

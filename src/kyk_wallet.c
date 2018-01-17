@@ -1705,6 +1705,8 @@ int kyk_wallet_cmd_make_tx( struct kyk_block** new_blk,
     res = kyk_remove_spent_utxo(&updated_utxo_chain, wallet_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_remove_spent_utxo failed");
 
+    kyk_print_utxo_chain(updated_utxo_chain);
+
     res = kyk_wallet_save_utxo_chain(wallet, updated_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_wallet_save_utxo_chain failed");
 
@@ -1828,4 +1830,91 @@ error:
 
     return -1;
 
+}
+
+
+int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+				 struct kyk_utxo_chain* src_utxo_chain,
+				 const struct kyk_wallet* wallet)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    char** addr_list = NULL;
+    char* addr = NULL;
+    size_t len = 0;
+    size_t i = 0;
+    int res = -1;
+
+    check(new_utxo_chain, "Failed to kyk_wallet_filter_utxo_chain: new_utxo_chain is NULL");
+    check(src_utxo_chain, "Failed to kyk_wallet_filter_utxo_chain: src_utxo_chain is NULL");
+    check(wallet, "Failed to kyk_wallet_filter_utxo_chain: wallet is NULL");
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_wallet_filter_utxo_chain: calloc failed");
+
+    res = kyk_wallet_load_addr_list(wallet, &addr_list, &len);
+    check(res == 0, "Failed to kyk_wallet_filter_utxo_chain: kyk_wallet_load_addr_list failed");
+
+    for(i = 0; i < len; i++){
+    }
+
+    *new_utxo_chain = utxo_chain;
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+
+int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
+				     const struct kyk_tx* tx,
+				     struct kyk_utxo_list* utxo_list)
+{
+    struct kyk_utxo* utxo = NULL;
+    struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    size_t i = 0;
+    size_t j = 0;
+    
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_wallet_find_utxo_list_for_tx: wallet is NULL");
+    check(tx, "Failed to kyk_wallet_find_utxo_list_for_tx: tx is NULL");
+    check(tx -> vin_sz > 0, "Failed to kyk_wallet_find_utxo_list_for_tx: tx -> vin_sz is invalid");
+    check(utxo_list, "Failed to kyk_wallet_find_utxo_list_for_tx: utxo_list is NULL");
+    check(utxo_list -> data == NULL, "Failed to kyk_wallet_find_utxo_list_for_tx: utxo_list -> data should be NULL");
+
+    utxo_list -> len = 0;
+
+    utxo_list -> data = calloc(tx -> vin_sz, sizeof(*utxo_list -> data));
+    check(utxo_list -> data, "Failed to kyk_wallet_find_utxo_list_for_tx: calloc failed");
+
+    res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
+    check(res == 0, "Failed to kyk_wallet_find_utxo_list_for_tx: kyk_load_utxo_chain failed");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	utxo = wallet_utxo_chain -> hd;
+	for(j = 0; j < wallet_utxo_chain -> len; j++){
+	    /* printf("????????????txin\n"); */
+	    /* kyk_print_txin(tx -> txin + i); */
+	    printf("????????utxo\n");
+	    kyk_print_utxo(utxo);
+	    res = kyk_utxo_match_txin(utxo, tx -> txin + i);
+	    if(res == 0){
+		kyk_copy_utxo(utxo_list -> data + i, utxo);
+		utxo_list -> len += 1;
+		break;
+	    }
+	    utxo = utxo -> next;
+	}
+
+	/* didn't find matched utxo for txin */
+	check(utxo_list -> len == i+1, "Failed to kyk_wallet_find_utxo_list_for_tx: no matched utxo for txin: %zu", i);
+    }
+    
+    return 0;
+    
+error:
+    if(utxo_list -> data) free(utxo_list -> data);
+    return -1;
 }

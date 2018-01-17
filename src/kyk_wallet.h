@@ -6,8 +6,8 @@
 #include "kyk_ldb.h"
 
 struct kyk_blk_hd_chain;
-
 struct kyk_utxo_chain;
+struct kyk_utxo_list;
 
 struct kyk_wallet_key {
     struct kyk_key* key;
@@ -181,5 +181,13 @@ int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
 			   struct kyk_wallet* wallet,
 			   long double btc_num,
 			   const char* btc_addr);
+
+int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
+				     const struct kyk_tx* tx,
+				     struct kyk_utxo_list* utxo_list);
+
+int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+				 struct kyk_utxo_chain* src_utxo_chain,
+				 const struct kyk_wallet* wallet);
 
 #endif
