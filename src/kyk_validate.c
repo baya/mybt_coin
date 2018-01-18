@@ -241,14 +241,13 @@ int kyk_validate_tx(const struct kyk_tx* tx,
     check(tx, "Failed to kyk_validate_tx: tx is NULL");
     check(utxo_list, "Failed to kyk_validate_tx: utxo_list is NULL");
 
-    txout_list = calloc(len, sizeof(*utxo_list));
-    check(utxo_list, "Failed to kyk_validate_tx: calloc failed");
+    txout_list = calloc(len, sizeof(*txout_list));
+    check(txout_list, "Failed to kyk_validate_tx: calloc failed");
 
     for(i = 0; i < len; i++){
 	txout = txout_list + i;
 	utxo = utxo_list + i;
 	res = kyk_copy_txout_from_utxo(txout, utxo);
-	kyk_print_txout(txout);
 	check(res == 0, "Failed to kyk_validate_tx: kyk_copy_txout_from_utxo failed");
 
 	res = kyk_validate_tx_txin_script_sig(tx, i, txout);

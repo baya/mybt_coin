@@ -1337,8 +1337,6 @@ int kyk_unlock_utxo(const struct kyk_utxo* utxo,
     check(txin, "Failed to kyk_unlock_utxo: txin is NULL");
 
     memcpy(txin -> pre_txid, utxo -> txid, sizeof(txin -> pre_txid));
-    printf("???????? unlock utxo\n");
-    kyk_print_utxo(utxo);
     txin -> pre_txout_inx = utxo -> outidx;
     txin -> sc_size = 0;
     if(txin -> sc) free(txin -> sc);

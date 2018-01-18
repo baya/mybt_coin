@@ -128,4 +128,9 @@ int kyk_copy_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* src_utxo);
 
 void kyk_print_utxo_list(const struct kyk_utxo_list* utxo_list);
 
+int kyk_filter_utxo_chain_by_addr(struct kyk_utxo_chain* dest_utxo_chain,
+				  struct kyk_utxo_chain* src_utxo_chain,
+				  const char* addr);
+
+
 #endif

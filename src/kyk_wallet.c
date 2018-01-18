@@ -1800,6 +1800,7 @@ int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
 			   const char* btc_addr)
 {
     struct kyk_utxo_chain* wallet_utxo_chain = NULL;
+    struct kyk_utxo_chain* filtered_utxo_chain = NULL;
     struct kyk_tx* tx = NULL;
     uint32_t version = 1;
     uint64_t value = 0;
@@ -1817,9 +1818,11 @@ int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
     check(total_value >= value, "Failed to kyk_spv_wallet_make_tx: not sufficient funds");
 
     res = kyk_load_utxo_chain(&wallet_utxo_chain, wallet);
-    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");    
+    check(res == 0, "Failed to kyk_wallet_cmd_make_tx: kyk_load_utxo_chain failed");
 
-    res = kyk_wallet_make_tx(&tx, NULL, version, wallet, wallet_utxo_chain, value, btc_addr);
+    res = kyk_wallet_filter_utxo_chain(&filtered_utxo_chain, wallet_utxo_chain, wallet);
+
+    res = kyk_wallet_make_tx(&tx, NULL, version, wallet, filtered_utxo_chain, value, btc_addr);
     check(res == 0, "Failed to kyk_spv_wallet_make_tx: kyk_wallet_make_tx failed");
 
     *new_tx = tx;
@@ -1839,7 +1842,6 @@ int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
 {
     struct kyk_utxo_chain* utxo_chain = NULL;
     char** addr_list = NULL;
-    char* addr = NULL;
     size_t len = 0;
     size_t i = 0;
     int res = -1;
@@ -1855,6 +1857,8 @@ int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     check(res == 0, "Failed to kyk_wallet_filter_utxo_chain: kyk_wallet_load_addr_list failed");
 
     for(i = 0; i < len; i++){
+	res = kyk_filter_utxo_chain_by_addr(utxo_chain, src_utxo_chain, addr_list[i]);
+	check(res == 0, "Failed to kyk_wallet_filter_utxo_chain: kyk_filter_utxo_chain_by_addr failed");
     }
 
     *new_utxo_chain = utxo_chain;
@@ -1862,7 +1866,7 @@ int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
     return 0;
     
 error:
-
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
     return -1;
 }
 
@@ -1895,10 +1899,7 @@ int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
     for(i = 0; i < tx -> vin_sz; i++){
 	utxo = wallet_utxo_chain -> hd;
 	for(j = 0; j < wallet_utxo_chain -> len; j++){
-	    /* printf("????????????txin\n"); */
-	    /* kyk_print_txin(tx -> txin + i); */
-	    printf("????????utxo\n");
-	    kyk_print_utxo(utxo);
+	    /* kyk_print_utxo(utxo); */
 	    res = kyk_utxo_match_txin(utxo, tx -> txin + i);
 	    if(res == 0){
 		kyk_copy_utxo(utxo_list -> data + i, utxo);

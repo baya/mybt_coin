@@ -1070,13 +1070,22 @@ int kyk_filter_utxo_chain_by_addr(struct kyk_utxo_chain* dest_utxo_chain,
 				  struct kyk_utxo_chain* src_utxo_chain,
 				  const char* addr)
 {
+    struct kyk_utxo* utxo = NULL;
     size_t i = 0;
+    int res = -1;
     
     check(dest_utxo_chain, "Failed to kyk_filter_utxo_chain_by_addr: dest_utxo_chain is NULL");
     check(src_utxo_chain, "Failed to kyk_filter_utxo_chain_by_addr: src_utxo_chain is NULL");
     check(addr, "Failed to kyk_filter_utxo_chain_by_addr: addr is NULL");
 
+    utxo = src_utxo_chain -> hd;
+    
     for(i = 0; i < src_utxo_chain -> len; i++){
+	res = kyk_utxo_match_addr(utxo, addr);
+	if(res == 0){
+	    kyk_utxo_chain_append(dest_utxo_chain, utxo);
+	}
+	utxo = utxo -> next;	
     }
 
     return 0;

@@ -278,7 +278,16 @@ int kyk_ptl_tx_rep(int sockfd,
     res = kyk_wallet_find_utxo_list_for_tx(wallet, tx, utxo_list);
     check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_wallet_find_utxo_list_for_tx failed");
 
-    kyk_print_utxo_list(utxo_list);
+    /* kyk_print_utxo_list(utxo_list); */
+    printf("================== Received Tx:\n");
+    kyk_print_tx(tx);
+
+    res = kyk_validate_tx(tx, utxo_list -> data, utxo_list -> len);
+    if(res == -1){
+	printf("Failed to validate tx \n");
+	kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "validate tx failed");
+	goto error;
+    }
 
     return 0;
     
