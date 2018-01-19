@@ -10,6 +10,7 @@
 #include "beej_pack.h"
 #include "kyk_block.h"
 #include "kyk_utxo.h"
+#include "kyk_validate.h"
 #include "dbg.h"
 
 /* The ping message is sent primarily to confirm that the TCP/IP connection is still valid. */
@@ -257,6 +258,7 @@ int kyk_ptl_tx_rep(int sockfd,
 {
     struct kyk_tx* tx = NULL;
     struct kyk_utxo_list* utxo_list = NULL;
+    struct kyk_block* blk = NULL;
     ptl_payload* pld = NULL;
     int res = -1;
 
@@ -288,6 +290,10 @@ int kyk_ptl_tx_rep(int sockfd,
 	kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "validate tx failed");
 	goto error;
     }
+
+    printf("================== Mining Block\n");
+    kyk_wallet_mining_block(&blk, tx, utxo_list, wallet);
+    kyk_print_block(blk);
 
     return 0;
     

@@ -1094,3 +1094,33 @@ error:
 
     return -1;
 }
+
+
+int kyk_utxo_list_to_chain(const struct kyk_utxo_list* utxo_list,
+			   struct kyk_utxo_chain** new_utxo_chain)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+    int res = -1;
+    
+    check(utxo_list, "Failed to kyk_utxo_list_to_chain: utxo_list is NULL");
+    check(utxo_list -> data, "Failed to kyk_utxo_list_to_chain: utxo_list -> data is NULL");
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_utxo_list_to_chain: calloc failed");
+
+    for(i = 0; i < utxo_list -> len; i++){
+	utxo = utxo_list -> data + i;
+	res = kyk_utxo_chain_append(utxo_chain, utxo);
+	check(res == 0, "Failed to kyk_utxo_list_to_chain: kyk_utxo_chain_append failed");
+    }
+
+    *new_utxo_chain = utxo_chain;
+
+    return 0;
+    
+error:
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
+    return -1;
+}

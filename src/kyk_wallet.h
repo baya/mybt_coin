@@ -190,4 +190,10 @@ int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
 				 struct kyk_utxo_chain* src_utxo_chain,
 				 const struct kyk_wallet* wallet);
 
+
+int kyk_wallet_mining_block(struct kyk_block** new_blk,
+			    const struct kyk_tx* tx,
+			    struct kyk_utxo_list* utxo_list,
+			    struct kyk_wallet* wallet);
+
 #endif

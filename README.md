@@ -130,4 +130,173 @@ $ ./kyk_miner.out delete
 ```
 
 
+## 钱包和矿工节点的交互
 
+首先我们将前面的矿工节点删除:
+
+```
+$ ./kyk_miner.out delete
+```
+
+初始化矿工节点:
+
+```
+$ ./kyk_miner.out init
+```
+
+预挖矿:
+
+```
+$ ./kyk_miner.out makeBlock
+```
+
+查询矿工节点拥有的比特币数量:
+
+```
+$ ./kyk_miner.out queryBalance
+
+100.000000 BTC
+```
+
+此时矿工节点拥有 100 个比特币, 我在程序中设定的是每出一个块, 将产生 100 个比特币.
+
+构建 Bob wallet, Bob wallet 是一个 spv钱包，简单理解就是一个轻量级的客户端，这种客户端不能进行挖矿操作.
+
+```
+$ make bob_wallet
+```
+
+初始化 Bob wallet:
+
+```
+$ ./bob_wallet.out init
+```
+
+查询 Bob wallet 的余额:
+
+```
+$ ./bob_wallet.out queryBalance
+
+0.000000 BTC
+```
+
+此时 Bob wallet 的比特币数量为 0
+
+显示 Bob wallet 的用于接收比特币的地址:
+
+```
+$ ./bob_wallet.out showAddrList
+
+168wfy7TCmyEgQncK9rYRCjn8QE1zmK8cA
+```
+
+在此次交互实验中, Bob wallet 的比特币地址是 168wfy7TCmyEgQncK9rYRCjn8QE1zmK8cA, 请用你实际得到的地址替换这个地址.
+
+
+因为 Bob wallet 没有挖矿的功能, 它获得比特币的方式就是其他人给它发送比特币，现在我们的矿工节点会给 Bob wallet 发送 10 个比特币
+
+
+```
+$ ./kyk_miner.out makeTx 10 168wfy7TCmyEgQncK9rYRCjn8QE1zmK8cA
+```
+
+此时 Bob wallet 已经有了 10 比特币了，但是 Bob wallet 并不知道它已经拥有了 10 个比特币, 只有从矿工节点同步数据后它才能知道自己拥有了 10 个比特币.
+
+启动矿工节点的服务:
+
+```
+$ ./kyk_miner.out serve
+```
+
+Bob wallet 测试和矿工节点的连接:
+
+```
+$ ./bob_wallet.out ping
+```
+
+Bob wallet 从矿工节点同步区块头数据:
+
+```
+$ ./bob_wallet.out req-getheaders
+```
+
+Bob wallet 从矿工节点同步数据:
+
+```
+$ ./bob_wallet.out req-getdata
+```
+
+此时 Bob wallet 知道它拥有了 10 个比特币:
+
+```
+$ ./bob_wallet.out queryBalance
+
+10.000000 BTC
+```
+
+构建 Alice wallet, Alice wallet 是一个和 Bob wallet 功能一致的 spv wallet 唯一的区别就是名字不一样.
+
+```
+$ make alice_wallet
+```
+
+初始化 Alice wallet:
+
+```
+$ ./alice_wallet.out init
+```
+
+查询 Alice wallet 拥有的比特币数量, 此时 Alice wallet 拥有的比特币数量为 0.
+
+```
+$ ./alice_wallet.out queryBalance
+
+0.000000 BTC
+```
+
+显示 Alice wallet 的比特币接收地址
+
+```
+$ ./alice_wallet.out showAddrList
+
+1YYxf8n2jJszrEMkqd9HirGDuAF5Z8fEQ
+```
+
+请使用你实际得到的比特币地址替换地址 `1YYxf8n2jJszrEMkqd9HirGDuAF5Z8fEQ`.
+
+
+Bob wallet 向 Alice wallet 发送 3 个比特币:
+
+```
+$ ./bob_wallet.out makeTx 3 1YYxf8n2jJszrEMkqd9HirGDuAF5Z8fEQ
+```
+
+Bob wallet 从矿工节点同步数据后, Bob wallet 将确认自己的余额:
+
+```
+$ ./bob_wallet.out req-getheaders
+
+$ ./bob_wallet.out req-getdata
+
+$ ./bob_wallet.out queryBalance
+
+6.999000 BTC
+```
+
+Bob wallet 此时余额为 6.999000 BTC, 其中 0.001 个比特币做为矿工费支付给了矿工.
+
+
+Alice wallet 从矿工节点那同步数据后, Alice wallet 将知道它已经拥有了 3 个比特币.
+
+
+```
+$ ./alice_wallet.out req-getheaders
+
+$ ./alice_wallet.out req-getdata
+
+$ ./alice_wallet.out queryBalance
+
+3.000000 BTC
+```
+
+此时 Alice wallet 拥有 3 个比特币.

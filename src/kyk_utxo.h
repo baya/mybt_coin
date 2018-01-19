@@ -132,5 +132,8 @@ int kyk_filter_utxo_chain_by_addr(struct kyk_utxo_chain* dest_utxo_chain,
 				  struct kyk_utxo_chain* src_utxo_chain,
 				  const char* addr);
 
+int kyk_utxo_list_to_chain(const struct kyk_utxo_list* utxo_list,
+			   struct kyk_utxo_chain** new_utxo_chain);
+
 
 #endif
