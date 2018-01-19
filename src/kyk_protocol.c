@@ -210,12 +210,12 @@ int kyk_ptl_blk_rep(int sockfd,
 
     }
 
-    /* kyk_free_block_list(blk_list, inv_count); */
+    kyk_free_block_list(blk_list, inv_count);
     
     return 0;
 
 error:
-    /* if(blk_list) kyk_free_block_list(blk_list, inv_count); */
+    if(blk_list) kyk_free_block_list(blk_list, inv_count);
     return -1;
 }
 
