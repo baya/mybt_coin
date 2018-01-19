@@ -121,8 +121,8 @@ char* test2_make_mkl_tree_root_from_tx_list()
     fclose(fp);
     fp = NULL;
 
-    res = kyk_deseri_block(&blk, buf, &blk_size);
-    check(res == 0, "Failed to test2_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, buf, &blk_size);
+    check(res == 0, "Failed to test2_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
     
     tx_list = blk -> tx;
     tx_count = blk -> tx_count;
@@ -168,8 +168,8 @@ char* test6_make_mkl_tree_root_from_tx_list()
     fclose(fp);
     fp = NULL;
 
-    res = kyk_deseri_block(&blk, buf, &blk_size);
-    check(res == 0, "Failed to test6_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, buf, &blk_size);
+    check(res == 0, "Failed to test6_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
     
     tx_list = blk -> tx;
     tx_count = blk -> tx_count;
@@ -217,8 +217,8 @@ char* test15_make_mkl_tree_root_from_tx_list()
     fclose(fp);
     fp = NULL;
 
-    res = kyk_deseri_block(&blk, buf, &blk_size);
-    check(res == 0, "Failed to test15_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, buf, &blk_size);
+    check(res == 0, "Failed to test15_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
     
     tx_list = blk -> tx;
     tx_count = blk -> tx_count;
@@ -264,8 +264,8 @@ char* test32_make_mkl_tree_root_from_tx_list()
     check(fp, "Failed to test32_make_mkl_tree_root_from_tx_list: fopen blkfile failed");
     fread(buf, 100, 100, fp);
 
-    res = kyk_deseri_block(&blk, buf, &blk_size);
-    check(res == 0, "Failed to test32_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, buf, &blk_size);
+    check(res == 0, "Failed to test32_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
     
     tx_list = blk -> tx;
     tx_count = blk -> tx_count;
@@ -315,10 +315,10 @@ char* test777_make_mkl_tree_root_from_tx_list()
     check(fp, "Failed to test777_make_mkl_tree_root_from_tx_list: fopen blkfile failed");
     fread(buf, 10000, 100, fp);
 
-    res = kyk_deseri_block(&blk, buf, &blk_size);
-    check(res == 0, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
-    check(blk -> tx_count == target_tx_count, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed");
-    check(blk_size == target_blk_size, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_block failed invalid blk_size");
+    res = kyk_deseri_new_block(&blk, buf, &blk_size);
+    check(res == 0, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
+    check(blk -> tx_count == target_tx_count, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed");
+    check(blk_size == target_blk_size, "Failed to test777_make_mkl_tree_root_from_tx_list: kyk_deseri_new_block failed invalid blk_size");
     
     tx_list = blk -> tx;
     tx_count = blk -> tx_count;

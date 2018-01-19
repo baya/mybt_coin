@@ -8,6 +8,7 @@
 #include "test_data.h"
 #include "kyk_block.h"
 #include "gens_block.h"
+#include "kyk_message.h"
 #include "mu_unit.h"
 
 char *test_kyk_seri_blk()
@@ -113,7 +114,7 @@ error:
 }
 
 
-char* test_deseri_block()
+char* test_deseri_new_block()
 {
     struct kyk_block* blk = NULL;
     uint8_t target_blk_hash[] = {
@@ -144,8 +145,8 @@ char* test_deseri_block()
     size_t blk_size = 0;
 
     
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size);
-    mu_assert(res == 0, "Failed to test_deseri_block");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size);
+    mu_assert(res == 0, "Failed to test_deseri_new_block");
     res = kyk_blk_hash256(blk_hash, blk -> hd);
     mu_assert(res == 0, "Failed to test_parse_block: kyk_blk_hash256 failed");
     mu_assert(kyk_digest_eq(blk_hash, target_blk_hash, sizeof(blk_hash)), "Failed to test_parse_block");
@@ -200,8 +201,8 @@ char* test_make_blk_header()
     
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
-    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_new_block failed");
 
     tx_list = blk -> tx;
 
@@ -237,8 +238,8 @@ char* test_kyk_make_block()
     size_t target_blk_size = 490;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_len);
-    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_len);
+    check(res == 0, "Failed to test_make_blk_header: kyk_deseri_new_block failed");
 
     res = kyk_make_block(&blk2, blk -> hd, blk -> tx, blk -> tx_count);
     mu_assert(res == 0, "Failed to test_kyk_make_block");
@@ -367,8 +368,8 @@ char* test_kyk_get_blk_size()
     size_t blk_size2 = 0;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
-    check(res == 0, "Failed to test_kyk_get_blk_size: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blk_size: kyk_deseri_new_block failed");
 
     res = kyk_get_blk_size(blk, &blk_size2);
     mu_assert(res == 0, "Failed to test_kyk_get_blk_size");
@@ -390,8 +391,8 @@ char* test_kyk_get_blkself_size()
     size_t blk_size2 = 0;
     int res = -1;
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, &blk_size1);
-    check(res == 0, "Failed to test_kyk_get_blkself_size: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, &blk_size1);
+    check(res == 0, "Failed to test_kyk_get_blkself_size: kyk_deseri_new_block failed");
 
     res = kyk_get_blkself_size(blk, &blk_size2);
     mu_assert(res == 0, "Failed to test_kyk_get_blkself_size");
@@ -478,6 +479,44 @@ error:
 
 }
 
+char* test_kyk_deseri_block_from_blk_message()
+{
+    struct kyk_block* blk;
+    ptl_message* ptl_msg = NULL;
+    uint8_t msg_buf[] = {
+	0xf9, 0xbe, 0xb4, 0xd9, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0xb7, 0x00, 0x00, 0x00, 0x8c, 0x0e, 0x5c, 0x05, 0x01, 0x00, 0x00, 0x00, 0xf3, 0xf8, 0x8b, 0x54,
+	0x7f, 0x96, 0xdf, 0x8a, 0x9f, 0x79, 0x81, 0x16, 0xe2, 0x5a, 0xf9, 0x96, 0x72, 0xea, 0xbd, 0xc1,
+	0x2e, 0x01, 0xa3, 0xb2, 0xf8, 0xc1, 0xf8, 0x9e, 0x6c, 0x87, 0x00, 0x00, 0x16, 0x4e, 0x1e, 0x42,
+	0xcc, 0x49, 0x10, 0xaf, 0x03, 0xb1, 0x12, 0x63, 0xe8, 0x7c, 0xe6, 0xca, 0xa2, 0xe4, 0xa9, 0xfb,
+	0xd5, 0x30, 0xd7, 0x34, 0xe0, 0x63, 0xa7, 0x0f, 0x3e, 0xba, 0x99, 0xff, 0x7f, 0x19, 0x53, 0x5a,
+	0xff, 0xff, 0x00, 0x1f, 0x1b, 0x9c, 0x01, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0xff, 0xff, 0x11, 0x04, 0xff, 0xff, 0x00, 0x1d, 0x01, 0x04, 0x09, 0x76, 0x6f, 0x69, 0x64, 0x20,
+	0x63, 0x6f, 0x69, 0x6e, 0xff, 0xff, 0xff, 0xff, 0x01, 0x00, 0xe4, 0x0b, 0x54, 0x02, 0x00, 0x00,
+	0x00, 0x19, 0x76, 0xa9, 0x14, 0x1d, 0xb9, 0x27, 0x79, 0x7e, 0x93, 0x14, 0x72, 0x1d, 0x19, 0x3a,
+	0x18, 0x41, 0x71, 0xf3, 0xa3, 0x7c, 0xe3, 0x4c, 0x68, 0x88, 0xac, 0x00, 0x00, 0x00, 0x00
+    };
+
+    int res = -1;
+    blk = calloc(1, sizeof(*blk));
+
+    res = kyk_deseri_new_ptl_message(&ptl_msg, msg_buf, sizeof(msg_buf));
+    check(res == 0, "Failed to test_kyk_deseri_block_from_blk_message: kyk_deseri_new_ptl_message failed");
+
+    res = kyk_deseri_block_from_blk_message(blk, ptl_msg, NULL);
+    mu_assert(res == 0, "Failed to test_kyk_deseri_block_from_blk_message");
+
+    /* kyk_print_block(blk); */
+    
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_deseri_block_from_blk_message";
+}
+
 
 char *all_tests()
 {
@@ -486,7 +525,7 @@ char *all_tests()
     mu_run_test(test_kyk_seri_blk);
     mu_run_test(test_kyk_seri_blkself);
     mu_run_test(test_deseri_blk_header);
-    mu_run_test(test_deseri_block);
+    mu_run_test(test_deseri_new_block);
     mu_run_test(test_make_blk_header);
     mu_run_test(test_kyk_make_block);
     mu_run_test(test_kyk_init_blk_hd_chain);
@@ -495,6 +534,7 @@ char *all_tests()
     mu_run_test(test_kyk_get_blkself_size);
     mu_run_test(test_kyk_tail_hd_chain);
     mu_run_test(test_kyk_make_coinbase_block);
+    mu_run_test(test_kyk_deseri_block_from_blk_message);
     
     return NULL;
 }

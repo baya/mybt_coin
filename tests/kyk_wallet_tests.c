@@ -177,8 +177,8 @@ char* test_kyk_wallet_save_block()
     res = kyk_setup_wallet(&wallet, wdir);
     check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_setup_wallet failed");
 
-    res = kyk_deseri_block(&blk, BLOCK_BUF, NULL);
-    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_deseri_block failed");
+    res = kyk_deseri_new_block(&blk, BLOCK_BUF, NULL);
+    check(res == 0, "Failed to test_kyk_wallet_save_block: kyk_deseri_new_block failed");
 
     res = kyk_set_blkself_info(blk);
     check(res == 0, "Failed to test_kyk_wallet_save_block: failed to kyk_set_blkself_info");
@@ -506,6 +506,32 @@ error:
     return "Failed to test_kyk_wallet_cmd_make_tx";
 }
 
+char* test_kyk_spv_wallet_make_tx()
+{
+    const char* wdir = "/tmp/test_kyk_spv_wallet_make_tx";
+    struct kyk_wallet* wallet = NULL;
+    struct kyk_block* blk = NULL;
+    const char* btc_addr = "1KuA5hsQwSc475WGdE9bVW29Ez2FVzb2Vj";
+    struct kyk_tx* tx = NULL;
+    long double btc_num = 1.0;
+    int res = -1;
+
+    res = kyk_setup_wallet(&wallet, wdir);
+    check(res == 0, "Failed to test_kyk_spv_wallet_make_tx: kyk_setup_wallet failed");
+
+    res = kyk_wallet_make_coinbase_block(&blk, wallet);
+
+    res = kyk_spv_wallet_make_tx(&tx, wallet, btc_num, btc_addr);
+    mu_assert(res == 0, "Failed to test_kyk_spv_wallet_make_tx");
+
+    return NULL;
+
+error:
+
+    return "Failed to test_kyk_spv_wallet_make_tx";
+
+}
+
 
 
 char* all_tests()
@@ -531,6 +557,7 @@ char* all_tests()
     mu_run_test(test_kyk_wallet_cmd_make_tx);
     mu_run_test(test2_kyk_wallet_make_tx);
     mu_run_test(test3_kyk_wallet_make_tx);
+    mu_run_test(test_kyk_spv_wallet_make_tx);
 
     return NULL;
 }

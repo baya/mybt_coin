@@ -12,6 +12,7 @@
 #include "kyk_mkl_tree.h"
 #include "kyk_script.h"
 #include "varint.h"
+#include "kyk_utxo.h"
 #include "dbg.h"
 
 static int validate_hd_bts(const struct kyk_blk_header* hd);
@@ -223,4 +224,50 @@ error:
 
     return -1;
 }
+
+
+int kyk_validate_tx(const struct kyk_tx* tx,
+		    const struct kyk_utxo* utxo_list,
+		    size_t len)
+{
+    struct kyk_txout* txout_list = NULL;
+    struct kyk_txout* txout = NULL;
+    const struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+    uint64_t total_value = 0;
+    uint64_t total_utxo_value = 0;
+    int res = -1;
+
+    check(tx, "Failed to kyk_validate_tx: tx is NULL");
+    check(utxo_list, "Failed to kyk_validate_tx: utxo_list is NULL");
+
+    txout_list = calloc(len, sizeof(*txout_list));
+    check(txout_list, "Failed to kyk_validate_tx: calloc failed");
+
+    for(i = 0; i < len; i++){
+	txout = txout_list + i;
+	utxo = utxo_list + i;
+	res = kyk_copy_txout_from_utxo(txout, utxo);
+	check(res == 0, "Failed to kyk_validate_tx: kyk_copy_txout_from_utxo failed");
+
+	res = kyk_validate_tx_txin_script_sig(tx, i, txout);
+	check(res == 0, "Failed to kyk_validate_tx: kyk_validate_tx_txin_script_sig failed");
+    }
+
+    res = kyk_get_total_txout_value(tx, &total_value);
+    check(res == 0, "Failed to kyk_validate_tx: kyk_get_total_txout_value failed");
+
+    kyk_get_total_utxo_list_value(utxo_list, len, &total_utxo_value);
+
+    check(total_utxo_value >= total_value, "Failed to kyk_validate_tx: total utxo value is less than tx value");
+
+    kyk_free_txout_list(txout_list, len);
+    
+    return 0;
+    
+error:
+    if(txout_list) kyk_free_txout_list(txout_list, len);
+    return -1;
+}
+
 

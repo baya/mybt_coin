@@ -40,6 +40,11 @@ enum kyk_hashtype{
 #define COINBASE_PRE_TXID       "0000000000000000000000000000000000000000000000000000000000000000"
 #define COINBASE_INX            0xffffffff
 
+
+#define KYK_BLK_HD_LEN 80
+#define KYK_BLK_HD_NO_NONCE_LEN 76
+#define KYK_BLK_MAGIC_NO 0xD9B4BEF9
+
 /* 1 BTC = 10 ** 8 Satoshi */
 #define ONE_BTC_COIN_VALUE 100000000llu
 
@@ -64,5 +69,6 @@ typedef struct {
 #define KYK_SERVE_BACKLOG  10      /* how many pending connections queue will hold */
 #define KYK_SERVE_MSG_SIZE 6000
 
+#define KYK_PL_BUF_SIZE    1024
 
 #endif

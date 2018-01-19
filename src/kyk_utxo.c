@@ -14,6 +14,13 @@
 #include "dbg.h"
 
 
+static int kyk_set_spent_utxo_with_txin(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_txin* txin);
+
+static int kyk_set_spent_utxo_within_tx(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_tx* tx);
+
+
 int kyk_free_utxo_chain(struct kyk_utxo_chain* utxo_chain)
 {
     struct kyk_utxo* curr;
@@ -117,8 +124,8 @@ int kyk_append_utxo_chain_from_tx(struct kyk_utxo_chain* utxo_chain,
 
     for(i = 0; i < tx -> vout_sz; i++){
 	txout = tx -> txout + i;
-	res = kyk_make_utxo(&utxo, txid, blkhash, txout, i);
-	check(res == 0, "Failed to kyk_append_utxo_chain_from_tx: kyk_make_utxo failed");
+	res = kyk_make_new_utxo(&utxo, txid, blkhash, txout, i);
+	check(res == 0, "Failed to kyk_append_utxo_chain_from_tx: kyk_make_new_utxo failed");
 	res = kyk_utxo_chain_append(tmp_chain, utxo);
 	check(res == 0, "Failed to kyk_append_utxo_chain_from_tx: kyk_utxo_chain_append failed");
     }
@@ -179,24 +186,49 @@ error:
     return -1;
 }
 
-int kyk_make_utxo(struct kyk_utxo** new_utxo,
+int kyk_make_new_utxo(struct kyk_utxo** new_utxo,
+		      const uint8_t* txid,
+		      const uint8_t* blkhash,
+		      const struct kyk_txout* txout,
+		      uint32_t txout_idx)
+{
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    check(new_utxo, "Failed to kyk_make_new_utxo: new_utxo is NULL");
+    check(txid, "Failed to kyk_make_new_utxo: txid is NULL");
+    check(blkhash, "Failed to kyk_make_new_utxo: blkhash is NULL");
+    check(txout, "Failed to kyk_make_new_utxo: txout is NULL");
+
+    utxo = calloc(1, sizeof(*utxo));
+    res = kyk_make_utxo(utxo, txid, blkhash, txout, txout_idx);
+    check(res == 0, "Failed to kyk_make_new_utxo: kyk_make_utxo failed");
+
+    *new_utxo = utxo;
+
+    return 0;
+
+error:
+    if(utxo) kyk_free_utxo(utxo);
+    return -1;
+}
+
+
+int kyk_make_utxo(struct kyk_utxo* utxo,
 		  const uint8_t* txid,
 		  const uint8_t* blkhash,
 		  const struct kyk_txout* txout,
 		  uint32_t txout_idx)
 {
-    struct kyk_utxo* utxo = NULL;
     char* btc_addr = NULL;
     int res = -1;
 
-    check(new_utxo, "Failed to kyk_make_utxo: new_utxo is NULL");
+    check(utxo, "Failed to kyk_make_utxo: utxo is NULL");
+    check(utxo -> sc == NULL, "Failed to kyk_make_utxo: utxo -> sc should be NULL");
     check(txid, "Failed to kyk_make_utxo: txid is NULL");
     check(blkhash, "Failed to kyk_make_utxo: blkhash is NULL");
     check(txout, "Failed to kyk_make_utxo: txout is NULL");
 
-    utxo = calloc(1, sizeof(*utxo));
-    check(utxo, "Failed to kyk_make_utxo: utxo calloc failed");
-    
     memcpy(utxo -> txid, txid, sizeof(utxo -> txid));
     memcpy(utxo -> blkhash, blkhash, sizeof(utxo -> blkhash));
 
@@ -217,13 +249,12 @@ int kyk_make_utxo(struct kyk_utxo** new_utxo,
 
     utxo -> spent = 0;
 
-    *new_utxo = utxo;
-
     return 0;
 
 error:
-    if(utxo) kyk_free_utxo(utxo);
+    if(utxo -> sc) free(utxo -> sc);
     return -1;
+
 }
 
 
@@ -583,6 +614,19 @@ void kyk_print_utxo(const struct kyk_utxo* utxo)
     printf("spent:   %d\n", utxo -> spent);
 }
 
+void kyk_print_utxo_list(const struct kyk_utxo_list* utxo_list)
+{
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < utxo_list -> len; i++){
+	utxo = utxo_list -> data + i;
+	printf("================================================================================UTXO#%zu\n", i);
+	kyk_print_utxo(utxo);
+	printf("================================================================================UTXO#%zu\n", i);
+    }
+}
+
 void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain)
 {
     struct kyk_utxo* utxo = NULL;
@@ -617,35 +661,19 @@ error:
     return -1;
 }
 
-int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo)
+int kyk_copy_new_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo)
 {
     struct kyk_utxo* utxo = NULL;
+    int res = -1;
     
-    check(new_utxo, "Failed to kyk_copy_utxo: new_utxo is NULL");
-    check(src_utxo, "Failed to kyk_copy_utxo: src_utxo is NULL");
+    check(new_utxo, "Failed to kyk_copy_new_utxo: new_utxo is NULL");
+    check(src_utxo, "Failed to kyk_copy_new_utxo: src_utxo is NULL");
 
     utxo = calloc(1, sizeof(*utxo));
-    check(utxo, "Failed to kyk_copy_utxo: utxo calloc failed");
+    check(utxo, "Failed to kyk_copy_new_utxo: utxo calloc failed");
 
-    memcpy(utxo -> txid, src_utxo -> txid, sizeof(utxo -> txid));
-    memcpy(utxo -> blkhash, src_utxo -> blkhash, sizeof(utxo -> blkhash));
-    
-    utxo -> addr_len = src_utxo -> addr_len;
-    utxo -> btc_addr = calloc(utxo -> addr_len + 1, sizeof(*utxo -> btc_addr));
-    check(utxo -> btc_addr, "Failed to kyk_copy_utxo: utxo -> btc_addr calloc failed");
-    memcpy(utxo -> btc_addr, src_utxo -> btc_addr, utxo -> addr_len);
-
-    utxo -> outidx = src_utxo -> outidx;
-    utxo -> value = src_utxo -> value;
-    
-    utxo -> sc_size = src_utxo -> sc_size;
-    utxo -> sc = calloc(utxo -> sc_size, sizeof(*utxo -> sc));
-    check(utxo -> sc, "Failed to kyk_copy_utxo: utxo -> sc calloc failed");
-    memcpy(utxo -> sc, src_utxo -> sc, utxo -> sc_size);
-
-    utxo -> spent = src_utxo -> spent;
-
-    utxo -> next = NULL;
+    res = kyk_copy_utxo(utxo, src_utxo);
+    check(res == 0, "Failed to kyk_copy_new_utxo: kyk_copy_utxo failed");
 
     *new_utxo = utxo;
 
@@ -654,6 +682,41 @@ int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo)
 error:
     if(utxo) kyk_free_utxo(utxo);
     return -1;
+}
+
+int kyk_copy_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* src_utxo)
+{
+    
+    check(utxo, "Failed to kyk_copy_utxo: new_utxo is NULL");
+    check(utxo -> btc_addr == NULL, "Failed to kyk_copy_utxo: utxo -> btc_addr should be NULL");
+    check(src_utxo, "Failed to kyk_copy_utxo: src_utxo is NULL");
+
+    memcpy(utxo -> txid, src_utxo -> txid, sizeof(utxo -> txid));
+    memcpy(utxo -> blkhash, src_utxo -> blkhash, sizeof(utxo -> blkhash));
+    
+    utxo -> addr_len = src_utxo -> addr_len;
+    utxo -> btc_addr = calloc(utxo -> addr_len + 1, sizeof(*utxo -> btc_addr));
+    check(utxo -> btc_addr, "Failed to kyk_copy_new_utxo: utxo -> btc_addr calloc failed");
+    memcpy(utxo -> btc_addr, src_utxo -> btc_addr, utxo -> addr_len);
+
+    utxo -> outidx = src_utxo -> outidx;
+    utxo -> value = src_utxo -> value;
+    
+    utxo -> sc_size = src_utxo -> sc_size;
+    utxo -> sc = calloc(utxo -> sc_size, sizeof(*utxo -> sc));
+    check(utxo -> sc, "Failed to kyk_copy_new_utxo: utxo -> sc calloc failed");
+    memcpy(utxo -> sc, src_utxo -> sc, utxo -> sc_size);
+
+    utxo -> spent = src_utxo -> spent;
+
+    utxo -> next = NULL;
+
+    return 0;
+
+error:
+
+    return -1;
+
 }
 
 int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
@@ -678,8 +741,8 @@ int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
     utxo = src_utxo_chain -> hd;
     while(utxo){
 	if(utxo -> value >= value){
-	    res = kyk_copy_utxo(&utxo_cpy, utxo);
-	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    res = kyk_copy_new_utxo(&utxo_cpy, utxo);
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_new_utxo failed");
 	    kyk_refer_to_utxo(utxo_cpy, utxo);
 	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
@@ -692,8 +755,8 @@ int kyk_find_available_utxo_list(struct kyk_utxo_chain** new_utxo_chain,
     if(utxo_chain -> len == 0){
 	utxo = src_utxo_chain -> hd;
 	while(utxo){
-	    res = kyk_copy_utxo(&utxo_cpy, utxo);
-	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_utxo failed");
+	    res = kyk_copy_new_utxo(&utxo_cpy, utxo);
+	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_copy_new_utxo failed");
 	    kyk_refer_to_utxo(utxo_cpy, utxo);
 	    res = kyk_utxo_chain_append(utxo_chain, utxo_cpy);	    
 	    check(res == 0, "Failed to kyk_find_available_utxo_list: kyk_utxo_chain_append failed");
@@ -761,6 +824,7 @@ int kyk_remove_spent_utxo(struct kyk_utxo_chain** new_utxo_chain,
 
     struct kyk_utxo_chain* utxo_chain = NULL;
     struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
     int res = -1;
 
     check(new_utxo_chain, "Failed to kyk_remove_spent_utxo: new_utxo_chain is NULL");
@@ -769,15 +833,23 @@ int kyk_remove_spent_utxo(struct kyk_utxo_chain** new_utxo_chain,
     utxo_chain = calloc(1, sizeof(*utxo_chain));
     check(utxo_chain, "Failed to kyk_remove_spent_utxo: utxo_chain calloc failed");
 
+    /* utxo = src_utxo_chain -> hd; */
+    /* while(utxo){ */
+    /* 	if(utxo -> spent == 0){ */
+    /* 	    res = kyk_utxo_chain_append_force(utxo_chain, utxo); */
+    /* 	    check(res == 0, "Failed to kyk_remove_spent_utxo: kyk_utxo_chain_append failed"); */
+    /* 	    utxo = utxo -> next; */
+    /* 	} else { */
+    /* 	    utxo = utxo -> next; */
+    /* 	} */
+    /* } */
+
     utxo = src_utxo_chain -> hd;
-    while(utxo){
+    for(i = 0; i < src_utxo_chain -> len; i++){
 	if(utxo -> spent == 0){
 	    res = kyk_utxo_chain_append_force(utxo_chain, utxo);
-	    check(res == 0, "Failed to kyk_remove_spent_utxo: kyk_utxo_chain_append failed");
-	    utxo = utxo -> next;
-	} else {
-	    utxo = utxo -> next;
 	}
+	utxo = utxo -> next;
     }
 
     *new_utxo_chain = utxo_chain;
@@ -787,6 +859,82 @@ int kyk_remove_spent_utxo(struct kyk_utxo_chain** new_utxo_chain,
 error:
     if(utxo_chain) free(utxo_chain);
     return -1;
+}
+
+int kyk_remove_repeated_utxo(struct kyk_utxo_chain** new_utxo_chain,
+			     const struct kyk_utxo_chain* src_utxo_chain)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_remove_repeated_utxo: calloc failed");
+
+    utxo = src_utxo_chain -> hd;
+    while(utxo){
+	res = kyk_utxo_chain_include_utxo(utxo_chain, utxo);
+	check(res >= 0, "Failed to kyk_remove_repeated_utxo: kyk_utxo_chain_include_utxo failed");
+	if(res == 0){
+	    res = kyk_utxo_chain_append_force(utxo_chain, utxo);
+	    check(res == 0, "Failed to kyk_remove_repeated_utxo: kyk_utxo_chain_append failed");
+	}
+	utxo = utxo -> next;
+    }
+
+    *new_utxo_chain = utxo_chain;
+
+    return 0;
+
+error:
+    if(utxo_chain) free(utxo_chain);
+    return -1;
+}
+
+int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
+				const struct kyk_utxo* src_utxo)
+{
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+
+    check(utxo_chain, "Failed to kyk_utxo_chain_include_utxo: utxo_chain is NULL");
+    check(src_utxo, "Failed to kyk_utxo_chain_include_utxo: src_utxo is NULL");
+
+    utxo = utxo_chain -> hd;
+    
+    for(i = 0; i < utxo_chain -> len; i++){
+	if(kyk_cmp_utxo(utxo, src_utxo) == 0){
+	    return 1;
+	}
+	utxo = utxo -> next;
+    }
+    
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo)
+{
+    int txid_eq = -1;
+    int blk_eq = -1;
+    int idx_eq = -1;
+    int res = -1;
+
+    txid_eq = kyk_digest_eq(l_utxo -> txid, r_utxo -> txid, sizeof(r_utxo -> txid));
+    blk_eq = kyk_digest_eq(l_utxo -> blkhash, r_utxo -> blkhash, sizeof(r_utxo -> blkhash));
+    idx_eq = l_utxo -> outidx == r_utxo -> outidx;
+
+    res = txid_eq && blk_eq && idx_eq;
+
+    if(res == 1){
+	return 0;
+    } else {
+	return -1;
+    }
+
 }
 
 int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value)
@@ -811,5 +959,168 @@ int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* 
     
 error:
 
+    return -1;
+}
+
+int kyk_get_total_utxo_list_value(const struct kyk_utxo* utxo_list, size_t len, uint64_t* value)
+{
+    const struct kyk_utxo* utxo = NULL;
+    uint64_t total_value = 0;
+    size_t i = 0;
+
+    check(utxo_list, "Failed to kyk_get_total_utxo_list_value: utxo_list is NULL");
+
+    for(i = 0; i < len; i++){
+	utxo = utxo_list + i;
+	total_value += utxo -> value;
+    }
+
+    *value = total_value;
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+
+int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
+				    const struct kyk_block* blk)
+{
+    const struct kyk_tx* tx = NULL;
+    varint_t i = 0;
+    int res = -1;
+    
+    check(utxo_chain, "Failed to kyk_set_spent_utxo_within_block: utxo_chain is NULL");
+    check(utxo_chain -> hd, "Failed to kyk_set_spent_utxo_within_block: utxo_chain -> hd is NULL");
+    check(blk, "Failed to kyk_set_spent_utxo_within_block: blk is NULL");
+
+    for(i = 0; i < blk -> tx_count; i++){
+	tx = blk -> tx + i;
+	res = kyk_set_spent_utxo_within_tx(utxo_chain, tx);
+	check(res == 0, "Failed to kyk_set_spent_utxo_within_block: kyk_set_spent_utxo_within_tx failed");
+    }
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+static int kyk_set_spent_utxo_within_tx(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_tx* tx)
+{    
+    const struct kyk_txin* txin = NULL;
+    varint_t i = 0;
+    
+    check(utxo_chain, "Failed to kyk_set_spent_utxo_within_tx: utxo_chain is NULL");
+    check(utxo_chain -> hd, "Failed to kyk_set_spent_utxo_within_tx: utxo_chain -> hd is NULL");
+    check(tx, "Failed to kyk_set_spent_utxo_within_tx: tx is NULL");
+
+    for(i = 0; i < tx -> vin_sz; i++){
+	txin = tx -> txin + i;
+	kyk_set_spent_utxo_with_txin(utxo_chain, txin);
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+static int kyk_set_spent_utxo_with_txin(struct kyk_utxo_chain* utxo_chain,
+					const struct kyk_txin* txin)
+{
+    struct kyk_utxo* utxo = NULL;
+    int res = -1;
+
+    utxo = utxo_chain -> hd;
+    while(utxo){
+	res = kyk_utxo_match_txin(utxo, txin);
+	if(res == 0){
+	    utxo -> spent = 1;
+	}
+	utxo = utxo -> next;
+    }
+
+    return 0;
+}
+
+int kyk_utxo_match_txin(const struct kyk_utxo* utxo,
+			const struct kyk_txin* txin)
+{
+    int txid_eq = -1;
+    int inx_eq = -1;
+
+    txid_eq = kyk_digest_eq(utxo -> txid, txin -> pre_txid, sizeof(txin -> pre_txid));
+    inx_eq = utxo -> outidx == txin -> pre_txout_inx;
+
+    if(txid_eq && inx_eq){
+	return 0;
+    } else {
+	return -1;
+    }
+    
+}
+
+int kyk_filter_utxo_chain_by_addr(struct kyk_utxo_chain* dest_utxo_chain,
+				  struct kyk_utxo_chain* src_utxo_chain,
+				  const char* addr)
+{
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+    int res = -1;
+    
+    check(dest_utxo_chain, "Failed to kyk_filter_utxo_chain_by_addr: dest_utxo_chain is NULL");
+    check(src_utxo_chain, "Failed to kyk_filter_utxo_chain_by_addr: src_utxo_chain is NULL");
+    check(addr, "Failed to kyk_filter_utxo_chain_by_addr: addr is NULL");
+
+    utxo = src_utxo_chain -> hd;
+    
+    for(i = 0; i < src_utxo_chain -> len; i++){
+	res = kyk_utxo_match_addr(utxo, addr);
+	if(res == 0){
+	    kyk_utxo_chain_append(dest_utxo_chain, utxo);
+	}
+	utxo = utxo -> next;	
+    }
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+
+int kyk_utxo_list_to_chain(const struct kyk_utxo_list* utxo_list,
+			   struct kyk_utxo_chain** new_utxo_chain)
+{
+    struct kyk_utxo_chain* utxo_chain = NULL;
+    struct kyk_utxo* utxo = NULL;
+    size_t i = 0;
+    int res = -1;
+    
+    check(utxo_list, "Failed to kyk_utxo_list_to_chain: utxo_list is NULL");
+    check(utxo_list -> data, "Failed to kyk_utxo_list_to_chain: utxo_list -> data is NULL");
+
+    utxo_chain = calloc(1, sizeof(*utxo_chain));
+    check(utxo_chain, "Failed to kyk_utxo_list_to_chain: calloc failed");
+
+    for(i = 0; i < utxo_list -> len; i++){
+	utxo = utxo_list -> data + i;
+	res = kyk_utxo_chain_append(utxo_chain, utxo);
+	check(res == 0, "Failed to kyk_utxo_list_to_chain: kyk_utxo_chain_append failed");
+    }
+
+    *new_utxo_chain = utxo_chain;
+
+    return 0;
+    
+error:
+    if(utxo_chain) kyk_free_utxo_chain(utxo_chain);
     return -1;
 }

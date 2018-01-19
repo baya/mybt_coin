@@ -22,6 +22,10 @@ struct kyk_utxo_chain {
     uint32_t len;
 };
 
+struct kyk_utxo_list {
+    struct kyk_utxo* data;
+    size_t len;
+};
 
 int kyk_free_utxo_chain(struct kyk_utxo_chain* utxo_chain);
 int kyk_free_utxo(struct kyk_utxo* utxo);
@@ -46,11 +50,11 @@ int kyk_utxo_chain_append(struct kyk_utxo_chain* utxo_chain,
 
 int kyk_get_utxo_size(const struct kyk_utxo* utxo, size_t* utxo_size);
 
-int kyk_make_utxo(struct kyk_utxo** new_utxo,
-		  const uint8_t* txid,
-		  const uint8_t* blkhash,
-		  const struct kyk_txout* txout,
-		  uint32_t txout_idx);
+int kyk_make_new_utxo(struct kyk_utxo** new_utxo,
+		      const uint8_t* txid,
+		      const uint8_t* blkhash,
+		      const struct kyk_txout* txout,
+		      uint32_t txout_idx);
 
 int kyk_valid_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 
@@ -83,7 +87,7 @@ int kyk_utxo_chain_get_total_value(const struct kyk_utxo_chain* utxo_chain, uint
 
 void kyk_print_utxo_chain(const struct kyk_utxo_chain* utxo_chain);
 
-int kyk_copy_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
+int kyk_copy_new_utxo(struct kyk_utxo** new_utxo, const struct kyk_utxo* src_utxo);
 
 int kyk_refer_to_utxo(struct kyk_utxo* utxo, struct kyk_utxo* ref_utxo);
 
@@ -94,5 +98,42 @@ int kyk_utxo_chain_append_force(struct kyk_utxo_chain* utxo_chain,
 				struct kyk_utxo* utxo);
 
 int kyk_get_total_utxo_value(const struct kyk_utxo_chain* utxo_chain, uint64_t* value);
+
+
+int kyk_set_spent_utxo_within_block(struct kyk_utxo_chain* utxo_chain,
+				    const struct kyk_block* blk);
+
+
+int kyk_remove_repeated_utxo(struct kyk_utxo_chain** new_utxo_chain,
+			     const struct kyk_utxo_chain* src_utxo_chain);
+
+
+int kyk_utxo_chain_include_utxo(const struct kyk_utxo_chain* utxo_chain,
+				const struct kyk_utxo* src_utxo);
+
+int kyk_cmp_utxo(const struct kyk_utxo* l_utxo, const struct kyk_utxo* r_utxo);
+
+int kyk_get_total_utxo_list_value(const struct kyk_utxo* utxo_list, size_t len, uint64_t* value);
+
+int kyk_make_utxo(struct kyk_utxo* utxo,
+		  const uint8_t* txid,
+		  const uint8_t* blkhash,
+		  const struct kyk_txout* txout,
+		  uint32_t txout_idx);
+
+int kyk_utxo_match_txin(const struct kyk_utxo* utxo,
+			const struct kyk_txin* txin);
+
+int kyk_copy_utxo(struct kyk_utxo* utxo, const struct kyk_utxo* src_utxo);
+
+void kyk_print_utxo_list(const struct kyk_utxo_list* utxo_list);
+
+int kyk_filter_utxo_chain_by_addr(struct kyk_utxo_chain* dest_utxo_chain,
+				  struct kyk_utxo_chain* src_utxo_chain,
+				  const char* addr);
+
+int kyk_utxo_list_to_chain(const struct kyk_utxo_list* utxo_list,
+			   struct kyk_utxo_chain** new_utxo_chain);
+
 
 #endif

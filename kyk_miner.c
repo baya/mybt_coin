@@ -41,6 +41,8 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 		long double btc_num,
 		const char* btc_addr);
 
+int cmd_query_block(const char* blk_hash, const struct kyk_wallet* wallet);
+
 int cmd_serve(const char*host, const char* port);
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath);
@@ -51,7 +53,6 @@ int main(int argc, char *argv[])
     struct kyk_wallet* wallet = NULL;
     char *hmdir = NULL;
     char *wdir = NULL;
-    char *errptr = NULL;
     int res = -1;
 
     hmdir = kyk_gethomedir();
@@ -102,17 +103,9 @@ int main(int argc, char *argv[])
 
     if(argc == 3){
 	if(match_cmd(argv[1], CMD_QUERY_BLOCK)){
-	    struct kyk_bkey_val* bval = NULL;
 	    wallet = kyk_open_wallet(wdir);
 	    check(wallet != NULL, "failed to open wallet");
-	    bval = w_get_bval(wallet, argv[2], &errptr);
-	    check(errptr == NULL, "failed to getblock %s", errptr);
-	    if(bval == NULL){
-		printf("No block record found\n");
-	    } else {
-		kyk_print_bval(bval);
-		kyk_free_bval(bval);
-	    }
+	    cmd_query_block(argv[2], wallet);
 	} else if(match_cmd(argv[1], CMD_ADD_ADDRESS)){
 	    wallet = kyk_open_wallet(wdir);
 	    check(wallet, "failed to open wallet");
@@ -266,11 +259,41 @@ error:
     return -1;
 }
 
+int cmd_query_block(const char* blk_hash, const struct kyk_wallet* wallet)
+{
+    struct kyk_bkey_val* bval = NULL;
+    struct kyk_block* blk = NULL;
+    char *errptr = NULL;
+    int res = -1;
+    
+    bval = w_get_bval(wallet, blk_hash, &errptr);
+    check(errptr == NULL, "Failed to cmd_query_block %s", errptr);
+
+    if(bval == NULL){
+	printf("No block record found\n");
+    } else {
+	kyk_print_bval(bval);
+	kyk_free_bval(bval);
+    }
+
+    res = kyk_wallet_query_block(wallet, blk_hash, &blk);
+    check(res == 0, "Failed to cmd_query_block: kyk_wallet_query_block failed");
+
+    kyk_print_block(blk);
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
 int cmd_serve(const char* host, const char* port)
 {
     kyk_start_serve(host, port);
     return 0;
 }
+
 
 void dump_block_to_file(const struct kyk_block* blk, const char* filepath)
 {

@@ -28,6 +28,6 @@ int str_snprintf_bytes(char        *str,
 int kyk_get_suffix_digest(const char* str, int* num);
 int kyk_get_first_digest(const char* str, int* num);
 int kyk_file_read_all(uint8_t** buf, FILE* fp, size_t* len);
-
+char* bytes2hexstr(const uint8_t* buf, size_t buflen);
 
 #endif

@@ -6,8 +6,8 @@
 #include "kyk_ldb.h"
 
 struct kyk_blk_hd_chain;
-
 struct kyk_utxo_chain;
+struct kyk_utxo_list;
 
 struct kyk_wallet_key {
     struct kyk_key* key;
@@ -160,5 +160,40 @@ int kyk_wallet_set_utxo_chain_spent(struct kyk_utxo_chain* utxo_chain);
 int kyk_wallet_get_mfee(const struct kyk_tx* tx,
 			const struct kyk_utxo_chain* utxo_chain,
 			uint64_t* mfee);
+
+int kyk_wallet_query_block(const struct kyk_wallet* wallet,
+			   const char* blk_hash,
+			   struct kyk_block** new_blk);
+
+int kyk_wallet_get_new_block_from_bval(const struct kyk_wallet* wallet,
+				       const struct kyk_bkey_val* bval,
+				       struct kyk_block** new_blk);
+
+
+int kyk_wallet_query_block_by_hashbytes(const struct kyk_wallet* wallet,
+					const uint8_t* blk_hash,
+					struct kyk_block** new_blk);
+
+int kyk_wallet_update_utxo_chain_with_block_list(const struct kyk_wallet* wallet,
+						 const struct kyk_block_list* blk_list);
+
+int kyk_spv_wallet_make_tx(struct kyk_tx** new_tx,
+			   struct kyk_wallet* wallet,
+			   long double btc_num,
+			   const char* btc_addr);
+
+int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
+				     const struct kyk_tx* tx,
+				     struct kyk_utxo_list* utxo_list);
+
+int kyk_wallet_filter_utxo_chain(struct kyk_utxo_chain** new_utxo_chain,
+				 struct kyk_utxo_chain* src_utxo_chain,
+				 const struct kyk_wallet* wallet);
+
+
+int kyk_wallet_mining_block(struct kyk_block** new_blk,
+			    const struct kyk_tx* tx,
+			    struct kyk_utxo_list* utxo_list,
+			    struct kyk_wallet* wallet);
 
 #endif

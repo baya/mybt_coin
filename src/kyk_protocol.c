@@ -5,9 +5,12 @@
 #include <time.h>
 
 #include "kyk_protocol.h"
+#include "kyk_wallet.h"
 #include "kyk_utils.h"
 #include "beej_pack.h"
 #include "kyk_block.h"
+#include "kyk_utxo.h"
+#include "kyk_validate.h"
 #include "dbg.h"
 
 /* The ping message is sent primarily to confirm that the TCP/IP connection is still valid. */
@@ -140,6 +143,157 @@ int kyk_ptl_headers_rep(int sockfd,
 
     res = kyk_reply_ptl_msg(sockfd, rep_msg);
     check(res == 0, "Failed to kyk_ptl_headers_rep: kyk_reply_ptl_msg failed");
+
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_ptl_blk_rep(int sockfd,
+		    const ptl_message* req_msg,
+		    struct kyk_wallet* wallet)
+{
+    /* struct kyk_block** blk = NULL; */
+    struct kyk_block** blk_list = NULL;
+    struct ptl_inv* inv_list = NULL;
+    struct ptl_inv* inv = NULL;
+    ptl_payload* pld = NULL;
+    ptl_message* rep_msg = NULL;
+    varint_t inv_count = 0;
+    varint_t i = 0;
+    char* hashstr = NULL;
+    char* msg = NULL;
+    int res = -1;
+    
+    check(wallet, "Failed to kyk_ptl_blk_rep: wallet is NULL");
+    check(req_msg, "Failed to kyk_ptl_blk_rep: req_msg is NULL");
+    check(req_msg -> pld, "Failed to yk_ptl_blk_rep: req_msg -> pld is NULL");
+
+    res = kyk_deseri_new_ptl_inv_list(req_msg -> pld -> data, &inv_list, &inv_count);
+    check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_deseri_new_ptl_inv_list failed");
+
+    blk_list = calloc(inv_count, sizeof(*blk_list));
+    check(blk_list, "Failed to kyk_ptl_blk_rep: calloc failed");
+
+    for(i = 0; i < inv_count; i++){
+	inv = inv_list + i;
+	res = kyk_wallet_query_block_by_hashbytes(wallet, (uint8_t*)inv -> hash, &blk_list[i]);
+	if(res != 0){
+	    hashstr = bytes2hexstr((uint8_t*)inv -> hash, sizeof(inv -> hash));
+	    check(hashstr, "Failed to kyk_ptl_blk_rep: bytes2hexstr failed");
+	    
+	    msg = kyk_asprintf("found no block: %s", hashstr);
+	    check(msg, "Failed to kyk_ptl_blk_rep: kyk_asprintf failed");
+	    
+	    kyk_print_hex("invalid blk hash", (uint8_t*)inv -> hash, sizeof(inv -> hash));
+	    kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, msg);
+	    free(hashstr);
+	    free(msg);
+	    goto error;
+	}
+	
+
+    }
+
+    for(i = 0; i < inv_count; i++){
+	
+	res = kyk_seri_blk_to_new_pld(&pld, blk_list[i]);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_seri_blk_to_new_pld failed");
+	
+	res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_BLOCK, NT_MAGIC_MAIN, pld);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_build_new_ptl_message failed");
+
+	res = kyk_reply_ptl_msg(sockfd, rep_msg);
+	check(res == 0, "Failed to kyk_ptl_blk_rep: kyk_write_ptl_msg failed");
+
+    }
+
+    kyk_free_block_list(blk_list, inv_count);
+    
+    return 0;
+
+error:
+    if(blk_list) kyk_free_block_list(blk_list, inv_count);
+    return -1;
+}
+
+int kyk_ptl_reject_rep(int sockfd,
+		       uint8_t ccode,
+		       const char* message)
+{
+    ptl_payload* pld = NULL;
+    ptl_message* rep_msg = NULL;
+    var_str* msg = NULL;
+    var_str* rsn = NULL;
+    int res = -1;
+
+    msg = kyk_new_var_str(message);
+    rsn = kyk_new_var_str(message);
+    res = kyk_build_new_reject_ptl_payload(&pld, msg, ccode, rsn, NULL, 0);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_build_new_reject_ptl_payload failed");
+
+    res = kyk_build_new_ptl_message(&rep_msg, KYK_MSG_TYPE_REJECT, NT_MAGIC_MAIN, pld);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_build_new_ptl_message failed");
+
+    res = kyk_reply_ptl_msg(sockfd, rep_msg);
+    check(res == 0, "Failed to kyk_ptl_reject_rep: kyk_write_ptl_msg failed");
+
+    kyk_free_var_str(msg);
+    kyk_free_var_str(rsn);
+    kyk_free_ptl_msg(rep_msg);
+    kyk_free_ptl_payload(pld);
+    
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_ptl_tx_rep(int sockfd,
+		   const ptl_message* req_msg,
+		   struct kyk_wallet* wallet)
+{
+    struct kyk_tx* tx = NULL;
+    struct kyk_utxo_list* utxo_list = NULL;
+    struct kyk_block* blk = NULL;
+    ptl_payload* pld = NULL;
+    int res = -1;
+
+    check(wallet, "Failed to kyk_ptl_tx_rep: wallet is NULL");
+    check(req_msg, "Failed to kyk_ptl_tx_rep: req_msg is NULL");
+    check(req_msg -> pld, "Failed to kyk_ptl_tx_rep: req_msg -> pld is NULL");
+
+    pld = req_msg -> pld;
+
+    tx = calloc(1, sizeof(*tx));
+    check(tx, "Failed to kyk_ptl_tx_rep: calloc failed");
+
+    res = kyk_deseri_tx(tx, pld -> data, NULL);
+    check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_deseri_tx failed");
+
+    utxo_list = calloc(1, sizeof(*utxo_list));
+    check(utxo_list, "Failed to kyk_ptl_tx_rep: calloc failed");
+
+    res = kyk_wallet_find_utxo_list_for_tx(wallet, tx, utxo_list);
+    check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_wallet_find_utxo_list_for_tx failed");
+
+    /* kyk_print_utxo_list(utxo_list); */
+    printf("================== Received Tx:\n");
+    kyk_print_tx(tx);
+
+    res = kyk_validate_tx(tx, utxo_list -> data, utxo_list -> len);
+    if(res == -1){
+	printf("Failed to validate tx \n");
+	kyk_ptl_reject_rep(sockfd, CC_REJECT_INVALID, "validate tx failed");
+	goto error;
+    }
+
+    printf("================== Mining Block\n");
+    kyk_wallet_mining_block(&blk, tx, utxo_list, wallet);
+    kyk_print_block(blk);
 
     return 0;
     

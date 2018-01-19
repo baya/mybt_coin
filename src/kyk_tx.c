@@ -51,6 +51,17 @@ void kyk_print_txout(const struct kyk_txout* txout)
     kyk_print_hex("txout -> sc", txout -> sc, txout -> sc_size);
 }
 
+void kyk_print_tx_list(const struct kyk_tx* tx_list, size_t tx_count)
+{
+    const struct kyk_tx* tx = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < tx_count; i++){
+	tx = tx_list + i;
+	kyk_print_tx(tx);
+    }
+}
+
 void kyk_print_tx(const struct kyk_tx* tx)
 {
     varint_t i = 0;
@@ -1188,6 +1199,25 @@ error:
     return -1;
 }
 
+int kyk_copy_txout_from_utxo(struct kyk_txout* txout, const struct kyk_utxo* utxo)
+{
+    check(txout, "Failed to kyk_copy_txout_from_utxo: txout is NULL");
+    check(utxo, "Failed to kyk_copy_txout_from_utxo: utxo is NULL");
+    check(utxo -> sc_size > 0, "Failed to kyk_copy_txout_from_utxo: utxo -> sc_size is invalid");
+
+    txout -> value = utxo -> value;
+    txout -> sc_size = utxo -> sc_size;
+    txout -> sc = calloc(txout -> sc_size, sizeof(*txout -> sc));
+
+    memcpy(txout -> sc, utxo -> sc, txout -> sc_size);
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
 struct kyk_utxo* kyk_find_utxo_with_txin(const struct kyk_utxo_chain* utxo_chain,
 					 const struct kyk_txin* txin)
 {
@@ -1500,3 +1530,5 @@ error:
 
     return -1;
 }
+
+

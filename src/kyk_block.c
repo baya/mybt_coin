@@ -12,6 +12,7 @@
 #include "kyk_sha.h"
 #include "kyk_hash_nonce.h"
 #include "kyk_validate.h"
+#include "kyk_message.h"
 #include "dbg.h"
 
 int kyk_get_blkself_size(const struct kyk_block* blk,
@@ -103,21 +104,41 @@ error:
     return -1;
 }
 
-/* buf should not have Magic No and Blocksize */
-int kyk_deseri_block(struct kyk_block** new_blk,
-		     const uint8_t* buf,
-		     size_t* byte_num)
+int kyk_deseri_block_from_blk_message(struct kyk_block* blk,
+				      ptl_message* msg,
+				      size_t* checknum)
 {
-    struct kyk_block* blk = NULL;
+    int res = -1;
+    uint8_t* bufp = NULL;
+    
+    check(blk, "Failed to kyk_deseri_block_from_blk_message: blk is NULL");
+    check(msg, "Failed to kyk_deseri_block_from_blk_message: msg is NULL");
+    check(strcmp(msg -> cmd, KYK_MSG_TYPE_BLOCK) == 0, "Failed to kyk_deseri_block_from_blk_message: invalid message type");
+
+    bufp = msg -> pld -> data;
+
+    res = kyk_deseri_block(blk, bufp, checknum);
+    check(res == 0, "Failed to kyk_deseri_block_from_blk_message: kyk_deseri_block failed");
+    
+    return 0;
+    
+error:
+
+    return -1;
+}
+
+int kyk_deseri_block(struct kyk_block* blk,
+		     const uint8_t* buf,
+		     size_t* checknum)
+{
+
     const uint8_t* bufp = NULL;
     int res = -1;
     size_t len = 0;
 
-    check(new_blk, "Failed to kyk_deseri_block: new_blk is NULL");    
-    check(buf, "Failed to kyk_deseri_block: buf is NULL");
-
-    blk = calloc(1, sizeof(*blk));
     check(blk, "Failed to kyk_deseri_block: blk is NULL");
+    check(blk -> hd == NULL, "Failed to kyk_deseri_block: blk -> hd should be NULL");
+    check(buf, "Failed to kyk_deseri_new_block: buf is NULL");
 
     bufp = buf;
 
@@ -125,7 +146,7 @@ int kyk_deseri_block(struct kyk_block** new_blk,
     check(blk -> hd, "Failed to kyk_parse_block: blk -> hd calloc failed");
 
     res = kyk_deseri_blk_header(blk -> hd, buf, &len);
-    check(res == 0, "Failed to kyk_parse_block: kyk_deseri_blk_header failed");
+    check(res == 0, "Failed to kyk_deseri_new_block: kyk_deseri_blk_header failed");
     bufp += len;
 
     len = kyk_unpack_varint(bufp, &blk -> tx_count);
@@ -137,13 +158,43 @@ int kyk_deseri_block(struct kyk_block** new_blk,
     check(blk -> tx, "Failed to kyk_deseri_block: blk -> tx calloc failed");
 
     res = kyk_deseri_tx_list(blk -> tx, blk -> tx_count, bufp, &len);
-    check(res == 0, "Failed to kyk_deseri_block: kyk_deseri_tx_list failed");
+    check(res == 0, "Failed to kyk_deseri_new_block: kyk_deseri_tx_list failed");
     bufp += len;
 
-    *new_blk = blk;
-    if(byte_num){
-	*byte_num = bufp - buf;
+    blk -> blk_size = bufp - buf;
+
+    if(checknum){
+	*checknum = bufp - buf;
     }
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+/* buf should not have Magic No and Blocksize */
+int kyk_deseri_new_block(struct kyk_block** new_blk,
+			 const uint8_t* buf,
+			 size_t* checknum)
+{
+    struct kyk_block* blk = NULL;
+    const uint8_t* bufp = NULL;
+    int res = -1;
+
+    check(new_blk, "Failed to kyk_deseri_new_block: new_blk is NULL");    
+    check(buf, "Failed to kyk_deseri_new_block: buf is NULL");
+
+    blk = calloc(1, sizeof(*blk));
+    check(blk, "Failed to kyk_deseri_new_block: blk is NULL");
+
+    bufp = buf;
+
+    res = kyk_deseri_block(blk, bufp, checknum);
+    check(res == 0, "Failed to kyk_deseri_new_block: kyk_deseri_block failed");
+
+    *new_blk = blk;
     
     return 0;
 
@@ -517,6 +568,7 @@ int kyk_make_block(struct kyk_block** new_blk,
     blk = calloc(1, sizeof(*blk));
     check(blk, "Failed to kyk_make_block: blk calloc failed");
 
+    blk -> magic_no = KYK_BLK_MAGIC_NO;
     blk -> blk_size = 0;
     blk -> hd = blk_hd;
     blk -> tx_count = tx_count;
@@ -797,6 +849,15 @@ void kyk_free_blk_hd_chain(struct kyk_blk_hd_chain* hd_chain)
     }
 }
 
+void kyk_print_block(const struct kyk_block* blk)
+{
+    printf("blk -> magic_no: %0x\n", blk -> magic_no);
+    printf("blk -> blk_size: %u\n", blk -> blk_size);
+    printf("blk -> hd\n");
+    kyk_print_blk_header(blk -> hd);
+    printf("blk -> tx\n");
+    kyk_print_tx_list(blk -> tx, blk -> tx_count);
+}
 
 void kyk_print_blk_hd_chain(const struct kyk_blk_hd_chain* hd_chain)
 {
@@ -811,12 +872,16 @@ void kyk_print_blk_hd_chain(const struct kyk_blk_hd_chain* hd_chain)
 
 void kyk_print_blk_header(const struct kyk_blk_header* hd)
 {
+    uint8_t digest[32];
+
+    kyk_blk_hash256(digest, hd);
     printf("version: %u\n", hd -> version);
     kyk_print_hex("pre_blk_hash ", hd -> pre_blk_hash, sizeof(hd -> pre_blk_hash));
     kyk_print_hex("mrk_root_hash ", hd -> mrk_root_hash, sizeof(hd -> mrk_root_hash));
     printf("tts: %u\n", hd -> tts);
     printf("bts: %0x\n", hd -> bts);
     printf("nonce: %u\n", hd -> nonce);
+    kyk_print_hex("hash", digest, sizeof(digest));
 }
 
 
@@ -868,5 +933,51 @@ int kyk_eq_blk_hd(const struct kyk_blk_header* lhd, const struct kyk_blk_header*
 	return 1;
     } else {
 	return 0;
+    }
+}
+
+void kyk_free_block_list(struct kyk_block** blk_list, size_t count)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+
+    if(blk_list){
+	for(i = 0; i < count; i++){
+	    blk = blk_list[i];
+	    if(blk){
+		kyk_free_block(blk);
+	    }
+	}
+
+	free(blk_list);
+    }
+}
+
+
+void kyk_free_kyk_block_list(struct kyk_block_list* blk_list)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+    
+    if(blk_list){
+	for(i = blk_list -> len - 1; i >= 1; i--){
+	    blk = blk_list -> data + i;
+	    kyk_free_block(blk);
+	}
+        kyk_free_block(blk_list -> data);
+	free(blk_list);
+    }
+}
+
+
+void kyk_print_kyk_block_list(const struct kyk_block_list* blk_list)
+{
+    struct kyk_block* blk = NULL;
+    size_t i = 0;
+
+    for(i = 0; i < blk_list -> len; i++){
+	blk = blk_list -> data + i;
+	printf("============================Block#%zu\n", i);
+	kyk_print_block(blk);
     }
 }

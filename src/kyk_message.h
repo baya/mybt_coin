@@ -14,7 +14,6 @@
 #define NODE_BLOOM 4
 
 #define LOCAL_IP_SRC "::ffff:127.0.0.1"
-#define KYK_PL_BUF_SIZE 1024
 
 #define KYK_MSG_TYPE_LEN 12
 #define KYK_MSG_CK_LEN 4
@@ -26,6 +25,26 @@
 #define KYK_MSG_TYPE_VERSION    "version"
 #define KYK_MSG_TYPE_GETHEADERS "getheaders"
 #define KYK_MSG_TYPE_HEADERS    "headers"
+#define KYK_MSG_TYPE_GETDATA    "getdata"
+#define KYK_MSG_TYPE_BLOCK      "block"
+#define KYK_MSG_TYPE_TX         "tx"
+#define KYK_MSG_TYPE_REJECT     "reject"
+
+#define PTL_INV_ERROR              0
+#define PTL_INV_MSG_TX             1
+#define PTL_INV_MSG_BLOCK          2
+#define PTL_INV_MSG_FILTERED_BLOCK 3
+#define PTL_INV_MSG_CMPCT_BLOCK    4
+
+#define CC_REJECT_MALFORMED       0x01
+#define CC_REJECT_INVALID         0x10
+#define CC_REJECT_OBSOLETE        0x11
+#define CC_REJECT_DUPLICATE       0x12
+#define CC_REJECT_NONSTANDARD     0x40
+#define CC_REJECT_DUST            0x41
+#define CC_REJECT_INSUFFICIENTFEE 0x42
+#define CC_REJECT_CHECKPOINT      0x43
+
 
 typedef struct protocol_message_payload {
     uint32_t len;
@@ -74,6 +93,18 @@ typedef struct protocol_getheaders_entity{
 struct ptl_ping_entity{
     uint64_t nonce;
 };
+
+struct ptl_inv {
+    uint32_t type;
+    char hash[32];
+};
+
+typedef struct ptl_reject_entity {
+    var_str* message;
+    uint8_t ccode;
+    var_str* reason;
+    uint8_t* data;
+} ptl_reject_entity;
 
 int kyk_build_new_ptl_message(ptl_message** new_msg,
 			      const char* cmd,
@@ -144,5 +175,47 @@ int kyk_seri_hd_chain_to_new_pld(ptl_payload** new_pld, const struct kyk_blk_hd_
 int kyk_get_headers_pld_len(const struct kyk_blk_hd_chain* hd_chain, size_t* pld_len);
 
 int kyk_deseri_headers_msg_to_new_hd_chain(ptl_message* msg, struct kyk_blk_hd_chain** new_hd_chain);
+
+int kyk_seri_ptl_inv(uint8_t* buf, const struct ptl_inv* inv, size_t* checknum);
+
+int kyk_seri_ptl_inv_list_to_new_pld(ptl_payload** new_pld,
+				     const struct ptl_inv* inv_list,
+				     varint_t inv_count);
+
+int kyk_hd_chain_to_inv_list(const struct kyk_blk_hd_chain* hd_chain,
+			     uint32_t type,
+			     struct ptl_inv** new_inv_list,
+			     varint_t* inv_count);
+
+int kyk_deseri_ptl_inv(const uint8_t* buf, struct ptl_inv* inv, size_t* checknum);
+
+int kyk_deseri_new_ptl_inv_list(const uint8_t* buf,
+				struct ptl_inv** new_inv_list,
+				varint_t* inv_count);
+
+void kyk_print_inv(const struct ptl_inv* inv);
+
+void kyk_print_inv_list(const struct ptl_inv* inv_list, varint_t inv_count);
+
+int kyk_seri_blk_to_new_pld(ptl_payload** new_pld, const struct kyk_block* blk);
+
+
+int kyk_build_new_reject_ptl_payload(ptl_payload** new_pld,
+				     const var_str* message,
+				     uint8_t ccode,
+				     const var_str* reason,
+				     uint8_t* data,
+				     size_t data_len);
+
+void kyk_free_ptl_reject_entity(ptl_reject_entity* et);
+
+int kyk_deseri_new_reject_entity(const uint8_t* buf,
+				 size_t buf_len,
+				 ptl_reject_entity** new_entity,
+				 size_t* checknum);
+
+void kyk_print_ptl_reject_entity(const ptl_reject_entity* et);
+
+int kyk_seri_tx_to_new_pld(ptl_payload** new_pld, const struct kyk_tx* tx);
 
 #endif

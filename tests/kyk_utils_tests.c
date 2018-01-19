@@ -59,11 +59,23 @@ char* test_get_first_digest()
     return NULL;
 }
 
+char* test_kyk_asprintf()
+{
+    char* file_path = NULL;
+    char* expect_str = "/path/to/wallet/block/blk00000.dat";
+
+    file_path = kyk_asprintf("%s/blk%05d.dat", "/path/to/wallet/block", 0);
+    mu_assert(strcmp(file_path, expect_str) == 0, "Failed to test_kyk_asprintf");
+
+    return NULL;
+}
+
 char *all_tests()
 {
     mu_suite_start();
     
     mu_run_test(test_get_suffix_digest);
+    mu_run_test(test_kyk_asprintf);
     
     return NULL;
 }

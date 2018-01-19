@@ -7,3 +7,4 @@ TAGS
 *.dSYM
 my_wallet2
 tmp/cmd_make_tx_blk_dump.dat
+tmp/cmd_make_tx_dump.dat

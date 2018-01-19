@@ -21,5 +21,9 @@ int kyk_send_ptl_msg_buf(const char *node,
 			 const ptl_msg_buf* msg_buf,
 			 ptl_message** new_rep_msg);
 
+int kyk_socket_connect(const char* node, const char* service, int* socketid);
 
+int kyk_write_ptl_msg(int sfd, const ptl_message* msg);
+
+int kyk_write_msg_buf(int sfd, const ptl_msg_buf* msg_buf);
 #endif

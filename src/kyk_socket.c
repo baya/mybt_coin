@@ -52,20 +52,11 @@ error:
     return -1;
 }
 
-int kyk_send_ptl_msg_buf(const char *node,
-			 const char *service,
-			 const ptl_msg_buf* msg_buf,
-			 ptl_message** new_rep_msg)
+int kyk_socket_connect(const char* node, const char* service, int* socket_fd)
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
     int sfd, s;
-    size_t len;
-    /* ssize_t nread; */
-    /* ptl_resp_buf* resp_buf = NULL; */
-    /* unsigned char resp_body[MAX_BUF_SIZE]; */
-    ptl_message* rep_msg = NULL;
-    int res = -1;
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
@@ -76,12 +67,12 @@ int kyk_send_ptl_msg_buf(const char *node,
     s = getaddrinfo(node, service, &hints, &result);
     check(s == 0, "Failed to kyk_send_btc_msg_buf: getaddrinfo: %s", gai_strerror(s));
 
-   /*
-   **  getaddrinfo() returns a list of address structures.
-   **  Try each address until we successfully connect(2).
-   **  If socket(2) (or connect(2)) fails, we (close the socket
-   **  and) try the next address.
-   */
+    /*
+    **  getaddrinfo() returns a list of address structures.
+    **  Try each address until we successfully connect(2).
+    **  If socket(2) (or connect(2)) fails, we (close the socket
+    **  and) try the next address.
+    */
     for (rp = result; rp != NULL; rp = rp -> ai_next) {
 	sfd = socket(rp -> ai_family,
 		     rp -> ai_socktype,
@@ -100,8 +91,44 @@ int kyk_send_ptl_msg_buf(const char *node,
     check(rp, "Failed to kyk_send_btc_msg_buf: Could not connect");
 
     /* No longer needed */
-    freeaddrinfo(result);           
+    freeaddrinfo(result);
 
+    *socket_fd = sfd;
+
+    return 0;
+
+error:
+
+    return -1;
+    
+}
+
+/* write msg to socket fd, when finished don't close the socket fd */
+int kyk_write_ptl_msg(int sfd, const ptl_message* msg)
+{
+    ptl_msg_buf* msg_buf = NULL;
+    int res = -1;
+
+    check(msg, "Failed to kyk_write_ptl_msg: msg is NULL");
+
+    res = kyk_new_seri_ptl_message(&msg_buf, msg);
+    check(res == 0, "Failed to kyk_write_ptl_msg: kyk_new_seri_ptl_message failed");
+
+    kyk_write_msg_buf(sfd, msg_buf);
+
+    kyk_print_ptl_message(msg);
+
+    return 0;
+
+error:
+
+    return -1;
+}
+
+int kyk_write_msg_buf(int sfd, const ptl_msg_buf* msg_buf)
+{
+    size_t len = 0;
+    
     len = msg_buf -> len;
     if (len + 1 > MAX_BUF_SIZE) {
 	fprintf(stderr, "Ignoring long message\n");
@@ -111,7 +138,25 @@ int kyk_send_ptl_msg_buf(const char *node,
     if (write(sfd, msg_buf -> data, len) != (ssize_t)len) {
 	fprintf(stderr, "partial/failed write\n");
 	exit(EXIT_FAILURE);
-    }
+    }/* 011111{:"? this is typed by my cat */
+
+
+    return 0;
+}
+
+int kyk_send_ptl_msg_buf(const char *node,
+			 const char *service,
+			 const ptl_msg_buf* msg_buf,
+			 ptl_message** new_rep_msg)
+{
+    int sfd;
+    ptl_message* rep_msg = NULL;
+    int res = -1;
+
+    res = kyk_socket_connect(node, service, &sfd);
+    check(res == 0, "Failed to kyk_send_ptl_msg_buf: kyk_socket_connect failed");
+
+    kyk_write_msg_buf(sfd, msg_buf);
 
     res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
     check(res == 0, "Failed to kyk_send_btc_msg_buf: kyk_recv_ptl_msg failed");
