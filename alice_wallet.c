@@ -424,14 +424,14 @@ int cmd_req_getdata(const char* node, const char* service, struct kyk_wallet* wa
     res = kyk_wallet_update_utxo_chain_with_block_list(wallet, blk_list);
     check(res == 0, "Failed to cmd_req_getdata: kyk_wallet_update_utxo_chain_with_block_list failed");
     
-    kyk_free_kyk_block_list(blk_list);
+    /* kyk_free_kyk_block_list(blk_list); */
 
     close(sfd);
 
     return 0;
 
 error:
-    if(blk_list) kyk_free_kyk_block_list(blk_list);
+    /* if(blk_list) kyk_free_kyk_block_list(blk_list); */
     if(sfd) close(sfd);
     
     return -1;
