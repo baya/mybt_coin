@@ -445,7 +445,7 @@ int cmd_make_tx(struct kyk_wallet* wallet,
     struct kyk_tx* tx = NULL;
     ptl_payload* pld = NULL;
     ptl_message* req_msg = NULL;
-    ptl_message* rep_msg = NULL;
+    /* ptl_message* rep_msg = NULL; */
     int sfd = 0;
     int res = -1;
 
@@ -473,11 +473,11 @@ int cmd_make_tx(struct kyk_wallet* wallet,
 
     res = kyk_write_ptl_msg(sfd, req_msg);
 
-    while(1){
-	res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL);
-	check(res == 0, "Failed to cmd_make_tx: kyk_recv_ptl_msg failed");	
-	kyk_print_ptl_message(rep_msg);
-    }
+    /* while(1){ */
+    /* 	res = kyk_recv_ptl_msg(sfd, &rep_msg, KYK_PL_BUF_SIZE, NULL); */
+    /* 	check(res == 0, "Failed to cmd_make_tx: kyk_recv_ptl_msg failed");	 */
+    /* 	kyk_print_ptl_message(rep_msg); */
+    /* } */
 
     return 0;
     

@@ -254,7 +254,7 @@ $ ./alice_wallet.out queryBalance
 0.000000 BTC
 ```
 
-显示 Alice wallet 的比特币接收地址
+显示 Alice wallet 用于接收比特币的地址
 
 ```
 $ ./alice_wallet.out showAddrList
@@ -283,7 +283,7 @@ $ ./bob_wallet.out queryBalance
 6.999000 BTC
 ```
 
-Bob wallet 此时余额为 6.999000 BTC, 其中 0.001 个比特币做为矿工费支付给了矿工.
+Bob wallet 此时余额为 6.999000 BTC, 其中 0.001 个比特币作为矿工费支付给了矿工.
 
 
 Alice wallet 从矿工节点那同步数据后, Alice wallet 将知道它已经拥有了 3 个比特币.
