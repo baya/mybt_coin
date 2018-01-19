@@ -51,7 +51,7 @@ $ sudo apt-get install libssl-dev
 $ sudo apt-get install libgmp3-dev
 ```
 
-## How to Play
+## 矿工节点
 
 ```
 $ git clone https://github.com/baya/mybt_coin.git
