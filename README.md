@@ -189,7 +189,7 @@ $ ./bob_wallet.out showAddrList
 在此次交互实验中, Bob wallet 的比特币地址是 168wfy7TCmyEgQncK9rYRCjn8QE1zmK8cA, 请用你实际得到的地址替换这个地址.
 
 
-因为 Bob wallet 没有挖矿的功能, 它获得比特币的方式就是其他人给它发送比特币，现在我们的矿工节点会给 Bob wallet 发送 10 个比特币
+因为 Bob wallet 没有挖矿的功能, 它只能通过其他人给它发送比特币的方式获得比特币, 现在我们的矿工节点会给 Bob wallet 发送 10 个比特币
 
 
 ```
