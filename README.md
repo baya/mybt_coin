@@ -296,3 +296,14 @@ $ ./alice_wallet.out queryBalance
 ```
 
 此时 Alice wallet 拥有 3 个比特币.
+
+
+## 重新开始实验
+
+```
+$ ./kyk_miner.out delete
+
+$ ./bob_wallet.out delete
+
+$ ./alice_wallet.out delete
+```
