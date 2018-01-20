@@ -150,15 +150,13 @@ $ ./kyk_miner.out init
 $ ./kyk_miner.out makeBlock
 ```
 
-查询矿工节点拥有的比特币数量:
+查询矿工节点拥有的比特币数量, 此时矿工节点拥有 100 个比特币, 我在程序中设定的是每出一个块, 将产生 100 个比特币.
 
 ```
 $ ./kyk_miner.out queryBalance
 
 100.000000 BTC
 ```
-
-此时矿工节点拥有 100 个比特币, 我在程序中设定的是每出一个块, 将产生 100 个比特币.
 
 构建 Bob wallet, Bob wallet 是一个 spv钱包，简单理解就是一个轻量级的客户端，这种客户端不能进行挖矿操作.
 
@@ -172,15 +170,13 @@ $ make bob_wallet
 $ ./bob_wallet.out init
 ```
 
-查询 Bob wallet 的余额:
+查询 Bob wallet 的余额, 此时 Bob wallet 的比特币数量为 0
 
 ```
 $ ./bob_wallet.out queryBalance
 
 0.000000 BTC
 ```
-
-此时 Bob wallet 的比特币数量为 0
 
 显示 Bob wallet 的用于接收比特币的地址:
 
@@ -234,7 +230,7 @@ $ ./bob_wallet.out queryBalance
 10.000000 BTC
 ```
 
-构建 Alice wallet, Alice wallet 是一个和 Bob wallet 功能一致的 spv wallet 唯一的区别就是名字不一样.
+构建 Alice wallet, Alice wallet 是一个和 Bob wallet 功能一致的 spv wallet, 唯一的区别就是名字不一样.
 
 ```
 $ make alice_wallet

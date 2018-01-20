@@ -281,6 +281,7 @@ int kyk_ptl_tx_rep(int sockfd,
     check(res == 0, "Failed to kyk_ptl_tx_rep: kyk_wallet_find_utxo_list_for_tx failed");
 
     /* kyk_print_utxo_list(utxo_list); */
+    /* printf("??????????????\n"); */
     printf("================== Received Tx:\n");
     kyk_print_tx(tx);
 

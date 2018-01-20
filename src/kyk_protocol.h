@@ -27,5 +27,8 @@ int kyk_ptl_reject_rep(int sockfd,
 		       uint8_t ccode,
 		       const char* message);
 
+int kyk_ptl_tx_rep(int sockfd,
+		   const ptl_message* req_msg,
+		   struct kyk_wallet* wallet);
 
 #endif

@@ -1878,6 +1878,7 @@ int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
 				     struct kyk_utxo_list* utxo_list)
 {
     struct kyk_utxo* utxo = NULL;
+    struct kyk_utxo* dest_utxo = NULL;
     struct kyk_utxo_chain* wallet_utxo_chain = NULL;
     size_t i = 0;
     size_t j = 0;
@@ -1904,7 +1905,8 @@ int kyk_wallet_find_utxo_list_for_tx(const struct kyk_wallet* wallet,
 	    /* kyk_print_utxo(utxo); */
 	    res = kyk_utxo_match_txin(utxo, tx -> txin + i);
 	    if(res == 0){
-		kyk_copy_utxo(utxo_list -> data + i, utxo);
+		dest_utxo = utxo_list -> data + i;
+		kyk_copy_utxo(dest_utxo, utxo);
 		utxo_list -> len += 1;
 		break;
 	    }
@@ -1970,7 +1972,9 @@ int kyk_wallet_mining_block(struct kyk_block** new_blk,
     res = kyk_append_utxo_chain_from_block(wallet_utxo_chain, blk);
     check(res == 0, "Failed to kyk_wallet_mining_block: kyk_append_utxo_chain_from_block failed");
 
-    kyk_wallet_set_utxo_chain_spent(tx_utxo_chain);
+    /* kyk_wallet_set_utxo_chain_spent(tx_utxo_chain); */
+
+    kyk_wallet_consume_utxo_chain(tx_utxo_chain, wallet_utxo_chain);
 
     res = kyk_remove_spent_utxo(&updated_utxo_chain, wallet_utxo_chain);
     check(res == 0, "Failed to kyk_wallet_mining_block: kyk_remove_spent_utxo failed");
@@ -2008,3 +2012,33 @@ error:
 
     return -1;
 }
+
+
+int kyk_wallet_consume_utxo_chain(const struct kyk_utxo_chain* tx_utxo_chain,
+				  struct kyk_utxo_chain* wallet_utxo_chain)
+{
+    struct kyk_utxo* tx_utxo = NULL;
+    struct kyk_utxo* w_utxo = NULL;
+    size_t i = 0;
+    size_t j = 0;
+    int res = -1;
+
+    w_utxo = wallet_utxo_chain -> hd;
+    for(i = 0; i < wallet_utxo_chain -> len; i++){
+	tx_utxo = tx_utxo_chain -> hd;
+	for(j = 0; j < tx_utxo_chain -> len; j++){
+	    res = kyk_cmp_utxo(tx_utxo, w_utxo);
+	    if(res == 0){
+		tx_utxo -> refer_to = w_utxo;
+		tx_utxo -> spent = 1;
+		w_utxo -> spent = 1;
+	    }
+	    tx_utxo = tx_utxo -> next;
+	}
+	
+	w_utxo = w_utxo -> next;
+    }
+
+    return 0;
+}
+

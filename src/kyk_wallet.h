@@ -196,4 +196,7 @@ int kyk_wallet_mining_block(struct kyk_block** new_blk,
 			    struct kyk_utxo_list* utxo_list,
 			    struct kyk_wallet* wallet);
 
+int kyk_wallet_consume_utxo_chain(const struct kyk_utxo_chain* tx_utxo_chain,
+				  struct kyk_utxo_chain* wallet_utxo_chain);
+
 #endif

@@ -163,7 +163,7 @@ void kyk_free_ptl_payload(ptl_payload* pld)
     }
 }
 
-void kyk_print_ptl_message(ptl_message* ptl_msg)
+void kyk_print_ptl_message(const ptl_message* ptl_msg)
 {
     ptl_msg_buf* msg_buf = NULL;
 
@@ -1341,7 +1341,7 @@ int kyk_deseri_new_reject_entity(const uint8_t* buf,
     check(res == 0, "Failed to kyk_deseri_new_reject_entity: kyk_unpack_var_str failed");
     bufp += len;
 
-    if(bufp - buf < buf_len){
+    if(bufp - buf < (long)buf_len){
 	data_len = buf_len - (bufp - buf);
 	check(data_len == 32, "Failed to kyk_deseri_new_reject_entity: invalid data len");
 	et -> data = calloc(data_len, sizeof(*et -> data));
@@ -1433,7 +1433,7 @@ int kyk_seri_tx_to_new_pld(ptl_payload** new_pld, const struct kyk_tx* tx)
     pld = calloc(1, sizeof(*pld));
     check(pld, "Failed to kyk_seri_tx_to_new_pld: calloc failed");
 
-    res = kyk_seri_tx_to_new_buf(tx, &pld -> data, &pld -> len);
+    res = kyk_seri_tx_to_new_buf(tx, &pld -> data, (size_t*)&pld -> len);
     check(res == 0, "Failed to kyk_seri_tx_to_new_pld: kyk_seri_tx_to_new_buf failed");
 
     *new_pld = pld;

@@ -159,7 +159,7 @@ int kyk_get_ptl_ver_entity_size(ptl_ver_entity* ver, size_t* entity_size);
 int kyk_get_gethder_entity_size(ptl_gethder_entity* et, size_t* elen);
 
 /* print functions */
-void kyk_print_ptl_message(ptl_message* ptl_msg);
+void kyk_print_ptl_message(const ptl_message* ptl_msg);
 void kyk_print_ptl_version_entity(ptl_ver_entity* ver);
 
 /* build payload methods */
