@@ -307,3 +307,9 @@ $ ./bob_wallet.out delete
 
 $ ./alice_wallet.out delete
 ```
+
+## 补充阅读
+
+[区块链技术探索(一), 构造比特币的创世区块](http://baya.github.io/2017/05/11/7daystalk.html)
+
+[区块链技术探索(二), 打造我们自己的比特币](http://baya.github.io/2017/09/04/build-our-btc-system.html)
