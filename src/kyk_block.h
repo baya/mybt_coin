@@ -92,6 +92,8 @@ int kyk_get_blkself_size(const struct kyk_block* blk,
 int kyk_tail_hd_chain(struct kyk_blk_header** hd,
 		      const struct kyk_blk_hd_chain* hd_chain);
 
+uint64_t kyk_get_block_reward(uint32_t height);
+
 int kyk_make_coinbase_block(struct kyk_block** new_blk,
 			    const struct kyk_blk_hd_chain* hd_chain,
 			    const char* note,

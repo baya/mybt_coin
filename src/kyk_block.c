@@ -587,6 +587,20 @@ error:
     return -1;
 }
 
+uint64_t kyk_get_block_reward(uint32_t height)
+{
+    uint64_t reward = KYK_BASE_BTC_COUNAT * ONE_BTC_COIN_VALUE;
+    uint32_t halvings = height / KYK_HALVING_INTERVAL;
+
+    if(halvings >= 64){
+	return 0;
+    }
+
+    reward >>= halvings;
+
+    return reward;
+}
+
 /* make block which contains only one coinbase Tx */
 int kyk_make_coinbase_block(struct kyk_block** new_blk,
 			    const struct kyk_blk_hd_chain* hd_chain,
@@ -599,9 +613,8 @@ int kyk_make_coinbase_block(struct kyk_block** new_blk,
     struct kyk_blk_header* hd = NULL;
     struct kyk_tx* tx = NULL;
 
-    /* TODO: coinbase Tx out value shoud be adjusted according to the block chain height */
-    uint64_t btc_count = KYK_BASE_BTC_COUNAT;
-    uint64_t outValue = ONE_BTC_COIN_VALUE * btc_count;
+    uint32_t height = (uint32_t)hd_chain->len;
+    uint64_t outValue = kyk_get_block_reward(height);
 
     uint8_t pre_blk_hash[32];
 
@@ -675,8 +688,7 @@ int kyk_make_tx_block(struct kyk_block** new_blk,
     size_t tx_list_size = 0;
     size_t i = 0;
 
-    /* TODO: coinbase Tx out value shoud be adjusted according to the block chain height */
-    uint64_t btc_count = KYK_BASE_BTC_COUNAT;
+    uint32_t height = (uint32_t)hd_chain->len;
     uint64_t outValue = 0;
 
     uint8_t pre_blk_hash[32];
@@ -701,7 +713,7 @@ int kyk_make_tx_block(struct kyk_block** new_blk,
     check(tx, "Failed to kyk_make_tx_block: tx is NULL");
     check(note, "Failed to kyk_make_tx_block: note is NULL");
 
-    outValue = ONE_BTC_COIN_VALUE * btc_count;
+    outValue = kyk_get_block_reward(height);
     outValue += mfee;
 
     res = kyk_make_coinbase_tx(&cb_tx, note, outValue, pubkey, pub_len);
