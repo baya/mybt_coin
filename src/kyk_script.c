@@ -117,21 +117,22 @@ error:
 
 int pubk_hash_from_address(unsigned char *pubk_hash, size_t pkh_len, const char *addr, size_t addr_len)
 {
-    BIGNUM bn;
+    BIGNUM *bn = NULL;
     size_t len;
     uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
 
     check(pubk_hash, "Failed to pubk_hash_from_address: pubk_hash is NULL");
     check(addr, "Failed to pubk_hash_from_address: addr is NULL");
 
-    BN_init(&bn);
-    raw_decode_base58(&bn, addr, addr_len);
+    bn = BN_new();
+    check(bn, "Failed to pubk_hash_from_address: BN_new failed");
+    raw_decode_base58(bn, addr, addr_len);
 
-    len = BN_num_bytes(&bn);
+    len = BN_num_bytes(bn);
     memset(buf, 0, sizeof(buf));
-    BN_bn2bin(&bn, buf + sizeof(buf) - len);
+    BN_bn2bin(bn, buf + sizeof(buf) - len);
 
-    BN_free(&bn);
+    BN_free(bn);
 
     if(validate_base58_checksum(buf, 1 + RIPEMD160_DIGEST_LENGTH) < 0){
 	fprintf(stderr, "address base58 checksum failed\n");
