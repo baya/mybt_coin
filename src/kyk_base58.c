@@ -120,17 +120,18 @@ int raw_decode_base58(BIGNUM *bn, const char *src, size_t len)
 
 int kyk_base58_decode_check(const char* src, size_t src_len, uint8_t** dst, size_t* dst_len)
 {
-    BIGNUM bn;
+    BIGNUM *bn = NULL;
     size_t bn_len = 0;
     uint8_t* buf = NULL;
 
     check(dst, "dst can not be NULL");
 
-    BN_init(&bn);
+    bn = BN_new();
+    check(bn, "failed to BN_new");
 
-    raw_decode_base58(&bn, src, src_len);
+    raw_decode_base58(bn, src, src_len);
 
-    bn_len = BN_num_bytes(&bn);
+    bn_len = BN_num_bytes(bn);
     *dst_len = bn_len - 1 - 4;
     
     *dst = calloc(*dst_len, sizeof(uint8_t));
@@ -139,11 +140,11 @@ int kyk_base58_decode_check(const char* src, size_t src_len, uint8_t** dst, size
     buf = calloc(bn_len, sizeof(*buf));
     check(dst, "failed to calloc");
     
-    BN_bn2bin(&bn, buf);
+    BN_bn2bin(bn, buf);
     memcpy(*dst, buf + 1, *dst_len);
 
     free(buf);
-    BN_free(&bn);
+    BN_free(bn);
 
     return 0;
 

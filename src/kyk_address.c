@@ -194,22 +194,23 @@ void set_chksum_byte(uint8_t *dgst8,
 int kyk_validate_address(const char* addr, size_t addr_len)
 {
         
-    BIGNUM bn;
+    BIGNUM *bn = NULL;
     size_t len;
     uint8_t buf[1 + RIPEMD160_DIGEST_LENGTH + 4];
     int res = -1;
 
     check(addr, "Failed to kyk_validate_address: addr is NULL");
 
-    BN_init(&bn);
-    res = raw_decode_base58(&bn, addr, addr_len);
+    bn = BN_new();
+    check(bn, "Failed to kyk_validate_address: BN_new failed");
+    res = raw_decode_base58(bn, addr, addr_len);
     check(res > 0, "Failed to kyk_validate_address: raw_decode_base58 failed");
 
-    len = BN_num_bytes(&bn);
+    len = BN_num_bytes(bn);
     memset(buf, 0, sizeof(buf));
-    BN_bn2bin(&bn, buf + sizeof(buf) - len);
+    BN_bn2bin(bn, buf + sizeof(buf) - len);
 
-    BN_free(&bn);
+    BN_free(bn);
 
     if(validate_base58_checksum(buf, 1 + RIPEMD160_DIGEST_LENGTH) < 0){
 	fprintf(stderr, "address base58 checksum failed\n");
